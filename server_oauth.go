@@ -11,11 +11,11 @@ import (
 	"github.com/yusufwira/lern-golang-gin/controller"
 )
 
-var (
-	UserController controller.UserController = controller.New()
-)
-
 func main() {
+	db := connection.Database()
+	mstrKgtController := controller.NewMstrKgtController(db)
+	UserController := controller.NewUserController(db)
+
 	r := gin.Default()
 
 	connection.Middleware()
@@ -39,15 +39,33 @@ func main() {
 			c.String(http.StatusOK, "not found")
 		})
 
-		api.GET("/getUserOuath", func(c *gin.Context) {
+		r.GET("/getUserOuath", func(c *gin.Context) {
 			c.JSON(http.StatusOK, UserController.Index())
 		})
 
-		api.POST("/postUser", func(c *gin.Context) {
+		r.GET("/getUserID/:id", func(c *gin.Context) {
+			c.JSON(http.StatusOK, UserController.GetData(c))
+		})
+
+		r.POST("/postUser", func(c *gin.Context) {
 			c.JSON(http.StatusOK, UserController.Store(c))
 		})
 
-	}
+		r.DELETE("/delUserID/:id", func(c *gin.Context) {
+			c.JSON(http.StatusOK, UserController.DelData(c))
+		})
+		r.PUT("/upUserID/:id", func(c *gin.Context) {
+			c.JSON(http.StatusOK, UserController.UpData(c))
+		})
 
+		r.POST("/login", UserController.Login)
+	}
+	tjsl := r.Group("/api/tjsl")
+	{
+		tjsl.POST("listKegiatan", mstrKgtController.ListMasterKegiatan)
+		tjsl.POST("storeMasterKegiatan", mstrKgtController.StoreMasterKegiatan)
+		tjsl.PUT("updateMasterKegiatan/:slug", mstrKgtController.UpdateMasterKegiatan)
+		tjsl.DELETE("deleteMasterKegiatan/:slug", mstrKgtController.DeleteMasterKegiatan)
+	}
 	r.Run(":9096")
 }

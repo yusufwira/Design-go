@@ -2,36 +2,44 @@ package service
 
 import (
 	"github.com/yusufwira/lern-golang-gin/connection"
-	"github.com/yusufwira/lern-golang-gin/entity"
+	users "github.com/yusufwira/lern-golang-gin/entity/users"
 )
 
 type UserService interface {
-	Save(entity.User) entity.User
-	FindAll() []entity.User
-	GetAll() []entity.User
+	Save(users.User) users.User
+	FindAll() []users.User
+	GetAll() []users.User
+	GetUsersID(string) []users.User
 }
 
 type userService struct {
-	users []entity.User
+	users []users.User
 }
 
 func New() UserService {
 	return &userService{}
 }
 
-func (service *userService) Save(user entity.User) entity.User {
+func (service *userService) Save(user users.User) users.User {
 	db := connection.Database()
 	db.Table("User").Create(user)
 	return user
 }
 
-func (service *userService) FindAll() []entity.User {
+func (service *userService) FindAll() []users.User {
 	return nil
 }
 
-func (service *userService) GetAll() []entity.User {
-	var user []entity.User
+func (service *userService) GetAll() []users.User {
+	var user []users.User
 	db := connection.Database()
-	db.Table("User").Find(&user)
+	db.Table("public.users").Find(&user)
+	return user
+}
+
+func (service *userService) GetUsersID(id string) []users.User {
+	var user []users.User
+	db := connection.Database()
+	db.Table("public.users").Where("id = ?", id).Take(&user)
 	return user
 }
