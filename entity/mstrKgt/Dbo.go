@@ -1,8 +1,6 @@
 package mstrKgt
 
-import (
-	"gorm.io/gorm"
-)
+import "github.com/yusufwira/lern-golang-gin/connection"
 
 type Pihc_master_kary_rt struct {
 	Emp_no         string `json:"emp_no" gorm:"primary_key"`
@@ -57,21 +55,10 @@ type Pihc_master_kary_rt struct {
 	JobGrade       string `json:"job_grade"`
 }
 
-func (Pihc_master_kary_rt) TableName() string {
-	return "dbo.pihc_master_kary_rt"
-}
-
-type DboRepo struct {
-	DB *gorm.DB
-}
-
-func NewDBORepo(db *gorm.DB) *DboRepo {
-	return &DboRepo{DB: db}
-}
-
-func (d DboRepo) FindUserByNIK(nik string) (Pihc_master_kary_rt, error) {
+func FindUserByNIK(nik string) (Pihc_master_kary_rt, error) {
 	var mkrt Pihc_master_kary_rt
-	err := d.DB.Select("company").Where("emp_no=?", nik).Take(&mkrt).Error
+	db := connection.Database()
+	err := db.Table("dbo.pihc_master_kary_rt").Select("company").Where("emp_no=?", nik).Take(&mkrt).Error
 	if err != nil {
 		return mkrt, err
 	}

@@ -12,7 +12,6 @@ import (
 
 type MstrKgtController struct {
 	TJSLRepo *mstrKgt.TJSLRepo
-	DboRepo  *mstrKgt.DboRepo
 }
 
 func NewMstrKgtController(db *gorm.DB) *MstrKgtController {
@@ -27,7 +26,7 @@ func (c *MstrKgtController) ListMasterKegiatan(ctx *gin.Context) {
 		return
 	}
 
-	PIHC_MSTR_KRY_RT, err := c.DboRepo.FindUserByNIK(inputan.NIK)
+	PIHC_MSTR_KRY_RT, err := mstrKgt.FindUserByNIK(inputan.NIK)
 
 	comp_code := PIHC_MSTR_KRY_RT.Company
 
@@ -64,7 +63,7 @@ func (c *MstrKgtController) StoreMasterKegiatan(ctx *gin.Context) {
 		return
 	}
 
-	PIHC_MSTR_KRY_RT, err := c.DboRepo.FindUserByNIK(inputan.NIK)
+	PIHC_MSTR_KRY_RT, err := mstrKgt.FindUserByNIK(inputan.NIK)
 
 	comp_code := PIHC_MSTR_KRY_RT.Company
 
