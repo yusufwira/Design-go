@@ -1,9 +1,13 @@
 package mstrKgt
 
-import "github.com/yusufwira/lern-golang-gin/connection"
+import (
+	"fmt"
 
-type Pihc_master_kary_rt struct {
-	Emp_no         string `json:"emp_no" gorm:"primary_key"`
+	"gorm.io/gorm"
+)
+
+type PihcMasterKaryRt struct {
+	EmpNo          string `json:"emp_no" gorm:"primary_key"`
 	Nama           string `json:"nama"`
 	Gender         string `json:"gender"`
 	Agama          string `json:"agama"`
@@ -55,11 +59,23 @@ type Pihc_master_kary_rt struct {
 	JobGrade       string `json:"job_grade"`
 }
 
-func FindUserByNIK(nik string) (Pihc_master_kary_rt, error) {
-	var mkrt Pihc_master_kary_rt
-	db := connection.Database()
-	err := db.Table("dbo.pihc_master_kary_rt").Select("company").Where("emp_no=?", nik).Take(&mkrt).Error
+func (PihcMasterKaryRt) TableName() string {
+	return "dbo.pihc_master_kary_rt"
+}
+
+type PihcMasterKaryRtRepo struct {
+	DB *gorm.DB
+}
+
+func NewPihcMasterKaryRtRepo(db *gorm.DB) *PihcMasterKaryRtRepo {
+	return &PihcMasterKaryRtRepo{DB: db}
+}
+
+func (t PihcMasterKaryRtRepo) FindUserByNIK(nik string) (PihcMasterKaryRt, error) {
+	var mkrt PihcMasterKaryRt
+	err := t.DB.Where("emp_no=?", nik).Take(&mkrt).Error
 	if err != nil {
+		fmt.Println("Error retrieving user by NIK:", err)
 		return mkrt, err
 	}
 	return mkrt, nil

@@ -22,15 +22,15 @@ func (KegiatanMaster) TableName() string {
 	return "tjsl.kegiatan_mstr"
 }
 
-type TJSLRepo struct {
+type KegiatanMasterRepo struct {
 	DB *gorm.DB
 }
 
-func NewTJSLRepo(db *gorm.DB) *TJSLRepo {
-	return &TJSLRepo{DB: db}
+func NewKegiatanMasterRepo(db *gorm.DB) *KegiatanMasterRepo {
+	return &KegiatanMasterRepo{DB: db}
 }
 
-func (t TJSLRepo) FindUserByCompCodeYear(comp_code string, tahun string) ([]KegiatanMaster, error) {
+func (t KegiatanMasterRepo) FindUserByCompCodeYear(comp_code string, tahun string) ([]KegiatanMaster, error) {
 	var kgtn_mstr []KegiatanMaster
 	err := t.DB.Where("comp_code=? AND periode=?", comp_code, tahun).Find(&kgtn_mstr).Error
 	if err != nil {
@@ -39,7 +39,7 @@ func (t TJSLRepo) FindUserByCompCodeYear(comp_code string, tahun string) ([]Kegi
 	return kgtn_mstr, nil
 }
 
-func (t TJSLRepo) FindUserByID(id string) (KegiatanMaster, error) {
+func (t KegiatanMasterRepo) FindUserByID(id int) (KegiatanMaster, error) {
 	var kgtn_mstr KegiatanMaster
 	err := t.DB.Where("id_kegiatan=?", id).Take(&kgtn_mstr).Error
 	if err != nil {
@@ -48,7 +48,7 @@ func (t TJSLRepo) FindUserByID(id string) (KegiatanMaster, error) {
 	return kgtn_mstr, nil
 }
 
-func (t TJSLRepo) FindNIKbySlug(slug string) (KegiatanMaster, error) {
+func (t KegiatanMasterRepo) FindNIKbySlug(slug string) (KegiatanMaster, error) {
 	var kgtn_mstr KegiatanMaster
 	err := t.DB.Where("slug=?", slug).Take(&kgtn_mstr).Error
 	if err != nil {
@@ -57,17 +57,23 @@ func (t TJSLRepo) FindNIKbySlug(slug string) (KegiatanMaster, error) {
 	return kgtn_mstr, nil
 }
 
-func (t TJSLRepo) Create(km KegiatanMaster) (KegiatanMaster, error) {
+func (t KegiatanMasterRepo) Create(km KegiatanMaster) (KegiatanMaster, error) {
 	err := t.DB.Create(&km).Error
 	return km, err
 }
 
-func (t TJSLRepo) Update(km KegiatanMaster) (KegiatanMaster, error) {
+func (t KegiatanMasterRepo) Update(km KegiatanMaster) (KegiatanMaster, error) {
 	err := t.DB.Save(&km).Error
 	return km, err
 }
 
-func (t TJSLRepo) DelMasterKegiatanID(slug string) ([]KegiatanMaster, error) {
+func (t KegiatanMasterRepo) FindData(id int) KegiatanMaster {
+	var kgtn_mstr KegiatanMaster
+	t.DB.Where("id_kegiatan=?", id).Find(&kgtn_mstr)
+	return kgtn_mstr
+}
+
+func (t KegiatanMasterRepo) DelMasterKegiatanID(slug string) ([]KegiatanMaster, error) {
 	var data []KegiatanMaster
 	err := t.DB.Where("slug = ?", slug).First(&data).Error
 	if err == nil {

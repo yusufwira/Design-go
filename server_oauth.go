@@ -14,6 +14,7 @@ import (
 func main() {
 	db := connection.Database()
 	mstrKgtController := controller.NewMstrKgtController(db)
+	kgtKrywnController := controller.NewKgtKrywnController(db)
 	UserController := controller.NewUserController(db)
 
 	r := gin.Default()
@@ -64,8 +65,13 @@ func main() {
 	{
 		tjsl.POST("listKegiatan", mstrKgtController.ListMasterKegiatan)
 		tjsl.POST("storeMasterKegiatan", mstrKgtController.StoreMasterKegiatan)
-		tjsl.PUT("updateMasterKegiatan/:slug", mstrKgtController.UpdateMasterKegiatan)
+		//tjsl.PUT("updateMasterKegiatan/:slug", mstrKgtController.UpdateMasterKegiatan)
 		tjsl.DELETE("deleteMasterKegiatan/:slug", mstrKgtController.DeleteMasterKegiatan)
+
+		tjsl.POST("storePengajuan", kgtKrywnController.StoreKgtKrywn)
+		tjsl.POST("listApprovalTjsl", kgtKrywnController.ListKgtKrywn)
+		tjsl.GET("showPengajuan/:slug", kgtKrywnController.ShowKgtKrywn)
+		tjsl.DELETE("deletePengajuan/:slug", kgtKrywnController.DeleteKgtKrywn)
 	}
 	r.Run(":9096")
 }
