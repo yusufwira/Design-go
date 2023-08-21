@@ -63,14 +63,15 @@ func main() {
 	}
 	tjsl := r.Group("/api/tjsl")
 	{
-		tjsl.POST("listKegiatan", mstrKgtController.ListMasterKegiatan)
-		tjsl.POST("storeMasterKegiatan", mstrKgtController.StoreMasterKegiatan)
-		tjsl.DELETE("deleteMasterKegiatan/:slug", mstrKgtController.DeleteMasterKegiatan)
+		tjsl.POST("/listKegiatan", mstrKgtController.ListMasterKegiatan)
+		tjsl.POST("/storeMasterKegiatan", mstrKgtController.StoreMasterKegiatan)
+		tjsl.DELETE("/deleteMasterKegiatan/:slug", mstrKgtController.DeleteMasterKegiatan)
 
-		tjsl.POST("storePengajuan", kgtKrywnController.StoreKgtKrywn)
+		tjsl.POST("/storePengajuan", kgtKrywnController.StorePengajuanKegiatan)
 		// tjsl.POST("listApprovalTjsl", kgtKrywnController.ListApprvlKgtKrywn)
-		tjsl.GET("showPengajuan/:slug", kgtKrywnController.ShowKgtKrywn)
-		tjsl.DELETE("deletePengajuan/:slug", kgtKrywnController.DeleteKgtKrywn)
+		tjsl.GET("/showPengajuan/:slug", kgtKrywnController.ShowDetailPengajuanKegiatan)
+		tjsl.GET("/myTjsl", kgtKrywnController.ShowPengajuanKegiatan)
+		tjsl.DELETE("/deletePengajuan/:slug", kgtKrywnController.DeletePengajuanKegiatan)
 	}
 	r.Run(":9096")
 }

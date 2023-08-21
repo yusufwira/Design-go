@@ -28,7 +28,7 @@ func NewKgtKrywnController(db *gorm.DB) *KgtKrywnController {
 		PihcMasterKaryRtRepo: mstrKgt.NewPihcMasterKaryRtRepo(db)}
 }
 
-func (c *KgtKrywnController) StoreKgtKrywn(ctx *gin.Context) {
+func (c *KgtKrywnController) StorePengajuanKegiatan(ctx *gin.Context) {
 	var kk kgtKrywn.KegiatanKaryawan
 	var kp photosKgt.KegiatanPhotos
 	var req Authentication.ValidationKK
@@ -147,7 +147,27 @@ func (c *KgtKrywnController) ListApprvlKgtKrywn(ctx *gin.Context) {
 
 }
 
-func (c *KgtKrywnController) ShowKgtKrywn(ctx *gin.Context) {
+func (c *KgtKrywnController) ShowPengajuanKegiatan(ctx *gin.Context) {
+	nik := ctx.Query("nik")
+	tahun := ctx.Query("tahun")
+	data, err := c.KegiatanKaryawanRepo.FindDataNIKPeriode(nik, tahun)
+
+	if err == nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"status": http.StatusOK,
+			"info":   "Success",
+			"data":   data,
+		})
+	} else {
+		ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+			"status": http.StatusNotFound,
+			"info":   "Data Tidak Ada",
+			"Data":   nil,
+		})
+	}
+}
+
+func (c *KgtKrywnController) ShowDetailPengajuanKegiatan(ctx *gin.Context) {
 	var data Authentication.KegiatanKaryawanPhotos
 	slug := ctx.Param("slug")
 
@@ -206,7 +226,7 @@ func (c *KgtKrywnController) ShowKgtKrywn(ctx *gin.Context) {
 	}
 }
 
-func (c *KgtKrywnController) DeleteKgtKrywn(ctx *gin.Context) {
+func (c *KgtKrywnController) DeletePengajuanKegiatan(ctx *gin.Context) {
 	slug := ctx.Param("slug")
 
 	data_kk, err_kk := c.KegiatanKaryawanRepo.FindDataSlug(slug)

@@ -71,6 +71,15 @@ func (t KegiatanKaryawanRepo) FindDataSlug(slug string) (KegiatanKaryawan, error
 	return kgtn_krywn, nil
 }
 
+func (t KegiatanKaryawanRepo) FindDataNIKPeriode(nik string, tahun string) ([]KegiatanKaryawan, error) {
+	var kgtn_krywn []KegiatanKaryawan
+	err := t.DB.Where("nik=? AND periode=?", nik, tahun).Find(&kgtn_krywn).Error
+	if err != nil {
+		return kgtn_krywn, err
+	}
+	return kgtn_krywn, nil
+}
+
 func (t KegiatanKaryawanRepo) DelKegiatanKaryawanID(slug string, status string) error {
 	var data []KegiatanKaryawan
 	err := t.DB.Where("slug = ? AND status=?", slug, status).First(&data).Error
