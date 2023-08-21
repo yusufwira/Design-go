@@ -65,11 +65,10 @@ func main() {
 	{
 		tjsl.POST("listKegiatan", mstrKgtController.ListMasterKegiatan)
 		tjsl.POST("storeMasterKegiatan", mstrKgtController.StoreMasterKegiatan)
-		//tjsl.PUT("updateMasterKegiatan/:slug", mstrKgtController.UpdateMasterKegiatan)
 		tjsl.DELETE("deleteMasterKegiatan/:slug", mstrKgtController.DeleteMasterKegiatan)
 
 		tjsl.POST("storePengajuan", kgtKrywnController.StoreKgtKrywn)
-		tjsl.POST("listApprovalTjsl", kgtKrywnController.ListKgtKrywn)
+		// tjsl.POST("listApprovalTjsl", kgtKrywnController.ListApprvlKgtKrywn)
 		tjsl.GET("showPengajuan/:slug", kgtKrywnController.ShowKgtKrywn)
 		tjsl.DELETE("deletePengajuan/:slug", kgtKrywnController.DeleteKgtKrywn)
 	}

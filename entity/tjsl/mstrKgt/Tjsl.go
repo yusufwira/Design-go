@@ -64,13 +64,19 @@ func (t KegiatanMasterRepo) Create(km KegiatanMaster) (KegiatanMaster, error) {
 
 func (t KegiatanMasterRepo) Update(km KegiatanMaster) (KegiatanMaster, error) {
 	err := t.DB.Save(&km).Error
-	return km, err
+	if err != nil {
+		return km, err
+	}
+	return km, nil
 }
 
-func (t KegiatanMasterRepo) FindData(id int) KegiatanMaster {
+func (t KegiatanMasterRepo) FindData(id int) (KegiatanMaster, error) {
 	var kgtn_mstr KegiatanMaster
-	t.DB.Where("id_kegiatan=?", id).Find(&kgtn_mstr)
-	return kgtn_mstr
+	err := t.DB.Where("id_kegiatan=?", id).First(&kgtn_mstr).Error
+	if err != nil {
+		return kgtn_mstr, err
+	}
+	return kgtn_mstr, nil
 }
 
 func (t KegiatanMasterRepo) DelMasterKegiatanID(slug string) ([]KegiatanMaster, error) {

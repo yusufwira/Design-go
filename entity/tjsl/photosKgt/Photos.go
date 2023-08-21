@@ -36,8 +36,9 @@ func (t KegiatanPhotosRepo) LastString(ss []string) string {
 	return ss[len(ss)-1]
 }
 
-func (t KegiatanPhotosRepo) Create(kp KegiatanPhotos) {
+func (t KegiatanPhotosRepo) Create(kp KegiatanPhotos) KegiatanPhotos {
 	t.DB.Create(&kp)
+	return kp
 }
 
 func (t KegiatanPhotosRepo) Update(kp KegiatanPhotos) (KegiatanPhotos, error) {
@@ -45,15 +46,9 @@ func (t KegiatanPhotosRepo) Update(kp KegiatanPhotos) (KegiatanPhotos, error) {
 	return kp, err
 }
 
-// func (t KegiatanPhotosRepo) FindData(id int) []KegiatanPhotosRepo {
-// 	var kgtn_phto []KegiatanPhotosRepo
-// 	t.DB.Where("id=?", id).Take(&kgtn_phto)
-// 	return kgtn_phto
-// }
-
 func (t KegiatanPhotosRepo) FindData(id int) []KegiatanPhotos {
 	var kgtn_phto []KegiatanPhotos
-	t.DB.Where("kegiatan_id=?", id).Find(&kgtn_phto)
+	t.DB.Where("kegiatan_id=? AND is_koordinator=?", id, 0).Find(&kgtn_phto)
 	return kgtn_phto
 }
 
@@ -67,4 +62,24 @@ func (t KegiatanPhotosRepo) GetFileExtensionFromUrl(rawUrl string) (string, erro
 		return "", errors.New("couldn't find a period to indicate a file extension")
 	}
 	return u.Path[pos+1 : len(u.Path)], nil
+}
+
+func (t KegiatanPhotosRepo) DelPhotosID(kegiatan_id int) ([]KegiatanPhotos, error) {
+	var data []KegiatanPhotos
+	err := t.DB.Where("kegiatan_id = ? AND is_koordinator=?", kegiatan_id, 0).First(&data).Error
+	if err == nil {
+		t.DB.Where("kegiatan_id = ? AND is_koordinator=?", kegiatan_id, 0).Delete(&data)
+		return data, nil
+	}
+	return data, err
+}
+
+func (t KegiatanPhotosRepo) DelPhotosIDLama(kegiatan_id int, list_id []int) {
+	t.DB.Where("kegiatan_id = ? AND is_koordinator=? AND id not in(?)", kegiatan_id, 0, list_id).Delete(&KegiatanPhotos{})
+}
+
+func (t KegiatanPhotosRepo) FindDataPhotosID(id int) []KegiatanPhotos {
+	var kgtn_phtos []KegiatanPhotos
+	t.DB.Where("kegiatan_id=? AND is_koordinator=?", id, 0).Find(&kgtn_phtos)
+	return kgtn_phtos
 }

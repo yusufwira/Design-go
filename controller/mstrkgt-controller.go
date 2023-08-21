@@ -24,7 +24,7 @@ func NewMstrKgtController(db *gorm.DB) *MstrKgtController {
 }
 
 func (c *MstrKgtController) ListMasterKegiatan(ctx *gin.Context) {
-	var inputan Authentication.AuthenticationLMK
+	var inputan Authentication.ValidationLMK
 
 	// nik := ctx.PostForm("nik")
 	// tahun := ctx.PostForm("tahun")
@@ -64,7 +64,7 @@ func (c *MstrKgtController) ListMasterKegiatan(ctx *gin.Context) {
 
 func (c *MstrKgtController) StoreMasterKegiatan(ctx *gin.Context) {
 	var km mstrKgt.KegiatanMaster
-	var req Authentication.AuthenticationSMK
+	var req Authentication.ValidationSMK
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "NIK Tidak Boleh Kosong"})
@@ -83,41 +83,52 @@ func (c *MstrKgtController) StoreMasterKegiatan(ctx *gin.Context) {
 		return
 	}
 
-	t := time.Now()
-
 	if req.IdKegiatan != 0 {
-		km.IdKegiatan = req.IdKegiatan
-	}
-	if req.NamaKegiatan != "" {
-		km.NamaKegiatan = req.NamaKegiatan
-	}
-	if req.DeskripsiKegiatan != "" {
-		km.DeskripsiKegiatan = req.DeskripsiKegiatan
-	}
+		kgt_mstr, err_kgtmstr := c.KegiatanMasterRepo.FindData(req.IdKegiatan)
 
-	km.Periode = strconv.Itoa(t.Year())
-	km.CompCode = comp_code
-	km.CreatedBy = req.NIK
+		if req.NamaKegiatan != "" {
+			kgt_mstr.NamaKegiatan = req.NamaKegiatan
+		}
 
-	if km.IdKegiatan != 0 {
-		kgt_mstr := c.KegiatanMasterRepo.FindData(km.IdKegiatan)
-		km.Slug = kgt_mstr.Slug
-		km.CreatedAt = kgt_mstr.CreatedAt
-		km, err = c.KegiatanMasterRepo.Update(km)
-		if err == nil {
-			ctx.JSON(http.StatusOK, gin.H{
-				"status":  http.StatusOK,
-				"success": "Success",
-				"data":    "Data berhasil diUpdate",
-				"result":  &km,
-			})
+		if req.DeskripsiKegiatan != "" {
+			kgt_mstr.DeskripsiKegiatan = req.DeskripsiKegiatan
+		}
+
+		if err_kgtmstr == nil {
+			kgt_mstr, err_update := c.KegiatanMasterRepo.Update(kgt_mstr)
+			if err_update == nil {
+				ctx.JSON(http.StatusOK, gin.H{
+					"status":  http.StatusOK,
+					"success": "Success",
+					"data":    "Data berhasil diUpdate",
+					"result":  &kgt_mstr,
+				})
+			} else {
+				ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+					"status":  http.StatusInternalServerError,
+					"success": "Gagal mengupdate data",
+				})
+			}
 		} else {
-			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"status":  http.StatusInternalServerError,
-				"success": "Gagal mengupdate data",
+			ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+				"status": http.StatusNotFound,
+				"info":   "Data Tidak Ada",
+				"Data":   nil,
 			})
 		}
 	} else {
+		t := time.Now()
+
+		if req.NamaKegiatan != "" {
+			km.NamaKegiatan = req.NamaKegiatan
+		}
+
+		if req.DeskripsiKegiatan != "" {
+			km.DeskripsiKegiatan = req.DeskripsiKegiatan
+		}
+		km.Periode = strconv.Itoa(t.Year())
+		km.CompCode = comp_code
+		km.CreatedBy = req.NIK
 		km.Slug = users.String(12)
 		km, err = c.KegiatanMasterRepo.Create(km)
 		if err == nil {
@@ -136,55 +147,6 @@ func (c *MstrKgtController) StoreMasterKegiatan(ctx *gin.Context) {
 	}
 
 }
-
-// func (c *MstrKgtController) UpdateMasterKegiatan(ctx *gin.Context) {
-// 	slug := ctx.Param("slug")
-// 	var req Authentication.AuthenticationSMK
-
-// 	km, err := c.KegiatanMasterRepo.FindNIKbySlug(slug)
-
-// 	if err != nil {
-// 		ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{
-// 			"status": http.StatusNotFound,
-// 			"info":   "Data Karyawan Tidak Ada",
-// 			"Data":   nil,
-// 		})
-// 		return
-// 	}
-
-// 	req.NIK = km.CreatedBy
-
-// 	if err := ctx.ShouldBind(&req); err != nil {
-// 		ctx.AbortWithStatusJSON(http.StatusBadRequest, err.Error())
-// 		return
-// 	}
-
-// 	if req.NamaKegiatan != "" {
-// 		km.NamaKegiatan = req.NamaKegiatan
-// 	}
-// 	if req.DeskripsiKegiatan != "" {
-// 		km.DeskripsiKegiatan = req.DeskripsiKegiatan
-// 	}
-
-// 	if req.Periode != "" {
-// 		km.Periode = req.Periode
-// 	}
-
-// 	km, err = c.KegiatanMasterRepo.Update(km)
-// 	if err == nil {
-// 		ctx.JSON(http.StatusOK, gin.H{
-// 			"status":  http.StatusOK,
-// 			"success": "Success",
-// 			"data":    "Data berhasil diUpdate",
-// 			"result":  &km,
-// 		})
-// 	} else {
-// 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-// 			"status":  http.StatusInternalServerError,
-// 			"success": "Gagal mengupdate data",
-// 		})
-// 	}
-// }
 
 func (c *MstrKgtController) DeleteMasterKegiatan(ctx *gin.Context) {
 	slug := ctx.Param("slug")

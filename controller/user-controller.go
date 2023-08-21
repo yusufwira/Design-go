@@ -57,7 +57,7 @@ func (c *UsersController) Store(ctx *gin.Context) users.User {
 }
 
 func (c *UsersController) Login(ctx *gin.Context) {
-	var input Authentication.AuthenticationInput
+	var input Authentication.ValidationLogin
 
 	if err := ctx.ShouldBindJSON(&input); err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "Username / Password Tidak Boleh Kosong"})

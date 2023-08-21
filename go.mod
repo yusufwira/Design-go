@@ -8,12 +8,15 @@ require (
 	github.com/go-oauth2/oauth2 v3.9.2+incompatible
 	github.com/go-oauth2/oauth2/v4 v4.5.2
 	golang.org/x/crypto v0.12.0
-	gorm.io/driver/mysql v1.4.4
+	gorm.io/driver/mysql v1.4.7
 	gorm.io/driver/postgres v1.5.2
 	gorm.io/gorm v1.25.2
 )
 
-require gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22 // indirect
+require (
+	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22 // indirect
+	gorm.io/datatypes v1.2.0 // indirect
+)
 
 require (
 	github.com/bytedance/sonic v1.10.0-rc3 // indirect

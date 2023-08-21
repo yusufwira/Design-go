@@ -39,16 +39,44 @@ func NewKegiatanKaryawanRepo(db *gorm.DB) *KegiatanKaryawanRepo {
 
 func (t KegiatanKaryawanRepo) Create(kk KegiatanKaryawan) (KegiatanKaryawan, error) {
 	err := t.DB.Create(&kk).Error
-	return kk, err
+	if err != nil {
+		return kk, err
+	}
+	return kk, nil
 }
 
 func (t KegiatanKaryawanRepo) Update(kk KegiatanKaryawan) (KegiatanKaryawan, error) {
 	err := t.DB.Save(&kk).Error
-	return kk, err
+	if err != nil {
+		return kk, err
+	}
+	return kk, nil
 }
 
-func (t KegiatanKaryawanRepo) FindData(id int) KegiatanKaryawan {
+func (t KegiatanKaryawanRepo) FindDataID(id int) (KegiatanKaryawan, error) {
 	var kgtn_krywn KegiatanKaryawan
-	t.DB.Where("id=?", id).Find(&kgtn_krywn)
-	return kgtn_krywn
+	err := t.DB.Where("id=?", id).First(&kgtn_krywn).Error
+	if err != nil {
+		return kgtn_krywn, err
+	}
+	return kgtn_krywn, nil
+}
+
+func (t KegiatanKaryawanRepo) FindDataSlug(slug string) (KegiatanKaryawan, error) {
+	var kgtn_krywn KegiatanKaryawan
+	err := t.DB.Where("slug=?", slug).First(&kgtn_krywn).Error
+	if err != nil {
+		return kgtn_krywn, err
+	}
+	return kgtn_krywn, nil
+}
+
+func (t KegiatanKaryawanRepo) DelKegiatanKaryawanID(slug string, status string) error {
+	var data []KegiatanKaryawan
+	err := t.DB.Where("slug = ? AND status=?", slug, status).First(&data).Error
+	if err == nil {
+		t.DB.Where("slug = ? AND status=?", slug, status).Delete(&data)
+		return nil
+	}
+	return err
 }
