@@ -1,4 +1,4 @@
-package mstrKgt
+package pihc
 
 import (
 	"fmt"
@@ -72,11 +72,11 @@ func NewPihcMasterKaryRtRepo(db *gorm.DB) *PihcMasterKaryRtRepo {
 }
 
 func (t PihcMasterKaryRtRepo) FindUserByNIK(nik string) (PihcMasterKaryRt, error) {
-	var mkrt PihcMasterKaryRt
-	err := t.DB.Where("emp_no=?", nik).Take(&mkrt).Error
+	var pihc_mkrt PihcMasterKaryRt
+	err := t.DB.Where("emp_no=?", nik).Take(&pihc_mkrt).Error
 	if err != nil {
 		fmt.Println("Error retrieving user by NIK:", err)
-		return mkrt, err
+		return pihc_mkrt, err
 	}
-	return mkrt, nil
+	return pihc_mkrt, nil
 }

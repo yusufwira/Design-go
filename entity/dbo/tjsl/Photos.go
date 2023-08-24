@@ -1,4 +1,4 @@
-package photosKgt
+package tjsl
 
 import (
 	"errors"
@@ -66,20 +66,20 @@ func (t KegiatanPhotosRepo) GetFileExtensionFromUrl(rawUrl string) (string, erro
 
 func (t KegiatanPhotosRepo) DelPhotosID(kegiatan_id int) ([]KegiatanPhotos, error) {
 	var data []KegiatanPhotos
-	err := t.DB.Where("kegiatan_id = ? AND is_koordinator=?", kegiatan_id, 0).First(&data).Error
+	err := t.DB.Where("kegiatan_id = ?", kegiatan_id).First(&data).Error
 	if err == nil {
-		t.DB.Where("kegiatan_id = ? AND is_koordinator=?", kegiatan_id, 0).Delete(&data)
+		t.DB.Where("kegiatan_id = ?", kegiatan_id).Delete(&data)
 		return data, nil
 	}
 	return data, err
 }
 
 func (t KegiatanPhotosRepo) DelPhotosIDLama(kegiatan_id int, list_id []int) {
-	t.DB.Where("kegiatan_id = ? AND is_koordinator=? AND id not in(?)", kegiatan_id, 0, list_id).Delete(&KegiatanPhotos{})
+	t.DB.Where("kegiatan_id = ? AND id not in(?)", kegiatan_id, list_id).Delete(&KegiatanPhotos{})
 }
 
-func (t KegiatanPhotosRepo) FindDataPhotosID(id int) []KegiatanPhotos {
+func (t KegiatanPhotosRepo) FindDataPhotosID(id int, is_koordinator int) []KegiatanPhotos {
 	var kgtn_phtos []KegiatanPhotos
-	t.DB.Where("kegiatan_id=? AND is_koordinator=?", id, 0).Find(&kgtn_phtos)
+	t.DB.Where("kegiatan_id=? AND is_koordinator=?", id, is_koordinator).Find(&kgtn_phtos)
 	return kgtn_phtos
 }

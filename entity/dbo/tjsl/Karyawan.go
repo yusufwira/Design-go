@@ -1,4 +1,4 @@
-package kgtKrywn
+package tjsl
 
 import (
 	"time"
@@ -9,8 +9,8 @@ import (
 type KegiatanKaryawan struct {
 	Id                int       `json:"id" gorm:"primary_key"`
 	NIK               string    `json:"nik"`
-	KegiatanParentId  int       `json:"kegiatan_parent_id"`
-	KoordinatorId     int       `json:"koordinator_id"`
+	KegiatanParentId  int       `json:"kegiatan_parent_id" gorm:"default:null"`
+	KoordinatorId     int       `json:"koordinator_id" gorm:"default:null"`
 	NamaKegiatan      string    `json:"nama_kegiatan"`
 	TanggalKegiatan   string    `json:"tanggal_kegiatan"`
 	LokasiKegiatan    string    `json:"lokasi_kegiatan"`
@@ -20,7 +20,7 @@ type KegiatanKaryawan struct {
 	UpdatedAt         time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 	Manager           string    `json:"manager"`
 	Slug              string    `json:"slug"`
-	DescDecline       string    `json:"desc_decline"`
+	DescDecline       string    `json:"desc_decline" gorm:"default:null"`
 	CompCode          string    `json:"comp_code"`
 	Periode           string    `json:"periode"`
 }
@@ -80,11 +80,20 @@ func (t KegiatanKaryawanRepo) FindDataNIKPeriode(nik string, tahun string) ([]Ke
 	return kgtn_krywn, nil
 }
 
-func (t KegiatanKaryawanRepo) DelKegiatanKaryawanID(slug string, status string) error {
+func (t KegiatanKaryawanRepo) FindDataNIKCompCodePeriode(nik_manager string, tahun string, comp_code string, status string) ([]KegiatanKaryawan, error) {
+	var kgtn_krywn []KegiatanKaryawan
+	err := t.DB.Where("manager=? AND periode=? AND comp_code=? AND status=?", nik_manager, tahun, comp_code, status).Find(&kgtn_krywn).Error
+	if err != nil {
+		return kgtn_krywn, err
+	}
+	return kgtn_krywn, nil
+}
+
+func (t KegiatanKaryawanRepo) DelKegiatanKaryawanID(slug string) error {
 	var data []KegiatanKaryawan
-	err := t.DB.Where("slug = ? AND status=?", slug, status).First(&data).Error
+	err := t.DB.Where("slug = ?", slug).First(&data).Error
 	if err == nil {
-		t.DB.Where("slug = ? AND status=?", slug, status).Delete(&data)
+		t.DB.Where("slug = ?", slug).Delete(&data)
 		return nil
 	}
 	return err

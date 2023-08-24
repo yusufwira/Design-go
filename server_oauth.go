@@ -9,12 +9,14 @@ import (
 
 	"github.com/yusufwira/lern-golang-gin/connection"
 	"github.com/yusufwira/lern-golang-gin/controller"
+	"github.com/yusufwira/lern-golang-gin/controller/tjsl_controller"
 )
 
 func main() {
 	db := connection.Database()
-	mstrKgtController := controller.NewMstrKgtController(db)
-	kgtKrywnController := controller.NewKgtKrywnController(db)
+	mstrKgtController := tjsl_controller.NewMstrKgtController(db)
+	kgtKrywnController := tjsl_controller.NewKgtKrywnController(db)
+	koorkgtController := tjsl_controller.NewKoorKgtController(db)
 	UserController := controller.NewUserController(db)
 
 	r := gin.Default()
@@ -61,17 +63,26 @@ func main() {
 
 		r.POST("/login", UserController.Login)
 	}
+
 	tjsl := r.Group("/api/tjsl")
 	{
 		tjsl.POST("/listKegiatan", mstrKgtController.ListMasterKegiatan)
 		tjsl.POST("/storeMasterKegiatan", mstrKgtController.StoreMasterKegiatan)
+		tjsl.GET("/getMasterKegiatan/:slug", mstrKgtController.GetMasterKegiatan)
 		tjsl.DELETE("/deleteMasterKegiatan/:slug", mstrKgtController.DeleteMasterKegiatan)
 
 		tjsl.POST("/storePengajuan", kgtKrywnController.StorePengajuanKegiatan)
-		// tjsl.POST("listApprovalTjsl", kgtKrywnController.ListApprvlKgtKrywn)
 		tjsl.GET("/showPengajuan/:slug", kgtKrywnController.ShowDetailPengajuanKegiatan)
 		tjsl.GET("/myTjsl", kgtKrywnController.ShowPengajuanKegiatan)
 		tjsl.DELETE("/deletePengajuan/:slug", kgtKrywnController.DeletePengajuanKegiatan)
+
+		tjsl.POST("/approve", kgtKrywnController.StoreApprovePengajuanKegiatan)
+		tjsl.POST("/listApprovalTjsl", kgtKrywnController.ListApprvlKgtKrywn)
+
+		tjsl.POST("/storeKoordinator", koorkgtController.StoreKoordinator)
+		tjsl.GET("/showKoordinator/:slug", koorkgtController.ShowDetailKoordinator)
+		tjsl.DELETE("/deleteKoordinator/:slug", koorkgtController.DeleteKoordinator)
+		tjsl.GET("/listKoordinator", koorkgtController.ListKoordinator)
 	}
 	r.Run(":9096")
 }

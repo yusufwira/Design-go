@@ -1,4 +1,4 @@
-package mstrKgt
+package tjsl
 
 import (
 	"time"
@@ -48,7 +48,7 @@ func (t KegiatanMasterRepo) FindUserByID(id int) (KegiatanMaster, error) {
 	return kgtn_mstr, nil
 }
 
-func (t KegiatanMasterRepo) FindNIKbySlug(slug string) (KegiatanMaster, error) {
+func (t KegiatanMasterRepo) FindDataBySlug(slug string) (KegiatanMaster, error) {
 	var kgtn_mstr KegiatanMaster
 	err := t.DB.Where("slug=?", slug).Take(&kgtn_mstr).Error
 	if err != nil {
@@ -70,7 +70,7 @@ func (t KegiatanMasterRepo) Update(km KegiatanMaster) (KegiatanMaster, error) {
 	return km, nil
 }
 
-func (t KegiatanMasterRepo) FindData(id int) (KegiatanMaster, error) {
+func (t KegiatanMasterRepo) FindDataById(id int) (KegiatanMaster, error) {
 	var kgtn_mstr KegiatanMaster
 	err := t.DB.Where("id_kegiatan=?", id).First(&kgtn_mstr).Error
 	if err != nil {

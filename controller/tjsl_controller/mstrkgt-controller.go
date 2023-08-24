@@ -1,26 +1,29 @@
-package controller
+package tjsl_controller
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	Authentication "github.com/yusufwira/lern-golang-gin/entity/authentication"
-	"github.com/yusufwira/lern-golang-gin/entity/tjsl/mstrKgt"
+	"github.com/yusufwira/lern-golang-gin/entity/dbo/pihc"
+	"github.com/yusufwira/lern-golang-gin/entity/dbo/tjsl"
 	users "github.com/yusufwira/lern-golang-gin/entity/users"
 	"gorm.io/gorm"
 )
 
 type MstrKgtController struct {
-	KegiatanMasterRepo   *mstrKgt.KegiatanMasterRepo
-	PihcMasterKaryRtRepo *mstrKgt.PihcMasterKaryRtRepo
+	KegiatanMasterRepo   *tjsl.KegiatanMasterRepo
+	PihcMasterKaryRtRepo *pihc.PihcMasterKaryRtRepo
 }
 
 func NewMstrKgtController(db *gorm.DB) *MstrKgtController {
 	return &MstrKgtController{
-		KegiatanMasterRepo:   mstrKgt.NewKegiatanMasterRepo(db),
-		PihcMasterKaryRtRepo: mstrKgt.NewPihcMasterKaryRtRepo(db)}
+		KegiatanMasterRepo:   tjsl.NewKegiatanMasterRepo(db),
+		PihcMasterKaryRtRepo: pihc.NewPihcMasterKaryRtRepo(db)}
 }
 
 func (c *MstrKgtController) ListMasterKegiatan(ctx *gin.Context) {
@@ -62,15 +65,41 @@ func (c *MstrKgtController) ListMasterKegiatan(ctx *gin.Context) {
 	}
 }
 
+func (c *MstrKgtController) GetMasterKegiatan(ctx *gin.Context) {
+	slug := ctx.Param("slug")
+
+	KegiatanMaster, err := c.KegiatanMasterRepo.FindDataBySlug(slug)
+
+	if err == nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"status": http.StatusOK,
+			"info":   "Success",
+			"data":   KegiatanMaster})
+	} else {
+		ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+			"status": http.StatusNotFound,
+			"info":   "Data Tidak Ada",
+			"Data":   nil,
+		})
+	}
+}
+
 func (c *MstrKgtController) StoreMasterKegiatan(ctx *gin.Context) {
-	var km mstrKgt.KegiatanMaster
+	var km tjsl.KegiatanMaster
 	var req Authentication.ValidationSMK
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": "NIK Tidak Boleh Kosong"})
+		var ve validator.ValidationErrors
+		if errors.As(err, &ve) {
+			out := make([]Authentication.ErrorMsg, len(ve))
+			for i, fe := range ve {
+				out[i] = Authentication.ErrorMsg{Field: fe.Field(), Message: getErrorMsg(fe)}
+			}
+			ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"errorcode_": http.StatusServiceUnavailable, "errormsg_": out})
+		}
 		return
 	}
-
+	
 	PIHC_MSTR_KRY_RT, err := c.PihcMasterKaryRtRepo.FindUserByNIK(req.NIK)
 
 	comp_code := PIHC_MSTR_KRY_RT.Company
@@ -84,7 +113,7 @@ func (c *MstrKgtController) StoreMasterKegiatan(ctx *gin.Context) {
 	}
 
 	if req.IdKegiatan != 0 {
-		kgt_mstr, err_kgtmstr := c.KegiatanMasterRepo.FindData(req.IdKegiatan)
+		kgt_mstr, err_kgtmstr := c.KegiatanMasterRepo.FindDataById(req.IdKegiatan)
 
 		if req.NamaKegiatan != "" {
 			kgt_mstr.NamaKegiatan = req.NamaKegiatan
