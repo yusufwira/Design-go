@@ -48,7 +48,7 @@ func (t KegiatanKoordinatorRepo) Update(koor_kgt KegiatanKoordinator) (KegiatanK
 
 func (t KegiatanKoordinatorRepo) FindDataParentID(id int, nik string) ([]KegiatanKoordinator, error) {
 	var koor_kgt []KegiatanKoordinator
-	err := t.DB.Where("kegiatan_parent_id=? AND created_by=?", id, nik).Find(&koor_kgt).Error
+	err := t.DB.Where("kegiatan_parent_id=? AND created_by=?", id, nik).Order("id_koordinator ASC").Find(&koor_kgt).Error
 	if err != nil {
 		return koor_kgt, err
 	}
@@ -64,10 +64,13 @@ func (t KegiatanKoordinatorRepo) FindDataID(id int) (KegiatanKoordinator, error)
 	return koor_kgt, nil
 }
 
-func (t KegiatanKoordinatorRepo) FindDataKoorIDLuarKegiatan(id int) (KegiatanKoordinator, error) {
-	var koor_kgt KegiatanKoordinator
-	err := t.DB.Where("id_koordinator=? AND kegiatan_parent_id IS NULL", id).First(&koor_kgt).Error
+func (t KegiatanKoordinatorRepo) FindDataKoorIDLuarKegiatan(nik string) ([]KegiatanKoordinator, error) {
+	var koor_kgt []KegiatanKoordinator
+
+	err := t.DB.Where("id_koordinator IN (select distinct koordinator_id from tjsl.koordinator_person where nik=?) AND kegiatan_parent_id IS NULL", nik).
+		Order("id_koordinator ASC").Find(&koor_kgt).Error
 	if err != nil {
+		//Joins("inner join dbo.pihc_master_kary_rt as b on tjsl.kegiatan_koordinator.created_by = b.emp_no").
 		return koor_kgt, err
 	}
 	return koor_kgt, nil

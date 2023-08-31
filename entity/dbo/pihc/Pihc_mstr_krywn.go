@@ -4,7 +4,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type PihcMasterKaryRt struct {
+type PihcMasterKary struct {
 	EmpNo          string `json:"emp_no" gorm:"primary_key"`
 	Nama           string `json:"nama"`
 	Gender         string `json:"gender"`
@@ -54,35 +54,34 @@ type PihcMasterKaryRt struct {
 	PayScale       string `json:"PayScale"`
 	CCCode         string `json:"cc_code"`
 	Nickname       string `json:"nickname"`
-	JobGrade       string `json:"job_grade"`
 }
 
-func (PihcMasterKaryRt) TableName() string {
-	return "dbo.pihc_master_kary_rt"
+func (PihcMasterKary) TableName() string {
+	return "dbo.pihc_master_karyawan"
 }
 
-type PihcMasterKaryRtRepo struct {
+type PihcMasterKaryRepo struct {
 	DB *gorm.DB
 }
 
-func NewPihcMasterKaryRtRepo(db *gorm.DB) *PihcMasterKaryRtRepo {
-	return &PihcMasterKaryRtRepo{DB: db}
+func NewPihcMasterKaryRepo(db *gorm.DB) *PihcMasterKaryRepo {
+	return &PihcMasterKaryRepo{DB: db}
 }
 
-func (t PihcMasterKaryRtRepo) FindUserByNIK(nik string) (PihcMasterKaryRt, error) {
-	var pihc_mkrt PihcMasterKaryRt
-	err := t.DB.Where("emp_no=?", nik).Take(&pihc_mkrt).Error
+func (t PihcMasterKaryRepo) FindUserByNIK(nik string) (PihcMasterKary, error) {
+	var pihc_mk PihcMasterKary
+	err := t.DB.Where("emp_no=?", nik).Take(&pihc_mk).Error
 	if err != nil {
-		return pihc_mkrt, err
+		return pihc_mk, err
 	}
-	return pihc_mkrt, nil
+	return pihc_mk, nil
 }
 
-func (t PihcMasterKaryRtRepo) FindUserByNIKTahunCompCodePeriode(nik string, tahun string, comp_code string, status string) ([]PihcMasterKaryRt, error) {
-	var pihc_mkrt []PihcMasterKaryRt
-	err := t.DB.Where("emp_no (IN SELECT manager from tjsl.kegiatan_karyawan where manager=? AND periode=? AND comp_code=? AND status=?)", nik, tahun, comp_code, status).Find(&pihc_mkrt).Error
+func (t PihcMasterKaryRepo) FindUserByNIKArray(list_nik []string) ([]PihcMasterKary, error) {
+	var pihc_mk []PihcMasterKary
+	err := t.DB.Where("emp_no in(?)", list_nik).Find(&pihc_mk).Error
 	if err != nil {
-		return pihc_mkrt, err
+		return pihc_mk, err
 	}
-	return pihc_mkrt, nil
+	return pihc_mk, nil
 }

@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/yusufwira/lern-golang-gin/entity/dbo/pihc"
-	"github.com/yusufwira/lern-golang-gin/entity/dbo/tjsl"
+	"github.com/yusufwira/lern-golang-gin/entity/tjsl"
 )
 
 type ValidationLogin struct {
@@ -13,22 +13,22 @@ type ValidationLogin struct {
 }
 
 type ValidationLMK struct {
-	NIK   string `json:"nik" binding:"required"`
-	Tahun string `json:"tahun" binding:"required"`
+	NIK   string `json:"nik" form:"nik" binding:"required"`
+	Tahun string `json:"tahun" form:"tahun" binding:"required"`
 }
 
 type ValidationSMK struct {
-	IdKegiatan        int    `json:"id" gorm:"primary_key"`
-	NIK               string `json:"nik" binding:"required"`
-	NamaKegiatan      string `json:"nama_kegiatan" binding:"required"`
-	DeskripsiKegiatan string `json:"deskripsi_kegiatan"`
+	IdKegiatan        int    `json:"id" form:"id" gorm:"primary_key"`
+	NIK               string `json:"nik" form:"nik" binding:"required"`
+	NamaKegiatan      string `json:"nama_kegiatan" form:"nama_kegiatan" binding:"required"`
+	DeskripsiKegiatan string `json:"deskripsi_kegiatan" form:"deskripsi_kegiatan"`
 }
 
 type ValidationSKKgt struct {
 	Id                int    `json:"id" gorm:"primary_key"`
 	NIK               string `json:"nik" binding:"required"`
-	KegiatanParentId  int    `json:"kegiatan_parent_id"`
-	KoordinatorId     int    `json:"koordinator_id"`
+	KegiatanParentId  int    `json:"kegiatan_parent_id" gorm:"default:null"`
+	KoordinatorId     int    `json:"koordinator_id" gorm:"default:null"`
 	NamaKegiatan      string `json:"nama_kegiatan" binding:"required"`
 	TanggalKegiatan   string `json:"tanggal" binding:"required"`
 	LokasiKegiatan    string `json:"lokasi" binding:"required"`
@@ -58,9 +58,9 @@ type ValidationMyTjsl struct {
 }
 
 type ValidationListKoordinator struct {
-	NIK   string `json:"nik" binding:"required"`
-	Tahun string `json:"tahun" binding:"required"`
-	Slug  string `json:"slug"`
+	NIK   string `json:"nik" form:"nik" binding:"required"`
+	Tahun string `json:"tahun" form:"tahun" binding:"required"`
+	Slug  string `json:"slug" form:"slug"`
 }
 
 type KegiatanKaryawanPhotos struct {
@@ -108,18 +108,18 @@ type ListApprovalTJSL struct {
 
 type ValidationKKoor struct {
 	Id     int    `json:"id"`
-	Nama   string `json:"nama" binding:"required"`
-	Nik    string `json:"nik" binding:"required"`
+	Nama   string `json:"nama" form:"nama" binding:"required"`
+	Nik    string `json:"nik" form:"nik" binding:"required"`
 	Photos []struct {
-		IDPhoto      string `json:"id_photo"`
-		Extension    string `json:"extension"`
-		Name         string `json:"name"`
-		OriginalName string `json:"original_name"`
-		Size         string `json:"size"`
-		URL          string `json:"url"`
-	} `json:"photos" binding:"required"`
-	Person []string `json:"person" binding:"required,min=2"`
-	Tahun  string   `json:"tahun" binding:"required"`
+		IDPhoto      string `json:"id_photo" form:"id_photo"`
+		Extension    string `json:"extension" form:"extension"`
+		Name         string `json:"name" form:"name"`
+		OriginalName string `json:"original_name" form:"original_name"`
+		Size         string `json:"size" form:"size"`
+		URL          string `json:"url" form:"url"`
+	} `json:"photos" form:"photos[]" binding:"required"`
+	Person []string `json:"person" form:"person[]" binding:"required,min=2"`
+	Tahun  string   `json:"tahun" form:"tahun" binding:"required"`
 }
 
 type KegiatanDetailKoordinatorPhotos struct {
@@ -137,13 +137,13 @@ type KegiatanDetailKoordinatorPhotos struct {
 }
 
 type Personal struct {
-	ID            int                   `json:"id"`
-	KoordinatorID int                   `json:"koordinator_id"`
-	Nik           string                `json:"nik"`
-	CreatedAt     time.Time             `json:"created_at"`
-	UpdatedAt     time.Time             `json:"updated_at"`
-	Employee      pihc.PihcMasterKaryRt `json:"employee"`
-	URLPhoto      string                `json:"url_photo"`
+	ID            int                 `json:"id"`
+	KoordinatorID int                 `json:"koordinator_id"`
+	Nik           string              `json:"nik"`
+	CreatedAt     time.Time           `json:"created_at"`
+	UpdatedAt     time.Time           `json:"updated_at"`
+	Employee      pihc.PihcMasterKary `json:"employee"`
+	URLPhoto      string              `json:"url_photo"`
 }
 
 type KegiatanListKoordinatorPhotos struct {

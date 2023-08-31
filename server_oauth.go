@@ -9,6 +9,7 @@ import (
 
 	"github.com/yusufwira/lern-golang-gin/connection"
 	"github.com/yusufwira/lern-golang-gin/controller"
+	"github.com/yusufwira/lern-golang-gin/controller/event_controller"
 	"github.com/yusufwira/lern-golang-gin/controller/tjsl_controller"
 )
 
@@ -17,6 +18,7 @@ func main() {
 	mstrKgtController := tjsl_controller.NewMstrKgtController(db)
 	kgtKrywnController := tjsl_controller.NewKgtKrywnController(db)
 	koorkgtController := tjsl_controller.NewKoorKgtController(db)
+	eventController := event_controller.NewEventController(db)
 	UserController := controller.NewUserController(db)
 
 	r := gin.Default()
@@ -66,11 +68,13 @@ func main() {
 
 	tjsl := r.Group("/api/tjsl")
 	{
+		// Master Kegiatan
 		tjsl.POST("/listKegiatan", mstrKgtController.ListMasterKegiatan)
 		tjsl.POST("/storeMasterKegiatan", mstrKgtController.StoreMasterKegiatan)
 		tjsl.GET("/getMasterKegiatan/:slug", mstrKgtController.GetMasterKegiatan)
 		tjsl.DELETE("/deleteMasterKegiatan/:slug", mstrKgtController.DeleteMasterKegiatan)
 
+		// Pengajuan Kegiatan
 		tjsl.POST("/storePengajuan", kgtKrywnController.StorePengajuanKegiatan)
 		tjsl.GET("/showPengajuan/:slug", kgtKrywnController.ShowDetailPengajuanKegiatan)
 		tjsl.GET("/myTjsl", kgtKrywnController.ShowPengajuanKegiatan)
@@ -79,10 +83,23 @@ func main() {
 		tjsl.POST("/approve", kgtKrywnController.StoreApprovePengajuanKegiatan)
 		tjsl.POST("/listApprovalTjsl", kgtKrywnController.ListApprvlKgtKrywn)
 
+		// Koordinator
 		tjsl.POST("/storeKoordinator", koorkgtController.StoreKoordinator)
 		tjsl.GET("/showKoordinator/:slug", koorkgtController.ShowDetailKoordinator)
 		tjsl.DELETE("/deleteKoordinator/:slug", koorkgtController.DeleteKoordinator)
 		tjsl.GET("/listKoordinator", koorkgtController.ListKoordinator)
+	}
+
+	event := r.Group("/api/event")
+	{
+		event.POST("/store_new", eventController.StoreEvent)
+		event.POST("/updateStatusEvent", eventController.UpdateStatusEvent)
+		event.POST("/storeDispose", eventController.StoreDispose)
+		event.GET("/getDataEvent/:nik", eventController.GetDataEvent)
+		event.POST("/getDataByNik", eventController.GetDataByNik)
+		event.POST("/deleteEvent", eventController.DeleteEvent)
+		event.GET("/showEvent/:id/:nik", eventController.ShowEvent)
+		
 	}
 	r.Run(":9096")
 }

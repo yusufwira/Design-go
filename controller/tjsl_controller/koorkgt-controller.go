@@ -8,7 +8,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	Authentication "github.com/yusufwira/lern-golang-gin/entity/authentication"
 	"github.com/yusufwira/lern-golang-gin/entity/dbo/pihc"
-	"github.com/yusufwira/lern-golang-gin/entity/dbo/tjsl"
+	"github.com/yusufwira/lern-golang-gin/entity/tjsl"
 	users "github.com/yusufwira/lern-golang-gin/entity/users"
 	"gorm.io/gorm"
 )
@@ -18,6 +18,7 @@ type KoorKgtController struct {
 	KegiatanPhotosRepo      *tjsl.KegiatanPhotosRepo
 	KegiatanMasterRepo      *tjsl.KegiatanMasterRepo
 	KoordinatorPersonRepo   *tjsl.KoordinatorPersonRepo
+	PihcMasterKaryRepo      *pihc.PihcMasterKaryRepo
 	PihcMasterKaryRtRepo    *pihc.PihcMasterKaryRtRepo
 }
 
@@ -25,6 +26,7 @@ func NewKoorKgtController(db *gorm.DB) *KoorKgtController {
 	return &KoorKgtController{KegiatanKoordinatorRepo: tjsl.NewKegiatanKoordinatorRepo(db),
 		KegiatanPhotosRepo:    tjsl.NewKegiatanPhotosRepo(db),
 		KoordinatorPersonRepo: tjsl.NewKoordinatorPersonRepo(db),
+		PihcMasterKaryRepo:    pihc.NewPihcMasterKaryRepo(db),
 		PihcMasterKaryRtRepo:  pihc.NewPihcMasterKaryRtRepo(db),
 		KegiatanMasterRepo:    tjsl.NewKegiatanMasterRepo(db)}
 }
@@ -47,7 +49,7 @@ func (c *KoorKgtController) StoreKoordinator(ctx *gin.Context) {
 	var koorPerson tjsl.KoordinatorPerson
 	var req Authentication.ValidationKKoor
 
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := ctx.ShouldBind(&req); err != nil {
 		var ve validator.ValidationErrors
 		if errors.As(err, &ve) {
 			out := make([]Authentication.ErrorMsg, len(ve))
@@ -170,7 +172,7 @@ func (c *KoorKgtController) ShowDetailKoordinator(ctx *gin.Context) {
 	// var list_person []Authentication.Personal
 	data_list := make([]Authentication.Personal, len(data_person))
 	for i, list_data_person := range data_person {
-		data_karyawan, _ := c.PihcMasterKaryRtRepo.FindUserByNIK(list_data_person.NIK)
+		data_karyawan, _ := c.PihcMasterKaryRepo.FindUserByNIK(list_data_person.NIK)
 
 		data_list[i] = Authentication.Personal{
 			ID:            list_data_person.Id,
@@ -233,13 +235,9 @@ func (c *KoorKgtController) DeleteKoordinator(ctx *gin.Context) {
 }
 
 func (c *KoorKgtController) ListKoordinator(ctx *gin.Context) {
-	nik := ctx.Query("nik")
-	tahun := ctx.Query("tahun")
-	slug := ctx.Query("slug")
-
-	req := Authentication.ValidationListKoordinator{NIK: nik, Tahun: tahun, Slug: slug}
+	var req Authentication.ValidationListKoordinator
 	var dataKoor []Authentication.KegiatanListKoordinatorPhotos
-	var listKoorKegiatan []tjsl.KegiatanKoordinator
+	// var listKoorKegiatan []tjsl.KegiatanKoordinator
 
 	if err := ctx.ShouldBindQuery(&req); err != nil {
 		var ve validator.ValidationErrors
@@ -276,52 +274,26 @@ func (c *KoorKgtController) ListKoordinator(ctx *gin.Context) {
 					dataKoor = append(dataKoor, data_list)
 				}
 			}
-		} else {
-			koordinator_person := c.KoordinatorPersonRepo.FindDataKoorPersonNIK(req.NIK)
-			for _, dataKoorPerson := range koordinator_person {
-				dataList, errListKoorKgt := c.KegiatanKoordinatorRepo.FindDataKoorIDLuarKegiatan(dataKoorPerson.KoordinatorId)
-				if errListKoorKgt == nil {
-					listKoorKegiatan = append(listKoorKegiatan, dataList)
-				}
-			}
-			for _, dataKoorKgt := range listKoorKegiatan {
-				data_karyawan, _ := c.PihcMasterKaryRtRepo.FindUserByNIK(dataKoorKgt.CreatedBy)
-				data_list := Authentication.KegiatanListKoordinatorPhotos{
-					IDKoordinator:    dataKoorKgt.IdKoordinator,
-					KegiatanParentID: dataKoorKgt.KegiatanParentId,
-					Nama:             dataKoorKgt.Nama,
-					CreatedBy:        dataKoorKgt.CreatedBy,
-					CreatedAt:        dataKoorKgt.CreatedAt,
-					UpdatedAt:        dataKoorKgt.UpdatedAt,
-					CompCode:         dataKoorKgt.CompCode,
-					Slug:             dataKoorKgt.Slug,
-					Periode:          dataKoorKgt.Periode,
-					Employee:         data_karyawan}
-				dataKoor = append(dataKoor, data_list)
-			}
 		}
 	} else {
-		koordinator_person := c.KoordinatorPersonRepo.FindDataKoorPersonNIK(req.NIK)
-		for _, dataKoorPerson := range koordinator_person {
-			dataList, errListKoorKgt := c.KegiatanKoordinatorRepo.FindDataKoorIDLuarKegiatan(dataKoorPerson.KoordinatorId)
-			if errListKoorKgt == nil {
-				listKoorKegiatan = append(listKoorKegiatan, dataList)
+		dataList, errDataList := c.KegiatanKoordinatorRepo.FindDataKoorIDLuarKegiatan(req.NIK)
+
+		if errDataList == nil {
+			for _, dataKoorPerson := range dataList {
+				data_karyawan, _ := c.PihcMasterKaryRtRepo.FindUserByNIK(dataKoorPerson.CreatedBy)
+				listKoor := Authentication.KegiatanListKoordinatorPhotos{
+					IDKoordinator:    dataKoorPerson.IdKoordinator,
+					KegiatanParentID: dataKoorPerson.KegiatanParentId,
+					Nama:             dataKoorPerson.Nama,
+					CreatedBy:        dataKoorPerson.CreatedBy,
+					CreatedAt:        dataKoorPerson.CreatedAt,
+					UpdatedAt:        dataKoorPerson.UpdatedAt,
+					CompCode:         dataKoorPerson.CompCode,
+					Slug:             dataKoorPerson.Slug,
+					Periode:          dataKoorPerson.Periode,
+					Employee:         data_karyawan}
+				dataKoor = append(dataKoor, listKoor)
 			}
-		}
-		for _, dataKoorKgt := range listKoorKegiatan {
-			data_karyawan, _ := c.PihcMasterKaryRtRepo.FindUserByNIK(dataKoorKgt.CreatedBy)
-			data_list := Authentication.KegiatanListKoordinatorPhotos{
-				IDKoordinator:    dataKoorKgt.IdKoordinator,
-				KegiatanParentID: dataKoorKgt.KegiatanParentId,
-				Nama:             dataKoorKgt.Nama,
-				CreatedBy:        dataKoorKgt.CreatedBy,
-				CreatedAt:        dataKoorKgt.CreatedAt,
-				UpdatedAt:        dataKoorKgt.UpdatedAt,
-				CompCode:         dataKoorKgt.CompCode,
-				Slug:             dataKoorKgt.Slug,
-				Periode:          dataKoorKgt.Periode,
-				Employee:         data_karyawan}
-			dataKoor = append(dataKoor, data_list)
 		}
 	}
 

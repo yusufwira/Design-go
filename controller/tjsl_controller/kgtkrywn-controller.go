@@ -10,7 +10,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	Authentication "github.com/yusufwira/lern-golang-gin/entity/authentication"
 	"github.com/yusufwira/lern-golang-gin/entity/dbo/pihc"
-	"github.com/yusufwira/lern-golang-gin/entity/dbo/tjsl"
+	"github.com/yusufwira/lern-golang-gin/entity/tjsl"
 
 	users "github.com/yusufwira/lern-golang-gin/entity/users"
 	"gorm.io/gorm"
@@ -37,7 +37,7 @@ func (c *KgtKrywnController) StorePengajuanKegiatan(ctx *gin.Context) {
 	var kp tjsl.KegiatanPhotos
 	var req Authentication.ValidationSKKgt
 
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := ctx.ShouldBind(&req); err != nil {
 		var ve validator.ValidationErrors
 		if errors.As(err, &ve) {
 			out := make([]Authentication.ErrorMsg, len(ve))
@@ -175,9 +175,7 @@ func (c *KgtKrywnController) StorePengajuanKegiatan(ctx *gin.Context) {
 }
 
 func (c *KgtKrywnController) ShowPengajuanKegiatan(ctx *gin.Context) {
-	nik := ctx.Query("nik")
-	tahun := ctx.Query("tahun")
-	req := Authentication.ValidationMyTjsl{Nik: nik, Tahun: tahun}
+	var req Authentication.ValidationMyTjsl
 
 	if err := ctx.ShouldBindQuery(&req); err != nil {
 		var ve validator.ValidationErrors
@@ -190,7 +188,7 @@ func (c *KgtKrywnController) ShowPengajuanKegiatan(ctx *gin.Context) {
 		}
 		return
 	}
-	data, err := c.KegiatanKaryawanRepo.FindDataNIKPeriode(nik, tahun)
+	data, err := c.KegiatanKaryawanRepo.FindDataNIKPeriode(req.Nik, req.Tahun)
 
 	if err == nil {
 		ctx.JSON(http.StatusOK, gin.H{
@@ -305,9 +303,7 @@ func (c *KgtKrywnController) DeletePengajuanKegiatan(ctx *gin.Context) {
 }
 
 func (c *KgtKrywnController) StoreApprovePengajuanKegiatan(ctx *gin.Context) {
-	slug_kegiatan := ctx.PostForm("slug_kegiatan")
-	status := ctx.PostForm("status")
-	req := Authentication.ValidationApprovalAtasan{SlugKegiatan: slug_kegiatan, Status: status}
+	var req Authentication.ValidationApprovalAtasan
 
 	if err := ctx.ShouldBind(&req); err != nil {
 		var ve validator.ValidationErrors
@@ -321,8 +317,8 @@ func (c *KgtKrywnController) StoreApprovePengajuanKegiatan(ctx *gin.Context) {
 		return
 	}
 
-	kegiatan_karyawan, err := c.KegiatanKaryawanRepo.FindDataSlug(slug_kegiatan)
-	kegiatan_karyawan.Status = status
+	kegiatan_karyawan, err := c.KegiatanKaryawanRepo.FindDataSlug(req.SlugKegiatan)
+	kegiatan_karyawan.Status = req.Status
 
 	if err == nil {
 		c.KegiatanKaryawanRepo.Update(kegiatan_karyawan)

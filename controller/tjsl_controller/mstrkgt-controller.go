@@ -10,7 +10,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	Authentication "github.com/yusufwira/lern-golang-gin/entity/authentication"
 	"github.com/yusufwira/lern-golang-gin/entity/dbo/pihc"
-	"github.com/yusufwira/lern-golang-gin/entity/dbo/tjsl"
+	"github.com/yusufwira/lern-golang-gin/entity/tjsl"
 	users "github.com/yusufwira/lern-golang-gin/entity/users"
 	"gorm.io/gorm"
 )
@@ -27,17 +27,21 @@ func NewMstrKgtController(db *gorm.DB) *MstrKgtController {
 }
 
 func (c *MstrKgtController) ListMasterKegiatan(ctx *gin.Context) {
-	var inputan Authentication.ValidationLMK
+	var req Authentication.ValidationLMK
 
-	// nik := ctx.PostForm("nik")
-	// tahun := ctx.PostForm("tahun")
-
-	if err := ctx.ShouldBindJSON(&inputan); err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": "NIK / Tahun Tidak Boleh Kosong"})
+	if err := ctx.ShouldBind(&req); err != nil {
+		var ve validator.ValidationErrors
+		if errors.As(err, &ve) {
+			out := make([]Authentication.ErrorMsg, len(ve))
+			for i, fe := range ve {
+				out[i] = Authentication.ErrorMsg{Field: fe.Field(), Message: getErrorMsg(fe)}
+			}
+			ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"errorcode_": http.StatusServiceUnavailable, "errormsg_": out})
+		}
 		return
 	}
 
-	PIHC_MSTR_KRY_RT, err := c.PihcMasterKaryRtRepo.FindUserByNIK(inputan.NIK)
+	PIHC_MSTR_KRY_RT, err := c.PihcMasterKaryRtRepo.FindUserByNIK(req.NIK)
 
 	comp_code := PIHC_MSTR_KRY_RT.Company
 
@@ -49,7 +53,7 @@ func (c *MstrKgtController) ListMasterKegiatan(ctx *gin.Context) {
 		})
 	}
 
-	KegiatanMaster, err := c.KegiatanMasterRepo.FindUserByCompCodeYear(comp_code, inputan.Tahun)
+	KegiatanMaster, err := c.KegiatanMasterRepo.FindUserByCompCodeYear(comp_code, req.Tahun)
 
 	if err == nil {
 		ctx.JSON(http.StatusOK, gin.H{
@@ -88,7 +92,7 @@ func (c *MstrKgtController) StoreMasterKegiatan(ctx *gin.Context) {
 	var km tjsl.KegiatanMaster
 	var req Authentication.ValidationSMK
 
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := ctx.ShouldBind(&req); err != nil {
 		var ve validator.ValidationErrors
 		if errors.As(err, &ve) {
 			out := make([]Authentication.ErrorMsg, len(ve))
@@ -99,7 +103,7 @@ func (c *MstrKgtController) StoreMasterKegiatan(ctx *gin.Context) {
 		}
 		return
 	}
-	
+
 	PIHC_MSTR_KRY_RT, err := c.PihcMasterKaryRtRepo.FindUserByNIK(req.NIK)
 
 	comp_code := PIHC_MSTR_KRY_RT.Company
