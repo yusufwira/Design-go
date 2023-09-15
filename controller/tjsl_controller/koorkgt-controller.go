@@ -69,6 +69,15 @@ func (c *KoorKgtController) StoreKoordinator(ctx *gin.Context) {
 		kgt_koor, err_kgt_koor := c.KegiatanKoordinatorRepo.FindDataID(req.Id)
 		kgt_koor.Nama = req.Nama
 
+		var isKoordinator int
+		if req.KegiatanParentId != nil {
+			kgt_koor.KegiatanParentId = req.KegiatanParentId
+			isKoordinator = 0
+		}
+		if req.KegiatanParentId == nil {
+			isKoordinator = 1
+		}
+
 		if err_kgt_koor == nil {
 			kgt_koor, err_updte_kgt_koor := c.KegiatanKoordinatorRepo.Update(kgt_koor)
 			if err_updte_kgt_koor == nil {
@@ -76,7 +85,7 @@ func (c *KoorKgtController) StoreKoordinator(ctx *gin.Context) {
 
 				for _, dataPhotos := range req.Photos {
 					kp.KegiatanId = kgt_koor.IdKoordinator
-					kp.IsKoordinator = 1
+					kp.IsKoordinator = isKoordinator
 					kp.OriginalName = dataPhotos.OriginalName
 					kp.Url = dataPhotos.URL
 					// url, _ := c.KegiatanPhotosRepo.GetFileExtensionFromUrl(kp.Url)
@@ -106,7 +115,14 @@ func (c *KoorKgtController) StoreKoordinator(ctx *gin.Context) {
 		}
 	} else {
 		// t := time.Now()
-		koorKgt.KegiatanParentId = 0
+		var isKoordinator int
+		if req.KegiatanParentId != nil {
+			koorKgt.KegiatanParentId = req.KegiatanParentId
+			isKoordinator = 0
+		}
+		if req.KegiatanParentId == nil {
+			isKoordinator = 1
+		}
 		koorKgt.Nama = req.Nama
 		koorKgt.CreatedBy = req.Nik
 		koorKgt.CompCode = comp_code
@@ -118,7 +134,7 @@ func (c *KoorKgtController) StoreKoordinator(ctx *gin.Context) {
 		if err_koorKgt == nil {
 			for _, dataPhotos := range req.Photos {
 				kp.KegiatanId = koorKgt.IdKoordinator
-				kp.IsKoordinator = 1
+				kp.IsKoordinator = isKoordinator
 				kp.OriginalName = dataPhotos.OriginalName
 				kp.Url = dataPhotos.URL
 				// url, _ := c.KegiatanPhotosRepo.GetFileExtensionFromUrl(kp.Url)
@@ -159,7 +175,9 @@ func (c *KoorKgtController) ShowDetailKoordinator(ctx *gin.Context) {
 	data_person := c.KoordinatorPersonRepo.FindDataKoorPersonID(data_koor.IdKoordinator)
 
 	data.IDKoordinator = data_koor.IdKoordinator
-	data.KegiatanParentID = 0
+	if data_koor.KegiatanParentId != nil {
+		data.KegiatanParentID = *data_koor.KegiatanParentId
+	}
 	data.Nama = data_koor.Nama
 	data.CreatedBy = data_koor.CreatedBy
 	data.CreatedAt = data_koor.CreatedAt
@@ -236,8 +254,7 @@ func (c *KoorKgtController) DeleteKoordinator(ctx *gin.Context) {
 
 func (c *KoorKgtController) ListKoordinator(ctx *gin.Context) {
 	var req Authentication.ValidationListKoordinator
-	var dataKoor []Authentication.KegiatanListKoordinatorPhotos
-	// var listKoorKegiatan []tjsl.KegiatanKoordinator
+	dataKoor := []Authentication.KegiatanListKoordinatorPhotos{}
 
 	if err := ctx.ShouldBindQuery(&req); err != nil {
 		var ve validator.ValidationErrors
@@ -252,48 +269,30 @@ func (c *KoorKgtController) ListKoordinator(ctx *gin.Context) {
 	}
 
 	if req.Slug != "" {
-		kegiatanMster, errKgtmster := c.KegiatanMasterRepo.FindDataBySlug(req.Slug)
+		dataList, _ := c.KegiatanKoordinatorRepo.ListKoordinatorDalamKegiatan(req.Slug, req.NIK)
 
-		if errKgtmster == nil {
-			koorKegiatan, errkoorKgt := c.KegiatanKoordinatorRepo.FindDataParentID(kegiatanMster.IdKegiatan, req.NIK)
-
-			if errkoorKgt == nil {
-				for _, dataKoorKgt := range koorKegiatan {
-					data_karyawan, _ := c.PihcMasterKaryRtRepo.FindUserByNIK(dataKoorKgt.CreatedBy)
-					data_list := Authentication.KegiatanListKoordinatorPhotos{
-						IDKoordinator:    dataKoorKgt.IdKoordinator,
-						KegiatanParentID: dataKoorKgt.KegiatanParentId,
-						Nama:             dataKoorKgt.Nama,
-						CreatedBy:        dataKoorKgt.CreatedBy,
-						CreatedAt:        dataKoorKgt.CreatedAt,
-						UpdatedAt:        dataKoorKgt.UpdatedAt,
-						CompCode:         dataKoorKgt.CompCode,
-						Slug:             dataKoorKgt.Slug,
-						Periode:          dataKoorKgt.Periode,
-						Employee:         data_karyawan}
-					dataKoor = append(dataKoor, data_list)
-				}
+		for _, item := range dataList {
+			// Create a new instance of authentication.KegiatanListKoordinatorPhotos
+			koorItem := Authentication.KegiatanListKoordinatorPhotos{
+				KegiatanKoordinator: item.KegiatanKoordinator,
+				Employee:            item.Employee,
 			}
+
+			// Append koorItem to dataKoor
+			dataKoor = append(dataKoor, koorItem)
 		}
 	} else {
-		dataList, errDataList := c.KegiatanKoordinatorRepo.FindDataKoorIDLuarKegiatan(req.NIK)
+		dataList, _ := c.KegiatanKoordinatorRepo.ListKoordinatorLuarKegiatan(req.NIK)
 
-		if errDataList == nil {
-			for _, dataKoorPerson := range dataList {
-				data_karyawan, _ := c.PihcMasterKaryRtRepo.FindUserByNIK(dataKoorPerson.CreatedBy)
-				listKoor := Authentication.KegiatanListKoordinatorPhotos{
-					IDKoordinator:    dataKoorPerson.IdKoordinator,
-					KegiatanParentID: dataKoorPerson.KegiatanParentId,
-					Nama:             dataKoorPerson.Nama,
-					CreatedBy:        dataKoorPerson.CreatedBy,
-					CreatedAt:        dataKoorPerson.CreatedAt,
-					UpdatedAt:        dataKoorPerson.UpdatedAt,
-					CompCode:         dataKoorPerson.CompCode,
-					Slug:             dataKoorPerson.Slug,
-					Periode:          dataKoorPerson.Periode,
-					Employee:         data_karyawan}
-				dataKoor = append(dataKoor, listKoor)
+		for _, item := range dataList {
+			// Create a new instance of authentication.KegiatanListKoordinatorPhotos
+			koorItem := Authentication.KegiatanListKoordinatorPhotos{
+				KegiatanKoordinator: item.KegiatanKoordinator,
+				Employee:            item.Employee,
 			}
+
+			// Append koorItem to dataKoor
+			dataKoor = append(dataKoor, koorItem)
 		}
 	}
 
@@ -303,3 +302,27 @@ func (c *KoorKgtController) ListKoordinator(ctx *gin.Context) {
 		"data":   dataKoor,
 	})
 }
+
+// func (c *KoorKgtController) ListKoordinator(ctx *gin.Context) {
+// 	var req Authentication.ValidationListKoordinator
+
+// 	if err := ctx.ShouldBindQuery(&req); err != nil {
+// 		var ve validator.ValidationErrors
+// 		if errors.As(err, &ve) {
+// 			out := make([]Authentication.ErrorMsg, len(ve))
+// 			for i, fe := range ve {
+// 				out[i] = Authentication.ErrorMsg{Field: fe.Field(), Message: getErrorMsg(fe)}
+// 			}
+// 			ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"errorcode_": http.StatusServiceUnavailable, "errormsg_": out})
+// 		}
+// 		return
+// 	}
+
+// 	dataList, _ := c.KegiatanKoordinatorRepo.ListKoordinatorLuarKegiatan(req.NIK)
+
+// 	ctx.JSON(http.StatusOK, gin.H{
+// 		"status": http.StatusOK,
+// 		"info":   "Success",
+// 		"data":   dataList,
+// 	})
+// }

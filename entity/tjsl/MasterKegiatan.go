@@ -9,7 +9,7 @@ import (
 type KegiatanMaster struct {
 	IdKegiatan        int       `json:"id_kegiatan" gorm:"primary_key"`
 	NamaKegiatan      string    `json:"nama_kegiatan"`
-	DeskripsiKegiatan string    `json:"deskripsi_kegiatan"`
+	DeskripsiKegiatan *string   `json:"deskripsi_kegiatan"`
 	CompCode          string    `json:"comp_code"`
 	CreatedAt         time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt         time.Time `json:"updated_at" gorm:"autoUpdateTime"`

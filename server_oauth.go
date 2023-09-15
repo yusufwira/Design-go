@@ -82,6 +82,7 @@ func main() {
 
 		tjsl.POST("/approve", kgtKrywnController.StoreApprovePengajuanKegiatan)
 		tjsl.POST("/listApprovalTjsl", kgtKrywnController.ListApprvlKgtKrywn)
+		tjsl.GET("/getChartSummary",kgtKrywnController.GetChartSummary)
 
 		// Koordinator
 		tjsl.POST("/storeKoordinator", koorkgtController.StoreKoordinator)
@@ -94,12 +95,29 @@ func main() {
 	{
 		event.POST("/store_new", eventController.StoreEvent)
 		event.POST("/updateStatusEvent", eventController.UpdateStatusEvent)
+		event.GET("/getDataApproval/:nik", eventController.GetDataApproval)
+		event.POST("/konfirmasiKehadiran", eventController.KonfirmasiKehadiran)
+		event.POST("/getDataInFeed/:nik", eventController.GetDataInFeed)
+
 		event.POST("/storeDispose", eventController.StoreDispose)
+		event.POST("/getDataDispose", eventController.GetDataDispose)
+
 		event.GET("/getDataEvent/:nik", eventController.GetDataEvent)
 		event.POST("/getDataByNik", eventController.GetDataByNik)
 		event.POST("/deleteEvent", eventController.DeleteEvent)
 		event.GET("/showEvent/:id/:nik", eventController.ShowEvent)
-		
+		event.POST("/getBookingRoom", eventController.GetBookingRoom)
+		event.DELETE("/deleteEventBooking/:id_booking", eventController.DeleteEventBooking)
+
+		// event.POST("/storeNotulen", eventController.StoreNotulen)
+		event.GET("/getDataNotulen/:id", eventController.GetDataNotulen)
+		event.DELETE("/deleteFileNotulen/:id", eventController.DeleteFileNotulen)
+		event.GET("/getCategoryRoom", eventController.GetCategoryRoom)
+		event.POST("/getDataRoom", eventController.GetRoomEvent)
+		event.POST("/storeBookingRoom", eventController.StoreBookingRoomEvent)
+		event.POST("/storeEventPresence", eventController.StoreEventPresence)
+		event.GET("/printDaftarHadir/:id", eventController.PrintDaftarHadir)
+
 	}
 	r.Run(":9096")
 }

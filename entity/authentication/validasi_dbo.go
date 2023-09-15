@@ -18,21 +18,21 @@ type ValidationLMK struct {
 }
 
 type ValidationSMK struct {
-	IdKegiatan        int    `json:"id" form:"id" gorm:"primary_key"`
-	NIK               string `json:"nik" form:"nik" binding:"required"`
-	NamaKegiatan      string `json:"nama_kegiatan" form:"nama_kegiatan" binding:"required"`
-	DeskripsiKegiatan string `json:"deskripsi_kegiatan" form:"deskripsi_kegiatan"`
+	IdKegiatan        int     `json:"id" form:"id" gorm:"primary_key"`
+	NIK               string  `json:"nik" form:"nik" binding:"required"`
+	NamaKegiatan      string  `json:"nama_kegiatan" form:"nama_kegiatan" binding:"required"`
+	DeskripsiKegiatan *string `json:"deskripsi_kegiatan" form:"deskripsi_kegiatan"`
 }
 
 type ValidationSKKgt struct {
-	Id                int    `json:"id" gorm:"primary_key"`
-	NIK               string `json:"nik" binding:"required"`
-	KegiatanParentId  int    `json:"kegiatan_parent_id" gorm:"default:null"`
-	KoordinatorId     int    `json:"koordinator_id" gorm:"default:null"`
-	NamaKegiatan      string `json:"nama_kegiatan" binding:"required"`
-	TanggalKegiatan   string `json:"tanggal" binding:"required"`
-	LokasiKegiatan    string `json:"lokasi" binding:"required"`
-	DeskripsiKegiatan string `json:"deskripsi" binding:"required"`
+	Id                int     `json:"id" gorm:"primary_key"`
+	NIK               string  `json:"nik" binding:"required"`
+	KegiatanParentId  *int    `json:"kegiatan_parent_id" gorm:"default:null"`
+	KoordinatorId     *int    `json:"koordinator_id" gorm:"default:null"`
+	NamaKegiatan      string  `json:"nama_kegiatan" binding:"required"`
+	TanggalKegiatan   string  `json:"tanggal" binding:"required"`
+	LokasiKegiatan    string  `json:"lokasi" binding:"required"`
+	DeskripsiKegiatan *string `json:"deskripsi" binding:"required"`
 	Photos            []struct {
 		IDPhoto      int    `json:"id_photo"`
 		OriginalName string `json:"original_name"`
@@ -71,17 +71,17 @@ type KegiatanKaryawanPhotos struct {
 	PhotoProfile             string                `json:"photo_profile"`
 	DeptTitle                string                `json:"dept_title"`
 	Jenis                    string                `json:"jenis"`
-	KoordinatorID            int                   `json:"koordinator_id"`
-	SlugKoordinator          int                   `json:"slug_koordinator"`
-	SlugKegiatanParent       int                   `json:"slug_kegiatan_parent"`
-	KegiatanParentID         int                   `json:"kegiatan_parent_id"`
+	KoordinatorID            *int                  `json:"koordinator_id"`
+	SlugKoordinator          *int                  `json:"slug_koordinator"`
+	SlugKegiatanParent       *int                  `json:"slug_kegiatan_parent"`
+	KegiatanParentID         *int                  `json:"kegiatan_parent_id"`
 	NamaKegiatan             string                `json:"nama_kegiatan"`
 	TanggalKegiatan          string                `json:"tanggal_kegiatan"`
 	TanggalKegiatanNonFormat string                `json:"tanggal_kegiatan_non_format"`
 	LokasiKegiatan           string                `json:"lokasi_kegiatan"`
-	Deskripsi                string                `json:"deskripsi"`
+	Deskripsi                *string               `json:"deskripsi"`
 	Status                   string                `json:"status"`
-	AlasanPenolakan          string                `json:"alasan_penolakan"`
+	AlasanPenolakan          *string               `json:"alasan_penolakan"`
 	PhotoKegiatan            []tjsl.KegiatanPhotos `json:"photo_kegiatan"`
 	Tahun                    string                `json:"tahun"`
 }
@@ -99,18 +99,62 @@ type ListApprovalTJSL struct {
 	NamaKegiatan    string                `json:"nama_kegiatan"`
 	TanggalKegiatan string                `json:"tanggal_kegiatan"`
 	LokasiKegiatan  string                `json:"lokasi_kegiatan"`
-	Deskripsi       string                `json:"deskripsi"`
+	Deskripsi       *string               `json:"deskripsi"`
 	Status          string                `json:"status"`
 	PhotoKegiatan   []tjsl.KegiatanPhotos `json:"photo_kegiatan"`
-	Short           string                `json:"short"`
+	Short           *string               `json:"short"`
 	LogoCompany     string                `json:"logo_company"`
 }
 
+type ListChartSummary struct {
+	RekapPerbulan `json:"month"`
+	Employee      `json:"employee"`
+}
+
+type ListChartNotFoundDataSummary struct {
+	RekapPerbulan `json:"month"`
+}
+
+type RekapPerbulan struct {
+	Month
+	TotalIndividu int `json:"total_individu"`
+}
+
+type Month struct {
+	Num1  int `json:"1"`
+	Num2  int `json:"2"`
+	Num3  int `json:"3"`
+	Num4  int `json:"4"`
+	Num5  int `json:"5"`
+	Num6  int `json:"6"`
+	Num7  int `json:"7"`
+	Num8  int `json:"8"`
+	Num9  int `json:"9"`
+	Num10 int `json:"10"`
+	Num11 int `json:"11"`
+	Num12 int `json:"12"`
+}
+
+type Employee struct {
+	EmpNama   string `json:"emp_nama"`
+	Nik       string `json:"nik"`
+	PosID     string `json:"pos_id"`
+	PosTitle  string `json:"pos_title"`
+	DeptID    string `json:"dept_id"`
+	DeptTitle string `json:"dept_title"`
+	KompID    string `json:"komp_id"`
+	KompTitle string `json:"komp_title"`
+	DirID     string `json:"dir_id"`
+	DirTitle  string `json:"dir_title"`
+	Photo     string `json:"photo"`
+}
+
 type ValidationKKoor struct {
-	Id     int    `json:"id"`
-	Nama   string `json:"nama" form:"nama" binding:"required"`
-	Nik    string `json:"nik" form:"nik" binding:"required"`
-	Photos []struct {
+	Id               int    `json:"id"`
+	KegiatanParentId *int   `json:"kegiatan_parent_id"`
+	Nama             string `json:"nama" form:"nama" binding:"required"`
+	Nik              string `json:"nik" form:"nik" binding:"required"`
+	Photos           []struct {
 		IDPhoto      string `json:"id_photo" form:"id_photo"`
 		Extension    string `json:"extension" form:"extension"`
 		Name         string `json:"name" form:"name"`
@@ -147,16 +191,8 @@ type Personal struct {
 }
 
 type KegiatanListKoordinatorPhotos struct {
-	IDKoordinator    int                   `json:"id_koordinator"`
-	KegiatanParentID int                   `json:"kegiatan_parent_id"`
-	Nama             string                `json:"nama"`
-	CreatedBy        string                `json:"created_by"`
-	CreatedAt        time.Time             `json:"created_at"`
-	UpdatedAt        time.Time             `json:"updated_at"`
-	CompCode         string                `json:"comp_code"`
-	Slug             string                `json:"slug"`
-	Periode          string                `json:"periode"`
-	Employee         pihc.PihcMasterKaryRt `json:"employee"`
+	tjsl.KegiatanKoordinator
+	Employee pihc.PihcMasterKaryRt `json:"employee" gorm:"foreignkey:EmpNo;association_foreignkey:CreatedBy"`
 }
 
 type ErrorMsg struct {

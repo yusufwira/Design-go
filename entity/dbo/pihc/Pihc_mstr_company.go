@@ -5,21 +5,21 @@ import (
 )
 
 type PihcMasterCompany struct {
-	Code               string `json:"code"`
-	Name               string `json:"name"`
-	Address            string `json:"address"`
-	BusinessSector     string `json:"business_sector"`
-	CompanyWebsite     string `json:"company_website"`
-	SortID             int    `json:"sort_id"`
-	AssetsLogo         string `json:"assets_logo"`
-	IspupukProducen    int    `json:"ispupuk_producen"`
-	UserDefaultLogo    string `json:"user_default_logo"`
-	OrgUnit            string `json:"org_unit"`
-	AssetsLogoFull     string `json:"assets_logo_full"`
-	BasePathUserPhoto  string `json:"base_path_user_photo"`
-	UserPhotoExtension string `json:"user_photo_extension"`
-	AssetsThumbnail    string `json:"assets_thumbnail"`
-	PosID              string `json:"pos_id"`
+	Code               string  `json:"code"`
+	Name               string  `json:"name"`
+	Address            *string `json:"address"`
+	BusinessSector     *string `json:"business_sector"`
+	CompanyWebsite     *string `json:"company_website"`
+	SortID             int     `json:"sort_id"`
+	AssetsLogo         string  `json:"assets_logo"`
+	IspupukProducen    int     `json:"ispupuk_producen"`
+	UserDefaultLogo    string  `json:"user_default_logo"`
+	OrgUnit            string  `json:"org_unit"`
+	AssetsLogoFull     string  `json:"assets_logo_full"`
+	BasePathUserPhoto  string  `json:"base_path_user_photo"`
+	UserPhotoExtension string  `json:"user_photo_extension"`
+	AssetsThumbnail    string  `json:"assets_thumbnail"`
+	PosID              string  `json:"pos_id"`
 }
 
 func (PihcMasterCompany) TableName() string {

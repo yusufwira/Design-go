@@ -3,12 +3,13 @@ package tjsl
 import (
 	"time"
 
+	"github.com/yusufwira/lern-golang-gin/entity/dbo/pihc"
 	"gorm.io/gorm"
 )
 
 type KegiatanKoordinator struct {
 	IdKoordinator    int       `json:"id_koordinator" gorm:"primary_key"`
-	KegiatanParentId int       `json:"kegiatan_parent_id" gorm:"default:null"`
+	KegiatanParentId *int      `json:"kegiatan_parent_id" gorm:"default:null"`
 	Nama             string    `json:"nama"`
 	CreatedBy        string    `json:"created_by"`
 	CreatedAt        time.Time `json:"created_at" gorm:"autoCreateTime"`
@@ -16,6 +17,11 @@ type KegiatanKoordinator struct {
 	CompCode         string    `json:"comp_code"`
 	Slug             string    `json:"slug"`
 	Periode          string    `json:"periode"`
+}
+
+type Result struct {
+	KegiatanKoordinator
+	Employee pihc.PihcMasterKaryRt `json:"employee" gorm:"foreignkey:EmpNo;association_foreignkey:CreatedBy"`
 }
 
 func (KegiatanKoordinator) TableName() string {
@@ -74,6 +80,75 @@ func (t KegiatanKoordinatorRepo) FindDataKoorIDLuarKegiatan(nik string) ([]Kegia
 		return koor_kgt, err
 	}
 	return koor_kgt, nil
+}
+
+func (t KegiatanKoordinatorRepo) ListKoordinatorLuarKegiatan(nik string) ([]Result, error) {
+	results := []Result{}
+	err := t.DB.Raw(`
+		SELECT kk.id_koordinator, kk.nama, kk.created_by, kk.created_at, kk.updated_at, kk.comp_code, kk.slug, kk.periode
+		FROM tjsl.kegiatan_koordinator kk
+		JOIN dbo.pihc_master_kary_rt pmkr ON kk.created_by = pmkr.emp_no
+		WHERE kk.id_koordinator IN (
+			SELECT DISTINCT koordinator_id
+			FROM tjsl.koordinator_person
+			WHERE nik = ?
+		) AND kk.kegiatan_parent_id IS NULL
+		ORDER BY kk.id_koordinator ASC
+	`, nik).Scan(&results).Error
+
+	if err != nil {
+		return results, err
+	}
+
+	var karyawan []pihc.PihcMasterKaryRt
+	t.DB.Raw(`
+		SELECT pmkr.*
+		FROM tjsl.kegiatan_koordinator kk
+		JOIN dbo.pihc_master_kary_rt pmkr ON kk.created_by = pmkr.emp_no
+		WHERE kk.id_koordinator IN (
+			SELECT DISTINCT koordinator_id
+			FROM tjsl.koordinator_person
+			WHERE nik = ?
+		) AND kk.kegiatan_parent_id IS NULL
+		ORDER BY kk.id_koordinator ASC
+	`, nik).Scan(&karyawan)
+
+	for i, data := range results {
+		data.Employee = karyawan[i]
+		results[i].Employee = data.Employee
+	}
+
+	return results, nil
+}
+func (t KegiatanKoordinatorRepo) ListKoordinatorDalamKegiatan(slug string, nik string) ([]Result, error) {
+	results := []Result{}
+	err := t.DB.Raw(`SELECT kk.id_koordinator, kk.nama, kk.created_by, kk.created_at, kk.updated_at, kk.comp_code, kk.slug, kk.periode
+						FROM tjsl.kegiatan_mstr km
+					JOIN tjsl.kegiatan_koordinator kk ON kk.kegiatan_parent_id = km.id_kegiatan
+					JOIN dbo.pihc_master_kary_rt pmkr ON kk.created_by = pmkr.emp_no
+						WHERE km.slug = ? AND kk.created_by = ?
+					ORDER BY kk.id_koordinator ASC`, slug, nik).
+		Scan(&results).Error
+
+	if err != nil {
+		return results, err
+	}
+
+	var karyawan []pihc.PihcMasterKaryRt
+	t.DB.Raw(`SELECT pmkr.*
+				FROM tjsl.kegiatan_mstr km
+			JOIN tjsl.kegiatan_koordinator kk ON kk.kegiatan_parent_id = km.id_kegiatan
+			JOIN dbo.pihc_master_kary_rt pmkr ON kk.created_by = pmkr.emp_no
+				WHERE km.slug = ? AND kk.created_by = ?
+			ORDER BY kk.id_koordinator ASC`, slug, nik).
+		Scan(&karyawan)
+
+	for i, data := range results {
+		data.Employee = karyawan[i]
+		results[i].Employee = data.Employee
+	}
+
+	return results, nil
 }
 
 func (t KegiatanKoordinatorRepo) FindDataSlug(slug string) (KegiatanKoordinator, error) {

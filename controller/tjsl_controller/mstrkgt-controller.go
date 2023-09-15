@@ -123,7 +123,7 @@ func (c *MstrKgtController) StoreMasterKegiatan(ctx *gin.Context) {
 			kgt_mstr.NamaKegiatan = req.NamaKegiatan
 		}
 
-		if req.DeskripsiKegiatan != "" {
+		if req.DeskripsiKegiatan != nil {
 			kgt_mstr.DeskripsiKegiatan = req.DeskripsiKegiatan
 		}
 
@@ -156,7 +156,7 @@ func (c *MstrKgtController) StoreMasterKegiatan(ctx *gin.Context) {
 			km.NamaKegiatan = req.NamaKegiatan
 		}
 
-		if req.DeskripsiKegiatan != "" {
+		if req.DeskripsiKegiatan != nil {
 			km.DeskripsiKegiatan = req.DeskripsiKegiatan
 		}
 		km.Periode = strconv.Itoa(t.Year())
