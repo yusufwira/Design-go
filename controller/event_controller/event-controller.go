@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"cloud.google.com/go/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	Authentication "github.com/yusufwira/lern-golang-gin/entity/authentication"
@@ -17,29 +18,29 @@ import (
 )
 
 type EventController struct {
-	EventBookingRoomRepo  *events.EventBookingRoomRepo
-	EventPersonRepo       *events.EventPersonRepo
-	MainEventRepo         *events.MainEventRepo
-	EventPresenceRepo     *events.EventPresenceRepo
-	EventMsterRoomRepo    *events.EventMsterRoomRepo
-	EventNotulenRepo      *events.EventNotulenRepo
-	EventMateriFileRepo   *events.EventMateriFileRepo
-	PihcMasterKaryRepo    *pihc.PihcMasterKaryRepo
-	PihcMasterKaryRtRepo  *pihc.PihcMasterKaryRtRepo
-	PihcMasterCompanyRepo *pihc.PihcMasterCompanyRepo
+	EventBookingRoomRepo   *events.EventBookingRoomRepo
+	EventPersonRepo        *events.EventPersonRepo
+	MainEventRepo          *events.MainEventRepo
+	EventPresenceRepo      *events.EventPresenceRepo
+	EventMsterRoomRepo     *events.EventMsterRoomRepo
+	EventNotulenRepo       *events.EventNotulenRepo
+	EventMateriFileRepo    *events.EventMateriFileRepo
+	PihcMasterKaryDbRepo   *pihc.PihcMasterKaryDbRepo
+	PihcMasterKaryRtDbRepo *pihc.PihcMasterKaryRtDbRepo
+	PihcMasterCompanyRepo  *pihc.PihcMasterCompanyRepo
 }
 
-func NewEventController(db *gorm.DB) *EventController {
-	return &EventController{EventBookingRoomRepo: events.NewEventBookingRoomRepo(db),
-		EventPersonRepo:       events.NewEventPersonRepo(db),
-		MainEventRepo:         events.NewMainEventRepo(db),
-		EventPresenceRepo:     events.NewEventPresenceRepo(db),
-		EventMsterRoomRepo:    events.NewEventMsterRoomRepo(db),
-		EventNotulenRepo:      events.NewEventNotulenRepo(db),
-		EventMateriFileRepo:   events.NewEventMateriFileRepo(db),
-		PihcMasterKaryRepo:    pihc.NewPihcMasterKaryRepo(db),
-		PihcMasterKaryRtRepo:  pihc.NewPihcMasterKaryRtRepo(db),
-		PihcMasterCompanyRepo: pihc.NewPihcMasterCompanyRepo(db)}
+func NewEventController(Db *gorm.DB, StorageClient *storage.Client) *EventController {
+	return &EventController{EventBookingRoomRepo: events.NewEventBookingRoomRepo(Db),
+		EventPersonRepo:        events.NewEventPersonRepo(Db),
+		MainEventRepo:          events.NewMainEventRepo(Db),
+		EventPresenceRepo:      events.NewEventPresenceRepo(Db),
+		EventMsterRoomRepo:     events.NewEventMsterRoomRepo(Db),
+		EventNotulenRepo:       events.NewEventNotulenRepo(Db, StorageClient),
+		EventMateriFileRepo:    events.NewEventMateriFileRepo(Db),
+		PihcMasterKaryDbRepo:   pihc.NewPihcMasterKaryDbRepo(Db),
+		PihcMasterKaryRtDbRepo: pihc.NewPihcMasterKaryRtDbRepo(Db),
+		PihcMasterCompanyRepo:  pihc.NewPihcMasterCompanyRepo(Db)}
 }
 
 func getErrorMsg(fe validator.FieldError) string {
@@ -70,12 +71,12 @@ func (c *EventController) StoreEvent(ctx *gin.Context) {
 		return
 	}
 
-	PIHC_MSTR_KRY_RT, _ := c.PihcMasterKaryRtRepo.FindUserByNIK(strconv.Itoa(req.Nik))
+	PIHC_MSTR_KRY_RT, _ := c.PihcMasterKaryRtDbRepo.FindUserByNIK(strconv.Itoa(req.Nik))
 
 	comp_code := PIHC_MSTR_KRY_RT.Company
 
-	parsedTimeStart, _ := time.Parse(time.DateTime, req.Start)
-	parsedTimeEnd, _ := time.Parse(time.DateTime, req.End)
+	// parsedTimeStart, _ := time.Parse(time.DateTime, req.Start)
+	// parsedTimeEnd, _ := time.Parse(time.DateTime, req.End)
 
 	if req.ID != 0 {
 		main_event, _ := c.MainEventRepo.FindEventMainID(req.ID)
@@ -83,8 +84,8 @@ func (c *EventController) StoreEvent(ctx *gin.Context) {
 		main_event.EventTitle = req.Title
 		main_event.EventDesc = req.Desc
 		main_event.EventType = req.Type
-		main_event.EventStart = parsedTimeStart
-		main_event.EventEnd = parsedTimeEnd
+		main_event.EventStart, _ = time.Parse(time.DateTime, req.Start)
+		main_event.EventEnd, _ = time.Parse(time.DateTime, req.End)
 		main_event.Status = req.Status
 		main_event.CreatedBy = strconv.Itoa(req.Nik)
 		main_event.CompCode = comp_code
@@ -142,7 +143,7 @@ func (c *EventController) StoreEvent(ctx *gin.Context) {
 
 			if errEventBookingRoom == nil {
 
-				existRoom, _ := c.EventBookingRoomRepo.FindExistRoom(*req.IDRoom, main_event.Id, parsedTimeStart, parsedTimeEnd)
+				existRoom, _ := c.EventBookingRoomRepo.FindExistRoom(*req.IDRoom, main_event.Id, main_event.EventStart, main_event.EventEnd)
 				fmt.Println(existRoom)
 
 				if !existRoom {
@@ -187,7 +188,7 @@ func (c *EventController) StoreEvent(ctx *gin.Context) {
 		} else if req.Type == "hybrid" {
 			// Type Hybrid
 
-			existRoom, _ := c.EventBookingRoomRepo.FindExistRoom(*req.IDRoom, main_event.Id, parsedTimeStart, parsedTimeEnd)
+			existRoom, _ := c.EventBookingRoomRepo.FindExistRoom(*req.IDRoom, main_event.Id, main_event.EventStart, main_event.EventEnd)
 
 			eventBookingRoom, errEventBookingRoom := c.EventBookingRoomRepo.FindRoomBooking(req.IDRoom, main_event.Id)
 
@@ -240,8 +241,8 @@ func (c *EventController) StoreEvent(ctx *gin.Context) {
 		ev_main.EventTitle = req.Title
 		ev_main.EventDesc = req.Desc
 		ev_main.EventType = req.Type
-		ev_main.EventStart = parsedTimeStart
-		ev_main.EventEnd = parsedTimeEnd
+		ev_main.EventStart, _ = time.Parse(time.DateTime, req.Start)
+		ev_main.EventEnd, _ = time.Parse(time.DateTime, req.End)
 		ev_main.Status = req.Status
 		ev_main.CreatedBy = strconv.Itoa(req.Nik)
 		ev_main.CompCode = comp_code
@@ -271,7 +272,7 @@ func (c *EventController) StoreEvent(ctx *gin.Context) {
 			}
 		} else if req.Type == "offline" {
 			// Type Offline
-			existRoom, _ := c.EventBookingRoomRepo.FindExistRoom(*req.IDRoom, ev_main.Id, parsedTimeStart, parsedTimeEnd)
+			existRoom, _ := c.EventBookingRoomRepo.FindExistRoom(*req.IDRoom, ev_main.Id, ev_main.EventStart, ev_main.EventEnd)
 
 			if !existRoom {
 				ev_main.EventRoom = req.IDRoom
@@ -301,7 +302,7 @@ func (c *EventController) StoreEvent(ctx *gin.Context) {
 			}
 		} else if req.Type == "hybrid" {
 			// Type Hybrid
-			existRoom, _ := c.EventBookingRoomRepo.FindExistRoom(*req.IDRoom, ev_main.Id, parsedTimeStart, parsedTimeEnd)
+			existRoom, _ := c.EventBookingRoomRepo.FindExistRoom(*req.IDRoom, ev_main.Id, ev_main.EventStart, ev_main.EventEnd)
 
 			if !existRoom {
 				ev_main.EventRoom = req.IDRoom
@@ -546,7 +547,7 @@ func (c *EventController) KonfirmasiKehadiran(ctx *gin.Context) {
 			}
 
 			list_nik := []*string{&main_event.CreatedBy, main_event.ApprovalPerson}
-			result, _ := c.PihcMasterKaryRepo.FindUserByNIKArray(list_nik)
+			result, _ := c.PihcMasterKaryDbRepo.FindUserByNIKArray(list_nik)
 			ev.EventCreatedByNik = &main_event.CreatedBy
 			ev.EventApprovalPerson = main_event.ApprovalPerson
 
@@ -937,7 +938,7 @@ func (c *EventController) ShowEvent(ctx *gin.Context) {
 		}
 
 		list_nik := []*string{&mainEvent.CreatedBy, mainEvent.ApprovalPerson}
-		result, _ := c.PihcMasterKaryRepo.FindUserByNIKArray(list_nik)
+		result, _ := c.PihcMasterKaryDbRepo.FindUserByNIKArray(list_nik)
 		ev.EventCreatedByNik = &mainEvent.CreatedBy
 		ev.EventApprovalPerson = mainEvent.ApprovalPerson
 
@@ -1089,13 +1090,13 @@ func (c *EventController) DeleteEvent(ctx *gin.Context) {
 		}
 		data.Person = data_list
 
-		parsedTimeStart, _ := time.Parse(time.DateTime, data.EventStart)
-		parsedTimeEnd, _ := time.Parse(time.DateTime, data.EventEnd)
+		// parsedTimeStart, _ := time.Parse(time.DateTime, data.EventStart)
+		// parsedTimeEnd, _ := time.Parse(time.DateTime, data.EventEnd)
 
 		ev_hist.EventTitle = data.EventTitle
 		ev_hist.EventDesc = data.EventDesc
-		ev_hist.EventStart = parsedTimeStart
-		ev_hist.EventEnd = parsedTimeEnd
+		ev_hist.EventStart, _ = time.Parse(time.DateTime, data.EventStart)
+		ev_hist.EventEnd, _ = time.Parse(time.DateTime, data.EventEnd)
 		ev_hist.EventType = data.EventType
 		if data.EventURL != nil {
 			ev_hist.EventURL = *data.EventURL
@@ -1235,6 +1236,118 @@ func (c *EventController) DeleteFileMateri(ctx *gin.Context) {
 // 	ctx.JSON(http.StatusOK, gin.H{"filepath": filePaths})
 // }
 
+func (c *EventController) StoreFileGCS(ctx *gin.Context) {
+	var req Authentication.ValidasiStoreNotulen
+
+	if err := ctx.ShouldBind(&req); err != nil {
+		var ve validator.ValidationErrors
+		if errors.As(err, &ve) {
+			out := make([]Authentication.ErrorMsg, len(ve))
+			for i, fe := range ve {
+				out[i] = Authentication.ErrorMsg{Field: fe.Field(), Message: getErrorMsg(fe)}
+			}
+			ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"errorcode_": http.StatusServiceUnavailable, "errormsg_": out})
+		}
+		return
+	}
+
+	form, _ := ctx.MultipartForm()
+	files := form.File["file"]
+	filePaths := []string{}
+
+	for _, file := range files {
+		originalFileName := file.Filename
+
+		fmt.Println(originalFileName)
+
+		// Open the multipart.FileHeader to get a multipart.File
+		fileToUpload, err := file.Open()
+		if err != nil {
+			// Handle the error
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Could not open file",
+			})
+			return
+		}
+
+		imageURL, err := c.EventNotulenRepo.UploadFile(originalFileName, fileToUpload)
+		if err != nil {
+			// Handle the error
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Could not upload file",
+			})
+			return
+		}
+
+		filePaths = append(filePaths, imageURL)
+	}
+	// Handle the uploaded file paths, e.g., return them in the response
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":    http.StatusOK,
+		"filePaths": filePaths,
+	})
+}
+
+func (c *EventController) RenameFileGCS(ctx *gin.Context) {
+	var req Authentication.ValidasiRenameFileNotulen
+
+	if err := ctx.ShouldBind(&req); err != nil {
+		var ve validator.ValidationErrors
+		if errors.As(err, &ve) {
+			out := make([]Authentication.ErrorMsg, len(ve))
+			for i, fe := range ve {
+				out[i] = Authentication.ErrorMsg{Field: fe.Field(), Message: getErrorMsg(fe)}
+			}
+			ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"errorcode_": http.StatusServiceUnavailable, "errormsg_": out})
+		}
+		return
+	}
+
+	url, err := c.EventNotulenRepo.RenameFileGCS(req.OldNameFile, req.NewNameFile)
+
+	if err == nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"status":    http.StatusOK,
+			"filePaths": url,
+		})
+	} else {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"status": http.StatusBadRequest,
+			"notice": "Gagal Mengganti Nama File",
+		})
+	}
+}
+
+func (c *EventController) DeleteFileGCS(ctx *gin.Context) {
+	var req Authentication.ValidasiDeleteFileNotulen
+
+	if err := ctx.ShouldBind(&req); err != nil {
+		var ve validator.ValidationErrors
+		if errors.As(err, &ve) {
+			out := make([]Authentication.ErrorMsg, len(ve))
+			for i, fe := range ve {
+				out[i] = Authentication.ErrorMsg{Field: fe.Field(), Message: getErrorMsg(fe)}
+			}
+			ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"errorcode_": http.StatusServiceUnavailable, "errormsg_": out})
+		}
+		return
+	}
+
+	err := c.EventNotulenRepo.DeleteFileGCS(req.NameFile)
+
+	if err == nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"status": http.StatusOK,
+			"notice": "success",
+		})
+	} else {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"status": http.StatusBadRequest,
+			"notice": "Gagal Menghapus File",
+		})
+	}
+}
+
 func (c *EventController) GetDataNotulen(ctx *gin.Context) {
 	id := ctx.Param("id")
 	idEvent, _ := strconv.Atoi(id)
@@ -1272,7 +1385,7 @@ func (c *EventController) GetCategoryRoom(ctx *gin.Context) {
 		return
 	}
 
-	pihc_mstr_krywn, err_pihc_mstr_krywn := c.PihcMasterKaryRepo.FindUserByNIK(req.Nik)
+	pihc_mstr_krywn, err_pihc_mstr_krywn := c.PihcMasterKaryDbRepo.FindUserByNIK(req.Nik)
 
 	var data []string
 	if err_pihc_mstr_krywn == nil {
@@ -1315,7 +1428,7 @@ func (c *EventController) GetRoomEvent(ctx *gin.Context) {
 		return
 	}
 
-	pihc_mstr_krywn, err_pihc_mstr_krywn := c.PihcMasterKaryRepo.FindUserByNIK(req.Nik)
+	pihc_mstr_krywn, err_pihc_mstr_krywn := c.PihcMasterKaryDbRepo.FindUserByNIK(req.Nik)
 
 	var data []events.EventMsterRoom
 	if err_pihc_mstr_krywn == nil {
@@ -1452,7 +1565,7 @@ func (c *EventController) PrintDaftarHadir(ctx *gin.Context) {
 
 	mainEvent, errMainEvent := c.MainEventRepo.FindEventMainID(idEvent)
 	if errMainEvent == nil {
-		pihc_krywn, _ := c.PihcMasterKaryRepo.FindUserByNIK(mainEvent.CreatedBy)
+		pihc_krywn, _ := c.PihcMasterKaryDbRepo.FindUserByNIK(mainEvent.CreatedBy)
 		ev.Title = mainEvent.EventTitle
 		ev.Deskripsi = mainEvent.EventDesc
 		ev.Type = mainEvent.EventType

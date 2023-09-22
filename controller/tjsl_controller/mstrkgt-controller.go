@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"cloud.google.com/go/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	Authentication "github.com/yusufwira/lern-golang-gin/entity/authentication"
@@ -16,14 +17,14 @@ import (
 )
 
 type MstrKgtController struct {
-	KegiatanMasterRepo   *tjsl.KegiatanMasterRepo
-	PihcMasterKaryRtRepo *pihc.PihcMasterKaryRtRepo
+	KegiatanMasterRepo     *tjsl.KegiatanMasterRepo
+	PihcMasterKaryRtDbRepo *pihc.PihcMasterKaryRtDbRepo
 }
 
-func NewMstrKgtController(db *gorm.DB) *MstrKgtController {
+func NewMstrKgtController(Db *gorm.DB, StorageClient *storage.Client) *MstrKgtController {
 	return &MstrKgtController{
-		KegiatanMasterRepo:   tjsl.NewKegiatanMasterRepo(db),
-		PihcMasterKaryRtRepo: pihc.NewPihcMasterKaryRtRepo(db)}
+		KegiatanMasterRepo:     tjsl.NewKegiatanMasterRepo(Db),
+		PihcMasterKaryRtDbRepo: pihc.NewPihcMasterKaryRtDbRepo(Db)}
 }
 
 func (c *MstrKgtController) ListMasterKegiatan(ctx *gin.Context) {
@@ -41,7 +42,7 @@ func (c *MstrKgtController) ListMasterKegiatan(ctx *gin.Context) {
 		return
 	}
 
-	PIHC_MSTR_KRY_RT, err := c.PihcMasterKaryRtRepo.FindUserByNIK(req.NIK)
+	PIHC_MSTR_KRY_RT, err := c.PihcMasterKaryRtDbRepo.FindUserByNIK(req.NIK)
 
 	comp_code := PIHC_MSTR_KRY_RT.Company
 
@@ -104,7 +105,7 @@ func (c *MstrKgtController) StoreMasterKegiatan(ctx *gin.Context) {
 		return
 	}
 
-	PIHC_MSTR_KRY_RT, err := c.PihcMasterKaryRtRepo.FindUserByNIK(req.NIK)
+	PIHC_MSTR_KRY_RT, err := c.PihcMasterKaryRtDbRepo.FindUserByNIK(req.NIK)
 
 	comp_code := PIHC_MSTR_KRY_RT.Company
 

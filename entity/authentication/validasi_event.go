@@ -98,6 +98,16 @@ type ValidasiStoreNotulen struct {
 	IdEvent   string `form:"id_event" binding:"required"`
 	Deskripsi string `form:"deskripsi" binding:"required"`
 }
+type ValidasiRenameFileNotulen struct {
+	ValidasiStoreNotulen
+	OldNameFile string `form:"old_name_file" binding:"required"`
+	NewNameFile string `form:"new_name_file" binding:"required"`
+}
+
+type ValidasiDeleteFileNotulen struct {
+	ValidasiStoreNotulen
+	NameFile string `form:"name_file" binding:"required"`
+}
 
 type Event struct {
 	EventID         int     `json:"event_id"`
@@ -163,12 +173,12 @@ type EventBookRoom struct {
 }
 
 type EventPersonDetail struct {
-	Nik             string  `json:"nik"`
-	Nama            string  `json:"nama"`
+	Nik             string `json:"nik"`
+	Nama            string `json:"nama"`
 	DeptTitle       string `json:"dept_title"`
-	Email           string  `json:"email"`
-	StatusKehadiran string  `json:"status_kehadiran"`
-	PhotoURL        string  `json:"photo_url"`
+	Email           string `json:"email"`
+	StatusKehadiran string `json:"status_kehadiran"`
+	PhotoURL        string `json:"photo_url"`
 }
 
 type EventShowEvent struct {

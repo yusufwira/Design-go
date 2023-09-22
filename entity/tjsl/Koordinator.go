@@ -100,7 +100,7 @@ func (t KegiatanKoordinatorRepo) ListKoordinatorLuarKegiatan(nik string) ([]Resu
 		return results, err
 	}
 
-	var karyawan []pihc.PihcMasterKaryRt
+	var karyawan []pihc.PihcMasterKaryRtDb
 	t.DB.Raw(`
 		SELECT pmkr.*
 		FROM tjsl.kegiatan_koordinator kk
@@ -114,11 +114,66 @@ func (t KegiatanKoordinatorRepo) ListKoordinatorLuarKegiatan(nik string) ([]Resu
 	`, nik).Scan(&karyawan)
 
 	for i, data := range results {
-		data.Employee = karyawan[i]
+		data_karyawan_convert := convertSourceTargetDataKaryawanRt(karyawan[i])
+		data.Employee = data_karyawan_convert
 		results[i].Employee = data.Employee
 	}
 
 	return results, nil
+}
+
+func convertSourceTargetDataKaryawanRt(source pihc.PihcMasterKaryRtDb) pihc.PihcMasterKaryRt {
+	return pihc.PihcMasterKaryRt{
+		EmpNo:          source.EmpNo,
+		Nama:           source.Nama,
+		Gender:         source.Gender,
+		Agama:          source.Agama,
+		StatusKawin:    source.StatusKawin,
+		Anak:           source.Anak,
+		Mdg:            "0",
+		EmpGrade:       source.EmpGrade,
+		EmpGradeTitle:  source.EmpGradeTitle,
+		Area:           source.Area,
+		AreaTitle:      source.AreaTitle,
+		SubArea:        source.SubArea,
+		SubAreaTtitle:  source.SubAreaTtitle,
+		Contract:       source.Contract,
+		Pendidikan:     source.Pendidikan,
+		Company:        source.Company,
+		Lokasi:         source.Lokasi,
+		EmployeeStatus: source.EmployeeStatus,
+		Email:          source.Email,
+		HP:             source.HP,
+		TglLahir:       source.TglLahir.Format("2006-01-02"),
+		PosID:          source.PosID,
+		PosTitle:       source.PosTitle,
+		SubPosID:       source.SubPosID,
+		PosGrade:       source.PosGrade,
+		PosKategori:    source.PosKategori,
+		OrgID:          source.OrgID,
+		OrgTitle:       source.OrgTitle,
+		DeptID:         source.DeptID,
+		DeptTitle:      source.DeptTitle,
+		KompID:         source.KompID,
+		KompTitle:      source.KompTitle,
+		DirID:          source.DirID,
+		DirTitle:       source.DirTitle,
+		PosLevel:       source.PosLevel,
+		SupEmpNo:       source.SupEmpNo,
+		BagID:          source.BagID,
+		BagTitle:       source.BagTitle,
+		SeksiID:        source.SeksiID,
+		SeksiTitle:     source.SeksiTitle,
+		PreNameTitle:   source.PreNameTitle,
+		PostNameTitle:  source.PostNameTitle,
+		NoNPWP:         source.NoNPWP,
+		BankAccount:    source.BankAccount,
+		BankName:       source.BankName,
+		MdgDate:        source.MdgDate,
+		PayScale:       source.PayScale,
+		CCCode:         source.CCCode,
+		Nickname:       source.Nickname,
+	}
 }
 func (t KegiatanKoordinatorRepo) ListKoordinatorDalamKegiatan(slug string, nik string) ([]Result, error) {
 	results := []Result{}
@@ -134,7 +189,7 @@ func (t KegiatanKoordinatorRepo) ListKoordinatorDalamKegiatan(slug string, nik s
 		return results, err
 	}
 
-	var karyawan []pihc.PihcMasterKaryRt
+	var karyawan []pihc.PihcMasterKaryRtDb
 	t.DB.Raw(`SELECT pmkr.*
 				FROM tjsl.kegiatan_mstr km
 			JOIN tjsl.kegiatan_koordinator kk ON kk.kegiatan_parent_id = km.id_kegiatan
@@ -144,7 +199,8 @@ func (t KegiatanKoordinatorRepo) ListKoordinatorDalamKegiatan(slug string, nik s
 		Scan(&karyawan)
 
 	for i, data := range results {
-		data.Employee = karyawan[i]
+		data_karyawan_convert := convertSourceTargetDataKaryawanRt(karyawan[i])
+		data.Employee = data_karyawan_convert
 		results[i].Employee = data.Employee
 	}
 

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"cloud.google.com/go/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	Authentication "github.com/yusufwira/lern-golang-gin/entity/authentication"
@@ -18,17 +19,19 @@ type KoorKgtController struct {
 	KegiatanPhotosRepo      *tjsl.KegiatanPhotosRepo
 	KegiatanMasterRepo      *tjsl.KegiatanMasterRepo
 	KoordinatorPersonRepo   *tjsl.KoordinatorPersonRepo
-	PihcMasterKaryRepo      *pihc.PihcMasterKaryRepo
+	PihcMasterKaryDbRepo    *pihc.PihcMasterKaryDbRepo
+	PihcMasterKaryRtDbRepo  *pihc.PihcMasterKaryRtDbRepo
 	PihcMasterKaryRtRepo    *pihc.PihcMasterKaryRtRepo
 }
 
-func NewKoorKgtController(db *gorm.DB) *KoorKgtController {
-	return &KoorKgtController{KegiatanKoordinatorRepo: tjsl.NewKegiatanKoordinatorRepo(db),
-		KegiatanPhotosRepo:    tjsl.NewKegiatanPhotosRepo(db),
-		KoordinatorPersonRepo: tjsl.NewKoordinatorPersonRepo(db),
-		PihcMasterKaryRepo:    pihc.NewPihcMasterKaryRepo(db),
-		PihcMasterKaryRtRepo:  pihc.NewPihcMasterKaryRtRepo(db),
-		KegiatanMasterRepo:    tjsl.NewKegiatanMasterRepo(db)}
+func NewKoorKgtController(Db *gorm.DB, StorageClient *storage.Client) *KoorKgtController {
+	return &KoorKgtController{KegiatanKoordinatorRepo: tjsl.NewKegiatanKoordinatorRepo(Db),
+		KegiatanPhotosRepo:     tjsl.NewKegiatanPhotosRepo(Db),
+		KoordinatorPersonRepo:  tjsl.NewKoordinatorPersonRepo(Db),
+		PihcMasterKaryDbRepo:   pihc.NewPihcMasterKaryDbRepo(Db),
+		PihcMasterKaryRtDbRepo: pihc.NewPihcMasterKaryRtDbRepo(Db),
+		PihcMasterKaryRtRepo:   pihc.NewPihcMasterKaryRtRepo(Db),
+		KegiatanMasterRepo:     tjsl.NewKegiatanMasterRepo(Db)}
 }
 
 func getErrorMsg(fe validator.FieldError) string {
@@ -61,7 +64,7 @@ func (c *KoorKgtController) StoreKoordinator(ctx *gin.Context) {
 		return
 	}
 
-	PIHC_MSTR_KRY_RT, _ := c.PihcMasterKaryRtRepo.FindUserByNIK(req.Nik)
+	PIHC_MSTR_KRY_RT, _ := c.PihcMasterKaryRtDbRepo.FindUserByNIK(req.Nik)
 
 	comp_code := PIHC_MSTR_KRY_RT.Company
 
@@ -190,17 +193,20 @@ func (c *KoorKgtController) ShowDetailKoordinator(ctx *gin.Context) {
 	// var list_person []Authentication.Personal
 	data_list := make([]Authentication.Personal, len(data_person))
 	for i, list_data_person := range data_person {
-		data_karyawan, _ := c.PihcMasterKaryRepo.FindUserByNIK(list_data_person.NIK)
+		data_karyawan, _ := c.PihcMasterKaryDbRepo.FindUserByNIK(list_data_person.NIK)
 
+		// data_list[i].Employee.TglLahir = data_karyawan.TglLahir.Format("2006-01-02")
+		data_karyawan_convert := convertSourceTargetDataKaryawan(data_karyawan)
 		data_list[i] = Authentication.Personal{
 			ID:            list_data_person.Id,
 			KoordinatorID: list_data_person.KoordinatorId,
 			Nik:           list_data_person.NIK,
 			CreatedAt:     list_data_person.CreatedAt,
 			UpdatedAt:     list_data_person.UpdatedAt,
-			Employee:      data_karyawan,
+			Employee:      data_karyawan_convert,
 			URLPhoto:      "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg",
 		}
+
 		// data_list := Authentication.Personal{
 		// 	ID:            list_data_person.Id,
 		// 	KoordinatorID: list_data_person.KoordinatorId,
@@ -222,6 +228,60 @@ func (c *KoorKgtController) ShowDetailKoordinator(ctx *gin.Context) {
 		})
 	} else {
 		ctx.AbortWithStatus(http.StatusInternalServerError)
+	}
+}
+
+func convertSourceTargetDataKaryawan(source pihc.PihcMasterKaryDb) pihc.PihcMasterKary {
+	return pihc.PihcMasterKary{
+		EmpNo:          source.EmpNo,
+		Nama:           source.Nama,
+		Gender:         source.Gender,
+		Agama:          source.Agama,
+		StatusKawin:    source.StatusKawin,
+		Anak:           source.Anak,
+		Mdg:            "0",
+		EmpGrade:       source.EmpGrade,
+		EmpGradeTitle:  source.EmpGradeTitle,
+		Area:           source.Area,
+		AreaTitle:      source.AreaTitle,
+		SubArea:        source.SubArea,
+		SubAreaTtitle:  source.SubAreaTtitle,
+		Contract:       source.Contract,
+		Pendidikan:     source.Pendidikan,
+		Company:        source.Company,
+		Lokasi:         source.Lokasi,
+		EmployeeStatus: source.EmployeeStatus,
+		Email:          source.Email,
+		HP:             source.HP,
+		TglLahir:       source.TglLahir.Format("2006-01-02"),
+		PosID:          source.PosID,
+		PosTitle:       source.PosTitle,
+		SubPosID:       source.SubPosID,
+		PosGrade:       source.PosGrade,
+		PosKategori:    source.PosKategori,
+		OrgID:          source.OrgID,
+		OrgTitle:       source.OrgTitle,
+		DeptID:         source.DeptID,
+		DeptTitle:      source.DeptTitle,
+		KompID:         source.KompID,
+		KompTitle:      source.KompTitle,
+		DirID:          source.DirID,
+		DirTitle:       source.DirTitle,
+		PosLevel:       source.PosLevel,
+		SupEmpNo:       source.SupEmpNo,
+		BagID:          source.BagID,
+		BagTitle:       source.BagTitle,
+		SeksiID:        source.SeksiID,
+		SeksiTitle:     source.SeksiTitle,
+		PreNameTitle:   source.PreNameTitle,
+		PostNameTitle:  source.PostNameTitle,
+		NoNPWP:         source.NoNPWP,
+		BankAccount:    source.BankAccount,
+		BankName:       source.BankName,
+		MdgDate:        source.MdgDate,
+		PayScale:       source.PayScale,
+		CCCode:         source.CCCode,
+		Nickname:       source.Nickname,
 	}
 }
 

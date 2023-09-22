@@ -22,7 +22,7 @@ func New() UserService {
 
 func (service *userService) Save(user users.User) users.User {
 	db := connection.Database()
-	db.Table("User").Create(user)
+	db.Db.Table("User").Create(user)
 	return user
 }
 
@@ -33,13 +33,13 @@ func (service *userService) FindAll() []users.User {
 func (service *userService) GetAll() []users.User {
 	var user []users.User
 	db := connection.Database()
-	db.Table("public.users").Find(&user)
+	db.Db.Table("public.users").Find(&user)
 	return user
 }
 
 func (service *userService) GetUsersID(id string) []users.User {
 	var user []users.User
 	db := connection.Database()
-	db.Table("public.users").Where("id = ?", id).Take(&user)
+	db.Db.Table("public.users").Where("id = ?", id).Take(&user)
 	return user
 }

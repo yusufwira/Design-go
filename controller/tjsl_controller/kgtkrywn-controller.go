@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"cloud.google.com/go/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	Authentication "github.com/yusufwira/lern-golang-gin/entity/authentication"
@@ -20,16 +21,18 @@ type KgtKrywnController struct {
 	KegiatanKaryawanRepo   *tjsl.KegiatanKaryawanRepo
 	KegiatanMasterRepo     *tjsl.KegiatanMasterRepo
 	KegiatanPhotosRepo     *tjsl.KegiatanPhotosRepo
+	PihcMasterKaryRtDbRepo *pihc.PihcMasterKaryRtDbRepo
 	PihcMasterKaryRtRepo   *pihc.PihcMasterKaryRtRepo
 	PihcMasterPositionRepo *pihc.PihcMasterPositionRepo
 }
 
-func NewKgtKrywnController(db *gorm.DB) *KgtKrywnController {
-	return &KgtKrywnController{KegiatanKaryawanRepo: tjsl.NewKegiatanKaryawanRepo(db),
-		KegiatanMasterRepo:     tjsl.NewKegiatanMasterRepo(db),
-		KegiatanPhotosRepo:     tjsl.NewKegiatanPhotosRepo(db),
-		PihcMasterKaryRtRepo:   pihc.NewPihcMasterKaryRtRepo(db),
-		PihcMasterPositionRepo: pihc.NewPihcMasterPositionRepo(db)}
+func NewKgtKrywnController(Db *gorm.DB, StorageClient *storage.Client) *KgtKrywnController {
+	return &KgtKrywnController{KegiatanKaryawanRepo: tjsl.NewKegiatanKaryawanRepo(Db),
+		KegiatanMasterRepo:     tjsl.NewKegiatanMasterRepo(Db),
+		KegiatanPhotosRepo:     tjsl.NewKegiatanPhotosRepo(Db),
+		PihcMasterKaryRtRepo:   pihc.NewPihcMasterKaryRtRepo(Db),
+		PihcMasterKaryRtDbRepo: pihc.NewPihcMasterKaryRtDbRepo(Db),
+		PihcMasterPositionRepo: pihc.NewPihcMasterPositionRepo(Db)}
 }
 
 func (c *KgtKrywnController) StorePengajuanKegiatan(ctx *gin.Context) {
@@ -49,7 +52,7 @@ func (c *KgtKrywnController) StorePengajuanKegiatan(ctx *gin.Context) {
 		return
 	}
 
-	PIHC_MSTR_KRY_RT, err := c.PihcMasterKaryRtRepo.FindUserByNIK(req.NIK)
+	PIHC_MSTR_KRY_RT, err := c.PihcMasterKaryRtDbRepo.FindUserByNIK(req.NIK)
 
 	comp_code := PIHC_MSTR_KRY_RT.Company
 
@@ -67,8 +70,8 @@ func (c *KgtKrywnController) StorePengajuanKegiatan(ctx *gin.Context) {
 
 		// tgl_kegiatan, _ := time.Parse(time.DateOnly, req.TanggalKegiatan)
 		// kgt_krywn.TanggalKegiatan = datatypes.Date(tgl_kegiatan)
-		parsedTime, _ := time.Parse(time.DateTime, req.TanggalKegiatan)
-		kgt_krywn.TanggalKegiatan = parsedTime
+		// parsedTime, _ := time.Parse(time.DateTime, req.TanggalKegiatan)
+		kgt_krywn.TanggalKegiatan, _ = time.Parse(time.DateTime, req.TanggalKegiatan)
 		kgt_krywn.LokasiKegiatan = req.LokasiKegiatan
 		if req.DeskripsiKegiatan != nil {
 			kgt_krywn.DeskripsiKegiatan = req.DeskripsiKegiatan
@@ -129,8 +132,8 @@ func (c *KgtKrywnController) StorePengajuanKegiatan(ctx *gin.Context) {
 		// Using datatypes.Date
 		// tgl_kegiatan, _ := time.Parse(time.DateOnly, req.TanggalKegiatan)
 		// kk.TanggalKegiatan = datatypes.Date(tgl_kegiatan)
-		parsedTime, _ := time.Parse(time.DateTime, req.TanggalKegiatan)
-		kk.TanggalKegiatan = parsedTime
+		// parsedTime, _ := time.Parse(time.DateTime, req.TanggalKegiatan)
+		kk.TanggalKegiatan, _ = time.Parse(time.DateTime, req.TanggalKegiatan)
 		kk.LokasiKegiatan = req.LokasiKegiatan
 		kk.DeskripsiKegiatan = req.DeskripsiKegiatan
 		kk.Status = "WaitApv"
@@ -391,7 +394,7 @@ func (c *KgtKrywnController) ShowDetailPengajuanKegiatan(ctx *gin.Context) {
 	}
 	data_kp := c.KegiatanPhotosRepo.FindDataPhotosID(kegiatan_id, is_koordinator)
 
-	data_pihc, err_pihc := c.PihcMasterKaryRtRepo.FindUserByNIK(data_kk.NIK)
+	data_pihc, err_pihc := c.PihcMasterKaryRtDbRepo.FindUserByNIK(data_kk.NIK)
 
 	data.IDKegiatan = data_kk.Id
 	data.SlugKegiatan = data_kk.Slug
