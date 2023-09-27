@@ -64,21 +64,16 @@ func (c *KoorKgtController) StoreKoordinator(ctx *gin.Context) {
 		return
 	}
 
-	PIHC_MSTR_KRY_RT, _ := c.PihcMasterKaryRtDbRepo.FindUserByNIK(req.Nik)
+	PIHC_MSTR_KRY, _ := c.PihcMasterKaryDbRepo.FindUserByNIK(req.Nik)
 
-	comp_code := PIHC_MSTR_KRY_RT.Company
+	comp_code := PIHC_MSTR_KRY.Company
 
 	if req.Id != 0 {
 		kgt_koor, err_kgt_koor := c.KegiatanKoordinatorRepo.FindDataID(req.Id)
 		kgt_koor.Nama = req.Nama
 
-		var isKoordinator int
 		if req.KegiatanParentId != nil {
 			kgt_koor.KegiatanParentId = req.KegiatanParentId
-			isKoordinator = 0
-		}
-		if req.KegiatanParentId == nil {
-			isKoordinator = 1
 		}
 
 		if err_kgt_koor == nil {
@@ -88,7 +83,7 @@ func (c *KoorKgtController) StoreKoordinator(ctx *gin.Context) {
 
 				for _, dataPhotos := range req.Photos {
 					kp.KegiatanId = kgt_koor.IdKoordinator
-					kp.IsKoordinator = isKoordinator
+					kp.IsKoordinator = 1
 					kp.OriginalName = dataPhotos.OriginalName
 					kp.Url = dataPhotos.URL
 					// url, _ := c.KegiatanPhotosRepo.GetFileExtensionFromUrl(kp.Url)
@@ -117,14 +112,8 @@ func (c *KoorKgtController) StoreKoordinator(ctx *gin.Context) {
 			})
 		}
 	} else {
-		// t := time.Now()
-		var isKoordinator int
 		if req.KegiatanParentId != nil {
 			koorKgt.KegiatanParentId = req.KegiatanParentId
-			isKoordinator = 0
-		}
-		if req.KegiatanParentId == nil {
-			isKoordinator = 1
 		}
 		koorKgt.Nama = req.Nama
 		koorKgt.CreatedBy = req.Nik
@@ -137,7 +126,7 @@ func (c *KoorKgtController) StoreKoordinator(ctx *gin.Context) {
 		if err_koorKgt == nil {
 			for _, dataPhotos := range req.Photos {
 				kp.KegiatanId = koorKgt.IdKoordinator
-				kp.IsKoordinator = isKoordinator
+				kp.IsKoordinator = 1
 				kp.OriginalName = dataPhotos.OriginalName
 				kp.Url = dataPhotos.URL
 				// url, _ := c.KegiatanPhotosRepo.GetFileExtensionFromUrl(kp.Url)

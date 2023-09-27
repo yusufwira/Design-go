@@ -26,6 +26,25 @@ type KegiatanKaryawan struct {
 	Periode           string    `json:"periode"`
 }
 
+type MyKegiatanTJSL struct {
+	Id                int       `json:"id" gorm:"primary_key"`
+	NIK               string    `json:"nik"`
+	KegiatanParentId  *int      `json:"kegiatan_parent_id" gorm:"default:null"`
+	KoordinatorId     *int      `json:"koordinator_id" gorm:"default:null"`
+	NamaKegiatan      string    `json:"nama_kegiatan"`
+	TanggalKegiatan   string    `json:"tanggal_kegiatan"`
+	LokasiKegiatan    string    `json:"lokasi_kegiatan"`
+	DeskripsiKegiatan *string   `json:"deskripsi_kegiatan"`
+	Status            string    `json:"status"`
+	CreatedAt         time.Time `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt         time.Time `json:"updated_at" gorm:"autoUpdateTime"`
+	Manager           *string   `json:"manager"`
+	Slug              *string   `json:"slug"`
+	DescDecline       *string   `json:"desc_decline" gorm:"default:null"`
+	CompCode          string    `json:"comp_code"`
+	Periode           string    `json:"periode"`
+}
+
 type DataKegiatanKaryawan struct {
 	KegiatanKaryawan
 	pihc.PihcMasterKaryRt

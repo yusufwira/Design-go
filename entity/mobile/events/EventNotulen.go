@@ -2,20 +2,19 @@ package events
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"mime/multipart"
+	"net/url"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
 	"cloud.google.com/go/storage"
 	"github.com/joho/godotenv"
-	"golang.org/x/oauth2/google"
 	"google.golang.org/api/iterator"
 	"gorm.io/gorm"
 )
@@ -44,6 +43,22 @@ func (EventNotulen) TableName() string {
 type EventNotulenRepo struct {
 	DB            *gorm.DB
 	StorageClient *storage.Client
+}
+
+func (t EventNotulenRepo) CreateNotulen(en EventNotulen) (EventNotulen, error) {
+	err := t.DB.Create(&en).Error
+	if err != nil {
+		return en, err
+	}
+	return en, nil
+}
+
+func (t EventNotulenRepo) CreateNotulenFiles(en EventNotulenFile) (EventNotulenFile, error) {
+	err := t.DB.Table("mobile.event_notulen_file").Create(&en).Error
+	if err != nil {
+		return en, err
+	}
+	return en, nil
 }
 
 func NewEventNotulenRepo(db *gorm.DB, sc *storage.Client) *EventNotulenRepo {
@@ -84,43 +99,60 @@ func (t EventNotulenRepo) DeleteEventNotulen(id int) error {
 	return err
 }
 
-func (t EventNotulenRepo) DeleteEventNotulenFile(id int) error {
+func (t EventNotulenRepo) DeleteEventNotulenFile(id int) (EventNotulenFile, error) {
 	var ev_rb EventNotulenFile
-	err := t.DB.Table("mobile.event_notulen_file").Where("id_notulen=?", id).Error
+	err := t.DB.Table("mobile.event_notulen_file").Where("id_notulen=?", id).First(&ev_rb).Error
 	if err == nil {
 		t.DB.Table("mobile.event_notulen_file").Where("id_notulen= ?", id).Delete(&ev_rb)
-		return nil
+		return ev_rb, nil
 	}
-	return err
+	return ev_rb, err
 }
 
-func (t EventNotulenRepo) UploadFile(objName string, files multipart.File) (string, error) {
+func (t EventNotulenRepo) DeleteEventNotulenFiles(id int) (EventNotulenFile, error) {
+	var ev_rb EventNotulenFile
+	err := t.DB.Table("mobile.event_notulen_file").Where("id_notulen_file=?", id).First(&ev_rb).Error
+	if err == nil {
+		t.DB.Table("mobile.event_notulen_file").Where("id_notulen_file= ?", id).Delete(&ev_rb)
+		return ev_rb, nil
+	}
+	return ev_rb, err
+}
+
+func (t EventNotulenRepo) UploadFile(objName string, files multipart.File) (string, string, error) {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatalf("err loading: %v", err)
 	}
-	gcsFile := "serviceAccount.json"
+	// gcsFile := "serviceAccount.json"
 
-	gcs, err := ioutil.ReadFile(gcsFile)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	// gcs, err := ioutil.ReadFile(gcsFile)
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
 
-	cfg, err := google.JWTConfigFromJSON(gcs)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	// cfg, err := google.JWTConfigFromJSON(gcs)
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
 
-	expires := time.Now().Add(time.Second * 60)
+	// expires := time.Now().Add(time.Second * 60)
 
 	ctx := context.Background() // Create a new context
 
-	bckt := t.StorageClient.Bucket(os.Getenv("GC_IMAGE_BUCKET"))
+	bckt := t.StorageClient.Bucket(os.Getenv("GC_LUMEN_BUCKET"))
 	folderName1 := "Event"
 	folderName2 := "Notulen"
-	tahun := time.Now().Year()
-	fd, _ := createFolderNotulen(bckt, ctx, folderName1, folderName2, strconv.Itoa(tahun))
-	object := bckt.Object(fd + objName)
+	time := time.Now()
+	tahun := time.Format("2006")
+	tanggal := time.Format("02012006")
+	jam := time.Format("150405")
+	fileName := tanggal + "_" + jam + "_" + objName
+	fmt.Println(fileName)
+	fd, _ := createFolderNotulen(bckt, ctx, folderName1, folderName2, tahun)
+
+	location := fd + fileName
+	object := bckt.Object(location)
 	wc := object.NewWriter(ctx)
 
 	// set cache control so the image will be served fresh by browsers
@@ -130,41 +162,64 @@ func (t EventNotulenRepo) UploadFile(objName string, files multipart.File) (stri
 	// multipart.File has a reader!
 	if _, err := io.Copy(wc, files); err != nil {
 		log.Printf("Unable to write a file to Google Cloud Storage: %v\n", err)
-		return "", err
+		return "", " ", err
 	}
 
 	if err := wc.Close(); err != nil {
-		return "", fmt.Errorf("Writer.Close: %v", err)
+		return "", " ", fmt.Errorf("Writer.Close: %v", err)
 	}
 
-	opts := &storage.SignedURLOptions{
-		GoogleAccessID: cfg.Email,
-		PrivateKey:     cfg.PrivateKey,
-		Method:         "GET",
-		Expires:        expires,
+	// Set the object's ACL to public read access
+	if err := makePublic(ctx, object); err != nil {
+		log.Fatalf("Failed to make the object public: %v", err)
 	}
 
-	url, err := bckt.SignedURL(fd+objName, opts)
-	if err != nil {
-		return "", fmt.Errorf("Bucket(%v).SignedURL: %w", bckt, err)
+	// opts := &storage.SignedURLOptions{
+	// 	GoogleAccessID: cfg.Email,
+	// 	PrivateKey:     cfg.PrivateKey,
+	// 	Method:         "GET",
+	// 	Expires:        expires,
+	// }
+
+	// url, err := bckt.SignedURL(fd+fileName, opts)
+	// if err != nil {
+	// 	return "", fmt.Errorf("Bucket(%v).SignedURL: %w", bckt, err)
+	// }
+
+	imageURL := fmt.Sprintf("https://storage.googleapis.com/%s/%s", os.Getenv("GC_LUMEN_BUCKET"), location)
+
+	return imageURL, fileName, nil
+}
+
+// makePublic makes the object publicly accessible by setting its ACL.
+func makePublic(ctx context.Context, object *storage.ObjectHandle) error {
+	// Create a new ACL rule to allow public read access
+	rule := storage.ACLRule{
+		Entity: storage.AllUsers,
+		Role:   storage.RoleReader,
 	}
 
-	// imageURL := fmt.Sprintf("http://storage.googleapis.com/lumen-oauth-storage/%s/%s", os.Getenv("GC_IMAGE_BUCKET"), objName)
+	// Add the ACL rule to the object's ACL
+	if err := object.ACL().Set(ctx, rule.Entity, rule.Role); err != nil {
+		return err
+	}
 
-	return url, nil
+	return nil
 }
 
 func createFolderNotulen(bucketName *storage.BucketHandle, ctx context.Context, folderName1 string, folderName2 string, tahun string) (string, error) {
 	// Create an empty object (blob) with the folder name as the object name
-	writer := bucketName.Object(folderName1 + "/" + folderName2 + "/" + tahun + "/").NewWriter(ctx)
+	foldername := folderName1 + "/" + folderName2 + "/" + tahun + "/"
+
+	writer := bucketName.Object(foldername).NewWriter(ctx)
 	if _, err := writer.Write([]byte("")); err != nil {
-		return folderName1 + "/" + folderName2 + "/" + tahun + "/", err
+		return foldername, err
 	}
 	if err := writer.Close(); err != nil {
-		return folderName1 + "/" + folderName2 + "/" + tahun + "/", err
+		return foldername, err
 	}
 
-	return folderName1 + "/" + folderName2 + "/" + tahun + "/", nil
+	return foldername, nil
 }
 
 func (t EventNotulenRepo) RenameFileGCS(objName string, newObjName string) (string, error) {
@@ -275,4 +330,16 @@ func (t EventNotulenRepo) DeleteFileGCS(objName string) error {
 	}
 
 	return nil
+}
+
+func (t EventNotulenRepo) GetFileExtensionFromUrl(rawUrl string) (string, error) {
+	u, err := url.Parse(rawUrl)
+	if err != nil {
+		return "", err
+	}
+	pos := strings.LastIndex(u.Path, ".")
+	if pos == -1 {
+		return "", errors.New("couldn't find a period to indicate a file extension")
+	}
+	return u.Path[pos+1 : len(u.Path)], nil
 }

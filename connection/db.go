@@ -18,18 +18,33 @@ type dB struct {
 	StorageClient *storage.Client
 }
 
+type Config struct {
+	PGHost     string
+	PGPort     string
+	PGUser     string
+	PGPassword string
+	PGDB       string
+}
+
+func loadConfig() Config {
+	return Config{
+		PGHost:     os.Getenv("DB_HOST"),
+		PGPort:     os.Getenv("DB_PORT"),
+		PGUser:     os.Getenv("DB_USERNAME"),
+		PGPassword: os.Getenv("DB_PASSWORD"),
+		PGDB:       os.Getenv("DB_DATABASE"),
+	}
+}
+
 func Database() *dB {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatalf("err loading: %v", err)
 	}
-	pgHost := os.Getenv("DB_HOST")
-	pgPort := os.Getenv("DB_PORT")
-	pgUser := os.Getenv("DB_USERNAME")
-	pgPassword := os.Getenv("DB_PASSWORD")
-	pgDB := os.Getenv("DB_DATABASE")
 
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s", pgHost, pgPort, pgUser, pgPassword, pgDB)
+	config := loadConfig()
+
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s", config.PGHost, config.PGPort, config.PGUser, config.PGPassword, config.PGDB)
 	db, errs := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	// dsn := "postgres://postgres:V3ry5tr0n94dm1nP@$$w0rd@192.168.188.232:5432/pi-smart"

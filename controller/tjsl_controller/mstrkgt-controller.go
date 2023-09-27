@@ -19,12 +19,14 @@ import (
 type MstrKgtController struct {
 	KegiatanMasterRepo     *tjsl.KegiatanMasterRepo
 	PihcMasterKaryRtDbRepo *pihc.PihcMasterKaryRtDbRepo
+	PihcMasterKaryDbRepo   *pihc.PihcMasterKaryDbRepo
 }
 
 func NewMstrKgtController(Db *gorm.DB, StorageClient *storage.Client) *MstrKgtController {
 	return &MstrKgtController{
 		KegiatanMasterRepo:     tjsl.NewKegiatanMasterRepo(Db),
-		PihcMasterKaryRtDbRepo: pihc.NewPihcMasterKaryRtDbRepo(Db)}
+		PihcMasterKaryRtDbRepo: pihc.NewPihcMasterKaryRtDbRepo(Db),
+		PihcMasterKaryDbRepo:   pihc.NewPihcMasterKaryDbRepo(Db)}
 }
 
 func (c *MstrKgtController) ListMasterKegiatan(ctx *gin.Context) {
@@ -42,9 +44,9 @@ func (c *MstrKgtController) ListMasterKegiatan(ctx *gin.Context) {
 		return
 	}
 
-	PIHC_MSTR_KRY_RT, err := c.PihcMasterKaryRtDbRepo.FindUserByNIK(req.NIK)
+	PIHC_MSTR_KRY, err := c.PihcMasterKaryDbRepo.FindUserByNIK(req.NIK)
 
-	comp_code := PIHC_MSTR_KRY_RT.Company
+	comp_code := PIHC_MSTR_KRY.Company
 
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{
@@ -105,9 +107,9 @@ func (c *MstrKgtController) StoreMasterKegiatan(ctx *gin.Context) {
 		return
 	}
 
-	PIHC_MSTR_KRY_RT, err := c.PihcMasterKaryRtDbRepo.FindUserByNIK(req.NIK)
+	PIHC_MSTR_KRY, err := c.PihcMasterKaryDbRepo.FindUserByNIK(req.NIK)
 
-	comp_code := PIHC_MSTR_KRY_RT.Company
+	comp_code := PIHC_MSTR_KRY.Company
 
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{

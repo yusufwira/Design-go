@@ -27,6 +27,18 @@ func NewEventMateriFileRepo(db *gorm.DB) *EventMateriFileRepo {
 	return &EventMateriFileRepo{DB: db}
 }
 
+func (t EventMateriFileRepo) Create(mf EventMateriFile) (EventMateriFile, error) {
+	err := t.DB.Create(&mf).Error
+	if err != nil {
+		return mf, err
+	}
+	return mf, nil
+}
+
+func (t EventMateriFileRepo) DelMateriFileLama(event_id int, list_id []int) {
+	t.DB.Where("id_event = ? AND id_materi_file not in(?)", event_id, list_id).Delete(&EventMateriFile{})
+}
+
 func (t EventMateriFileRepo) FindEventMateriFile(idEvent int) ([]EventMateriFile, error) {
 	var ev_materi_file []EventMateriFile
 	err := t.DB.Where("id_event=?", idEvent).Find(&ev_materi_file).Error
@@ -44,4 +56,14 @@ func (t EventMateriFileRepo) DeleteEventMateriFile(id int) error {
 		return nil
 	}
 	return err
+}
+
+func (t EventMateriFileRepo) DeleteMateriFiles(id int) (EventMateriFile, error) {
+	var ev_materi_file EventMateriFile
+	err := t.DB.Where("id_materi_file=?", id).First(&ev_materi_file).Error
+	if err == nil {
+		t.DB.Where("id_materi_file= ?", id).Delete(&ev_materi_file)
+		return ev_materi_file, nil
+	}
+	return ev_materi_file, err
 }

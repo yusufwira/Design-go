@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -9,6 +11,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/yusufwira/lern-golang-gin/connection"
+	"github.com/yusufwira/lern-golang-gin/controller"
 	"github.com/yusufwira/lern-golang-gin/controller/event_controller"
 	"github.com/yusufwira/lern-golang-gin/controller/tjsl_controller"
 )
@@ -20,7 +23,7 @@ func main() {
 	kgtKrywnController := tjsl_controller.NewKgtKrywnController(db.Db, db.StorageClient)
 	koorkgtController := tjsl_controller.NewKoorKgtController(db.Db, db.StorageClient)
 	eventController := event_controller.NewEventController(db.Db, db.StorageClient)
-	// UserController := controller.NewUserController(db)
+	UserController := controller.NewUserController(db.Db)
 
 	r := gin.Default()
 
@@ -31,41 +34,41 @@ func main() {
 		auth.GET("/token", ginserver.HandleTokenRequest)
 	}
 
-	// api := r.Group("/api")
-	// {
-	// 	fmt.Println("masuk")
-	// 	api.Use(ginserver.HandleTokenVerify())
-	// 	fmt.Println("masuk2")
-	// 	api.GET("/test", func(c *gin.Context) {
-	// 		ti, exists := c.Get(ginserver.DefaultConfig.TokenKey)
-	// 		if exists {
-	// 			c.JSON(http.StatusOK, ti)
-	// 			return
-	// 		}
-	// 		c.String(http.StatusOK, "not found")
-	// 	})
+	api := r.Group("/api")
+	{
+		fmt.Println("masuk")
+		api.Use(ginserver.HandleTokenVerify())
+		fmt.Println("masuk2")
+		api.GET("/test", func(c *gin.Context) {
+			ti, exists := c.Get(ginserver.DefaultConfig.TokenKey)
+			if exists {
+				c.JSON(http.StatusOK, ti)
+				return
+			}
+			c.String(http.StatusOK, "not found")
+		})
 
-	// 	r.GET("/getUserOuath", func(c *gin.Context) {
-	// 		c.JSON(http.StatusOK, UserController.Index())
-	// 	})
+		r.GET("/getUserOuath", func(c *gin.Context) {
+			c.JSON(http.StatusOK, UserController.Index())
+		})
 
-	// 	r.GET("/getUserID/:id", func(c *gin.Context) {
-	// 		c.JSON(http.StatusOK, UserController.GetData(c))
-	// 	})
+		r.GET("/getUserID/:id", func(c *gin.Context) {
+			c.JSON(http.StatusOK, UserController.GetData(c))
+		})
 
-	// 	r.POST("/postUser", func(c *gin.Context) {
-	// 		c.JSON(http.StatusOK, UserController.Store(c))
-	// 	})
+		r.POST("/postUser", func(c *gin.Context) {
+			c.JSON(http.StatusOK, UserController.Store(c))
+		})
 
-	// 	r.DELETE("/delUserID/:id", func(c *gin.Context) {
-	// 		c.JSON(http.StatusOK, UserController.DelData(c))
-	// 	})
-	// 	r.PUT("/upUserID/:id", func(c *gin.Context) {
-	// 		c.JSON(http.StatusOK, UserController.UpData(c))
-	// 	})
+		r.DELETE("/delUserID/:id", func(c *gin.Context) {
+			c.JSON(http.StatusOK, UserController.DelData(c))
+		})
+		r.PUT("/upUserID/:id", func(c *gin.Context) {
+			c.JSON(http.StatusOK, UserController.UpData(c))
+		})
 
-	// 	r.POST("/login", UserController.Login)
-	// }
+		r.POST("/login", UserController.Login)
+	}
 
 	err := godotenv.Load()
 	if err != nil {
@@ -89,6 +92,7 @@ func main() {
 		tjsl.POST("/approve", kgtKrywnController.StoreApprovePengajuanKegiatan)
 		tjsl.POST("/listApprovalTjsl", kgtKrywnController.ListApprvlKgtKrywn)
 		tjsl.GET("/getChartSummary", kgtKrywnController.GetChartSummary)
+		// tjsl.POST("/getLeaderBoard", kgtKrywnController.GetLeaderBoardKgtKrywn)
 
 		// Koordinator
 		tjsl.POST("/storeKoordinator", koorkgtController.StoreKoordinator)
@@ -105,6 +109,7 @@ func main() {
 		event.POST("/konfirmasiKehadiran", eventController.KonfirmasiKehadiran)
 		event.POST("/getDataInFeed/:nik", eventController.GetDataInFeed)
 
+		// DISPOSE
 		event.POST("/storeDispose", eventController.StoreDispose)
 		event.POST("/getDataDispose", eventController.GetDataDispose)
 
@@ -112,7 +117,6 @@ func main() {
 		event.POST("/getDataByNik", eventController.GetDataByNik)
 		event.POST("/deleteEvent", eventController.DeleteEvent)
 		event.GET("/showEvent/:id/:nik", eventController.ShowEvent)
-		event.POST("/getBookingRoom", eventController.GetBookingRoom)
 		event.DELETE("/deleteEventBooking/:id_booking", eventController.DeleteEventBooking)
 
 		// GCS
@@ -120,11 +124,19 @@ func main() {
 		event.POST("/renameFileGCS", eventController.RenameFileGCS)
 		event.POST("/deleteFileGCS", eventController.DeleteFileGCS)
 
+		// NOTULEN
+		event.POST("/storeNotulen", eventController.StoreNotulen)
 		event.GET("/getDataNotulen/:id", eventController.GetDataNotulen)
 		event.DELETE("/deleteFileNotulen/:id", eventController.DeleteFileNotulen)
+
+		// ROOM MASTER
 		event.GET("/getCategoryRoom", eventController.GetCategoryRoom)
 		event.POST("/getDataRoom", eventController.GetRoomEvent)
+		event.POST("/getBookingRoom", eventController.GetBookingRoom)
+
 		event.POST("/storeBookingRoom", eventController.StoreBookingRoomEvent)
+
+		// PRESENCE
 		event.POST("/storeEventPresence", eventController.StoreEventPresence)
 		event.GET("/printDaftarHadir/:id", eventController.PrintDaftarHadir)
 

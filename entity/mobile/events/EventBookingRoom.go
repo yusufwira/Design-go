@@ -8,7 +8,7 @@ import (
 
 type EventBookingRoom struct {
 	IdBooking int       `json:"id_booking" gorm:"primary_key"`
-	CodeRoom  *string    `json:"code_room"`
+	CodeRoom  *string   `json:"code_room"`
 	IdEvent   int       `json:"id_event"`
 	DateStart time.Time `json:"date_start"`
 	DateEnd   time.Time `json:"date_end"`
@@ -84,7 +84,7 @@ func (t EventBookingRoomRepo) FindBookRoomShow(codeRoom *string, idEvent int) (D
 	   from mobile.event_booking_room ebr 
 	   join mobile.event_mstr_room emr on emr.id_room = ebr.code_room 
 	   join dbo.pihc_master_company pmc on pmc.code = emr.comp_code 
-   where code_room = ? and id_event = ?`, codeRoom, idEvent).Scan(&data_brs).Error
+   where code_room = ? and id_event = ?`, codeRoom, idEvent).Take(&data_brs).Error
 	if err != nil {
 		return data_brs, err
 	}

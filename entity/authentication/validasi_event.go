@@ -9,17 +9,23 @@ import (
 )
 
 type ValidasiEvent struct {
-	ID             int     `json:"id"`
-	Nik            int     `json:"nik" binding:"required"`
-	Title          string  `json:"title" binding:"required"`
-	Desc           string  `json:"desc"`
-	Type           string  `json:"type" binding:"required"`
-	URL            *string `json:"url"`
-	Location       *string `json:"location"`
-	Image          string  `json:"image"`
-	Start          string  `json:"start" binding:"required"`
-	End            string  `json:"end" binding:"required"`
-	IsPublic       int     `json:"is_public"`
+	ID         int     `json:"id"`
+	Nik        int     `json:"nik" binding:"required"`
+	Title      string  `json:"title" binding:"required"`
+	Desc       string  `json:"desc"`
+	Type       string  `json:"type" binding:"required"`
+	URL        *string `json:"url"`
+	Location   *string `json:"location"`
+	Image      string  `json:"image"`
+	Start      string  `json:"start" binding:"required"`
+	End        string  `json:"end" binding:"required"`
+	IsPublic   int     `json:"is_public"`
+	FileMateri []struct {
+		IdMateriFile int    `json:"id_materi_file"`
+		IdEvent      int    `json:"id_event"`
+		FileName     string `json:"file_name"`
+		FileURL      string `json:"file_url"`
+	} `json:"file_materi"`
 	Status         string  `json:"status" binding:"required"`
 	IDRoom         *string `json:"id_room"`
 	Person         *string `json:"person"`
@@ -95,7 +101,7 @@ type ValidasiGetBookingRoom struct {
 }
 
 type ValidasiStoreNotulen struct {
-	IdEvent   string `form:"id_event" binding:"required"`
+	IdEvent   int    `form:"id_event" binding:"required"`
 	Deskripsi string `form:"deskripsi" binding:"required"`
 }
 type ValidasiRenameFileNotulen struct {

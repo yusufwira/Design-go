@@ -85,7 +85,7 @@ func (t KegiatanKoordinatorRepo) FindDataKoorIDLuarKegiatan(nik string) ([]Kegia
 func (t KegiatanKoordinatorRepo) ListKoordinatorLuarKegiatan(nik string) ([]Result, error) {
 	results := []Result{}
 	err := t.DB.Raw(`
-		SELECT kk.id_koordinator, kk.nama, kk.created_by, kk.created_at, kk.updated_at, kk.comp_code, kk.slug, kk.periode
+		SELECT kk.id_koordinator, kk.kegiatan_parent_id, kk.nama, kk.created_by, kk.created_at, kk.updated_at, kk.comp_code, kk.slug, kk.periode
 		FROM tjsl.kegiatan_koordinator kk
 		JOIN dbo.pihc_master_kary_rt pmkr ON kk.created_by = pmkr.emp_no
 		WHERE kk.id_koordinator IN (
@@ -177,12 +177,13 @@ func convertSourceTargetDataKaryawanRt(source pihc.PihcMasterKaryRtDb) pihc.Pihc
 }
 func (t KegiatanKoordinatorRepo) ListKoordinatorDalamKegiatan(slug string, nik string) ([]Result, error) {
 	results := []Result{}
-	err := t.DB.Raw(`SELECT kk.id_koordinator, kk.nama, kk.created_by, kk.created_at, kk.updated_at, kk.comp_code, kk.slug, kk.periode
-						FROM tjsl.kegiatan_mstr km
-					JOIN tjsl.kegiatan_koordinator kk ON kk.kegiatan_parent_id = km.id_kegiatan
-					JOIN dbo.pihc_master_kary_rt pmkr ON kk.created_by = pmkr.emp_no
-						WHERE km.slug = ? AND kk.created_by = ?
-					ORDER BY kk.id_koordinator ASC`, slug, nik).
+	err := t.DB.Raw(`SELECT id_koordinator,kk.kegiatan_parent_id,kk.nama,kk.created_by ,kk.created_at ,kk.updated_at ,kk.comp_code ,kk.slug,kk.periode 
+							FROM tjsl.kegiatan_mstr km 
+						JOIN tjsl.kegiatan_koordinator kk on kk.kegiatan_parent_id = km.id_kegiatan
+						JOIN tjsl.koordinator_person kp on kp.koordinator_id = kk.id_koordinator 
+						JOIN dbo.pihc_master_kary_rt pmkr on kk.created_by = pmkr.emp_no
+						WHERE km.slug = ? and kp.nik = ?
+					ORDER BY nama asc`, slug, nik).
 		Scan(&results).Error
 
 	if err != nil {
@@ -194,8 +195,9 @@ func (t KegiatanKoordinatorRepo) ListKoordinatorDalamKegiatan(slug string, nik s
 				FROM tjsl.kegiatan_mstr km
 			JOIN tjsl.kegiatan_koordinator kk ON kk.kegiatan_parent_id = km.id_kegiatan
 			JOIN dbo.pihc_master_kary_rt pmkr ON kk.created_by = pmkr.emp_no
-				WHERE km.slug = ? AND kk.created_by = ?
-			ORDER BY kk.id_koordinator ASC`, slug, nik).
+			JOIN tjsl.koordinator_person kp on kp.koordinator_id = kk.id_koordinator 
+				WHERE km.slug = ? and kp.nik = ?
+			ORDER BY nama ASC`, slug, nik).
 		Scan(&karyawan)
 
 	for i, data := range results {

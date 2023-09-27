@@ -31,6 +31,8 @@ type ValidationSKKgt struct {
 	KoordinatorId     *int    `json:"koordinator_id" gorm:"default:null"`
 	NamaKegiatan      string  `json:"nama_kegiatan" binding:"required"`
 	TanggalKegiatan   string  `json:"tanggal" binding:"required"`
+	Status            string  `json:"status" binding:"required"`
+	Manager           *string `json:"manager"`
 	LokasiKegiatan    string  `json:"lokasi" binding:"required"`
 	DeskripsiKegiatan *string `json:"deskripsi" binding:"required"`
 	Photos            []struct {
@@ -42,9 +44,13 @@ type ValidationSKKgt struct {
 }
 
 type ValidationListApproval struct {
-	NIK      string `json:"nik" binding:"required"`
-	Tahun    string `json:"tahun" binding:"required"`
+	ValidationLMK
 	CompCode string `json:"comp_code"`
+}
+type ValidationGetLeaderBoard struct {
+	ValidationLMK
+	IsMobile int    `json:"isMobile" form:"isMobile"`
+	Company  string `json:"company" form:"company" binding:"required"`
 }
 
 type ValidationApprovalAtasan struct {
@@ -53,14 +59,12 @@ type ValidationApprovalAtasan struct {
 }
 
 type ValidationMyTjsl struct {
-	Nik   string `form:"nik" binding:"required"`
-	Tahun string `form:"tahun" binding:"required"`
+	ValidationLMK
 }
 
 type ValidationListKoordinator struct {
-	NIK   string `json:"nik" form:"nik" binding:"required"`
-	Tahun string `json:"tahun" form:"tahun" binding:"required"`
-	Slug  string `json:"slug" form:"slug"`
+	ValidationLMK
+	Slug string `json:"slug" form:"slug"`
 }
 
 type KegiatanKaryawanPhotos struct {
@@ -72,8 +76,8 @@ type KegiatanKaryawanPhotos struct {
 	DeptTitle                string                `json:"dept_title"`
 	Jenis                    string                `json:"jenis"`
 	KoordinatorID            *int                  `json:"koordinator_id"`
-	SlugKoordinator          *int                  `json:"slug_koordinator"`
-	SlugKegiatanParent       *int                  `json:"slug_kegiatan_parent"`
+	SlugKoordinator          *string               `json:"slug_koordinator"`
+	SlugKegiatanParent       *string               `json:"slug_kegiatan_parent"`
 	KegiatanParentID         *int                  `json:"kegiatan_parent_id"`
 	NamaKegiatan             string                `json:"nama_kegiatan"`
 	TanggalKegiatan          string                `json:"tanggal_kegiatan"`

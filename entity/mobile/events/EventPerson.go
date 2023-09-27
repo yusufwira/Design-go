@@ -61,13 +61,16 @@ func (t EventPersonRepo) Update(me EventPerson) (EventPerson, error) {
 	return me, nil
 }
 
-func (t EventPersonRepo) FindEventPersonID(id int) ([]EventPerson, error) {
+func (t EventPersonRepo) FindEventPersonID(id int) []EventPerson {
 	var event_person []EventPerson
-	err := t.DB.Where("id_event=?", id).Find(&event_person).Error
-	if err != nil {
-		return nil, err
+
+	t.DB.Where("id_event=?", id).Find(&event_person)
+
+	if len(event_person) != 0 {
+		return event_person
 	}
-	return event_person, nil
+
+	return nil
 }
 
 func (t EventPersonRepo) FindEventPersonIDNIK(id int, nik string) (EventPerson, error) {

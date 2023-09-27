@@ -58,6 +58,7 @@ func (c *EventController) StoreEvent(ctx *gin.Context) {
 	var ev_br events.EventBookingRoom
 	var ev_person events.EventPerson
 	var ev_main events.MainEvent
+	var ev_materi_file events.EventMateriFile
 
 	if err := ctx.ShouldBind(&req); err != nil {
 		var ve validator.ValidationErrors
@@ -80,6 +81,18 @@ func (c *EventController) StoreEvent(ctx *gin.Context) {
 
 	if req.ID != 0 {
 		main_event, _ := c.MainEventRepo.FindEventMainID(req.ID)
+
+		if req.FileMateri != nil {
+			var list_id_file_materi []int
+			for _, files_materi := range req.FileMateri {
+				ev_materi_file.IdEvent = main_event.Id
+				ev_materi_file.FileName = files_materi.FileName
+				ev_materi_file.FileUrl = files_materi.FileURL
+				materi_file, _ := c.EventMateriFileRepo.Create(ev_materi_file)
+				list_id_file_materi = append(list_id_file_materi, materi_file.IdMateriFile)
+			}
+			c.EventMateriFileRepo.DelMateriFileLama(main_event.Id, list_id_file_materi)
+		}
 
 		main_event.EventTitle = req.Title
 		main_event.EventDesc = req.Desc
@@ -110,22 +123,23 @@ func (c *EventController) StoreEvent(ctx *gin.Context) {
 			if err_eventMain == nil {
 				var list_id_person []int
 
-				// Remove the "[" and "]" characters from the string
-				trimmed := strings.Trim(*req.Person, "[]")
+				if req.IsPublic == 0 {
+					// Remove the "[" and "]" characters from the string
+					trimmed := strings.Trim(*req.Person, "[]")
 
-				// Split the string into individual values
-				values := strings.Split(trimmed, ",")
+					// Split the string into individual values
+					values := strings.Split(trimmed, ",")
 
-				for _, nikPerson := range values {
-					ev_person.IdEvent = eventMain.Id
-					ev_person.Nik = nikPerson
-					ev_person.StatusKehadiran = "menunggu"
-					eventPerson, _ := c.EventPersonRepo.Create(ev_person)
-					list_id_person = append(list_id_person, eventPerson.Id)
+					for _, nikPerson := range values {
+						ev_person.IdEvent = eventMain.Id
+						ev_person.Nik = nikPerson
+						ev_person.StatusKehadiran = "menunggu"
+						eventPerson, _ := c.EventPersonRepo.Create(ev_person)
+						list_id_person = append(list_id_person, eventPerson.Id)
+					}
+
+					c.EventPersonRepo.DelParticipationLama(eventMain.Id, list_id_person)
 				}
-
-				c.EventPersonRepo.DelParticipationLama(eventMain.Id, list_id_person)
-
 			}
 			ctx.JSON(http.StatusOK, gin.H{
 				"status":  http.StatusOK,
@@ -161,20 +175,23 @@ func (c *EventController) StoreEvent(ctx *gin.Context) {
 
 						c.EventBookingRoomRepo.Update(eventBookingRoom)
 
-						// Remove the "[" and "]" characters from the string
-						trimmed := strings.Trim(*req.Person, "[]")
+						if req.IsPublic == 0 {
+							// Remove the "[" and "]" characters from the string
+							trimmed := strings.Trim(*req.Person, "[]")
 
-						// Split the string into individual values
-						values := strings.Split(trimmed, ",")
+							// Split the string into individual values
+							values := strings.Split(trimmed, ",")
 
-						for _, nikPerson := range values {
-							ev_person.IdEvent = eventMain.Id
-							ev_person.Nik = nikPerson
-							ev_person.StatusKehadiran = "menunggu"
-							eventPerson, _ := c.EventPersonRepo.Create(ev_person)
-							list_id_person = append(list_id_person, eventPerson.Id)
+							for _, nikPerson := range values {
+								ev_person.IdEvent = eventMain.Id
+								ev_person.Nik = nikPerson
+								ev_person.StatusKehadiran = "menunggu"
+								eventPerson, _ := c.EventPersonRepo.Create(ev_person)
+								list_id_person = append(list_id_person, eventPerson.Id)
+							}
+
+							c.EventPersonRepo.DelParticipationLama(eventMain.Id, list_id_person)
 						}
-						c.EventPersonRepo.DelParticipationLama(eventMain.Id, list_id_person)
 
 						ctx.JSON(http.StatusOK, gin.H{
 							"status":  http.StatusOK,
@@ -211,21 +228,23 @@ func (c *EventController) StoreEvent(ctx *gin.Context) {
 
 						c.EventBookingRoomRepo.Update(eventBookingRoom)
 
-						// Remove the "[" and "]" characters from the string
-						trimmed := strings.Trim(*req.Person, "[]")
+						if req.IsPublic == 0 {
+							// Remove the "[" and "]" characters from the string
+							trimmed := strings.Trim(*req.Person, "[]")
 
-						// Split the string into individual values
-						values := strings.Split(trimmed, ",")
+							// Split the string into individual values
+							values := strings.Split(trimmed, ",")
 
-						for _, nikPerson := range values {
-							ev_person.IdEvent = eventMain.Id
-							ev_person.Nik = nikPerson
-							ev_person.StatusKehadiran = "menunggu"
-							eventPerson, _ := c.EventPersonRepo.Create(ev_person)
-							list_id_person = append(list_id_person, eventPerson.Id)
+							for _, nikPerson := range values {
+								ev_person.IdEvent = eventMain.Id
+								ev_person.Nik = nikPerson
+								ev_person.StatusKehadiran = "menunggu"
+								eventPerson, _ := c.EventPersonRepo.Create(ev_person)
+								list_id_person = append(list_id_person, eventPerson.Id)
+							}
+
+							c.EventPersonRepo.DelParticipationLama(eventMain.Id, list_id_person)
 						}
-
-						c.EventPersonRepo.DelParticipationLama(eventMain.Id, list_id_person)
 
 						ctx.JSON(http.StatusOK, gin.H{
 							"status":  http.StatusOK,
@@ -258,18 +277,35 @@ func (c *EventController) StoreEvent(ctx *gin.Context) {
 
 			event_main, _ := c.MainEventRepo.Create(ev_main)
 
-			// Remove the "[" and "]" characters from the string
-			trimmed := strings.Trim(*req.Person, "[]")
+			if req.IsPublic == 0 {
+				if req.Person != nil && *req.Person != "" {
+					// Remove the "[" and "]" characters from the string
+					trimmed := strings.Trim(*req.Person, "[]")
 
-			// Split the string into individual values
-			values := strings.Split(trimmed, ",")
+					// Split the string into individual values
+					values := strings.Split(trimmed, ",")
 
-			for _, nikPerson := range values {
-				ev_person.IdEvent = event_main.Id
-				ev_person.Nik = nikPerson
-				ev_person.StatusKehadiran = "menunggu"
-				c.EventPersonRepo.Create(ev_person)
+					for _, nikPerson := range values {
+						ev_person.IdEvent = event_main.Id
+						ev_person.Nik = nikPerson
+						ev_person.StatusKehadiran = "menunggu"
+						c.EventPersonRepo.Create(ev_person)
+					}
+				}
 			}
+
+			if req.FileMateri != nil {
+				for _, files_materi := range req.FileMateri {
+					ev_materi_file.IdEvent = event_main.Id
+					ev_materi_file.FileName = files_materi.FileName
+					ev_materi_file.FileUrl = files_materi.FileURL
+					c.EventMateriFileRepo.Create(ev_materi_file)
+				}
+			}
+			ctx.JSON(http.StatusOK, gin.H{
+				"status":  http.StatusOK,
+				"success": "Success",
+			})
 		} else if req.Type == "offline" {
 			// Type Offline
 			existRoom, _ := c.EventBookingRoomRepo.FindExistRoom(*req.IDRoom, ev_main.Id, ev_main.EventStart, ev_main.EventEnd)
@@ -287,18 +323,35 @@ func (c *EventController) StoreEvent(ctx *gin.Context) {
 
 				c.EventBookingRoomRepo.Create(ev_br)
 
-				// Remove the "[" and "]" characters from the string
-				trimmed := strings.Trim(*req.Person, "[]")
+				if req.IsPublic == 0 {
+					if req.Person != nil && *req.Person != "" {
+						// Remove the "[" and "]" characters from the string
+						trimmed := strings.Trim(*req.Person, "[]")
 
-				// Split the string into individual values
-				values := strings.Split(trimmed, ",")
+						// Split the string into individual values
+						values := strings.Split(trimmed, ",")
 
-				for _, nikPerson := range values {
-					ev_person.IdEvent = event_main.Id
-					ev_person.Nik = nikPerson
-					ev_person.StatusKehadiran = "menunggu"
-					c.EventPersonRepo.Create(ev_person)
+						for _, nikPerson := range values {
+							ev_person.IdEvent = event_main.Id
+							ev_person.Nik = nikPerson
+							ev_person.StatusKehadiran = "menunggu"
+							c.EventPersonRepo.Create(ev_person)
+						}
+					}
 				}
+
+				if req.FileMateri != nil {
+					for _, files_materi := range req.FileMateri {
+						ev_materi_file.IdEvent = event_main.Id
+						ev_materi_file.FileName = files_materi.FileName
+						ev_materi_file.FileUrl = files_materi.FileURL
+						c.EventMateriFileRepo.Create(ev_materi_file)
+					}
+				}
+				ctx.JSON(http.StatusOK, gin.H{
+					"status":  http.StatusOK,
+					"success": "Success",
+				})
 			}
 		} else if req.Type == "hybrid" {
 			// Type Hybrid
@@ -320,24 +373,37 @@ func (c *EventController) StoreEvent(ctx *gin.Context) {
 
 				c.EventBookingRoomRepo.Create(ev_br)
 
-				// Remove the "[" and "]" characters from the string
-				trimmed := strings.Trim(*req.Person, "[]")
+				if req.IsPublic == 0 {
+					if req.Person != nil && *req.Person != "" {
+						// Remove the "[" and "]" characters from the string
+						trimmed := strings.Trim(*req.Person, "[]")
 
-				// Split the string into individual values
-				values := strings.Split(trimmed, ",")
+						// Split the string into individual values
+						values := strings.Split(trimmed, ",")
 
-				for _, nikPerson := range values {
-					ev_person.IdEvent = event_main.Id
-					ev_person.Nik = nikPerson
-					ev_person.StatusKehadiran = "menunggu"
-					c.EventPersonRepo.Create(ev_person)
+						for _, nikPerson := range values {
+							ev_person.IdEvent = event_main.Id
+							ev_person.Nik = nikPerson
+							ev_person.StatusKehadiran = "menunggu"
+							c.EventPersonRepo.Create(ev_person)
+						}
+					}
 				}
+
+				if req.FileMateri != nil {
+					for _, files_materi := range req.FileMateri {
+						ev_materi_file.IdEvent = event_main.Id
+						ev_materi_file.FileName = files_materi.FileName
+						ev_materi_file.FileUrl = files_materi.FileURL
+						c.EventMateriFileRepo.Create(ev_materi_file)
+					}
+				}
+				ctx.JSON(http.StatusOK, gin.H{
+					"status":  http.StatusOK,
+					"success": "Success",
+				})
 			}
 		}
-		ctx.JSON(http.StatusOK, gin.H{
-			"status":  http.StatusOK,
-			"success": "Success",
-		})
 	}
 	ctx.AbortWithStatus(http.StatusInternalServerError)
 }
@@ -649,9 +715,9 @@ func (c *EventController) StoreDispose(ctx *gin.Context) {
 		return
 	}
 
-	_, errPerson := c.EventPersonRepo.FindEventPersonID(req.EventID)
+	events_person := c.EventPersonRepo.FindEventPersonID(req.EventID)
 
-	if errPerson == nil {
+	if events_person != nil {
 		// Remove the "[" and "]" characters from the string
 		trimmed := strings.Trim(req.Dispose, "[]")
 
@@ -670,6 +736,8 @@ func (c *EventController) StoreDispose(ctx *gin.Context) {
 			"status":  http.StatusOK,
 			"success": "Success",
 		})
+	} else {
+		ctx.AbortWithStatus(http.StatusInternalServerError)
 	}
 }
 
@@ -916,8 +984,10 @@ func (c *EventController) ShowEvent(ctx *gin.Context) {
 		if mainEvent.EventType == "offline" || mainEvent.EventType == "hybrid" {
 			book_room, err := c.EventBookingRoomRepo.FindBookRoomShow(mainEvent.EventRoom, mainEvent.Id)
 			if err != nil {
+				fmt.Println("A")
 				ev.BookRoom = nil
 			} else {
+				fmt.Println("B")
 				br := &Authentication.DataBookRoomShow{
 					IDBooking:    book_room.IDBooking,
 					CodeRoom:     book_room.CodeRoom,
@@ -934,6 +1004,7 @@ func (c *EventController) ShowEvent(ctx *gin.Context) {
 				ev.BookRoom = br
 			}
 		} else {
+			fmt.Println("C")
 			ev.BookRoom = nil
 		}
 
@@ -1155,86 +1226,155 @@ func (c *EventController) DeleteEventBooking(ctx *gin.Context) {
 	}
 }
 
+// func (c *EventController) DeleteFileNotulen(ctx *gin.Context) {
+// 	idEvent := ctx.Param("id")
+// 	int_idEvent, _ := strconv.Atoi(idEvent)
+
+// 	mainEvent, errMainEvent := c.MainEventRepo.FindEventMainID(int_idEvent)
+
+// 	if errMainEvent == nil {
+// 		errNotulen := c.EventNotulenRepo.DeleteEventNotulen(mainEvent.Id)
+// 		if errNotulen == nil {
+// 			fmt.Println("XXXXX")
+
+// 			ctx.JSON(http.StatusOK, gin.H{
+// 				"status": http.StatusOK,
+// 				"info":   "Success",
+// 			})
+// 		} else {
+// 			ctx.AbortWithStatus(http.StatusInternalServerError)
+// 		}
+// 	} else {
+// 		ctx.AbortWithStatus(http.StatusInternalServerError)
+// 	}
+// }
+
+// func (c *EventController) DeleteFileMateri(ctx *gin.Context) {
+// 	idEvent := ctx.Param("id")
+// 	int_idEvent, _ := strconv.Atoi(idEvent)
+
+// 	mainEvent, errMainEvent := c.MainEventRepo.FindEventMainID(int_idEvent)
+
+// 	if errMainEvent == nil {
+// 		errDeleteEventMateri := c.EventMateriFileRepo.DeleteEventMateriFile(mainEvent.Id)
+// 		if errDeleteEventMateri == nil {
+// 			ctx.JSON(http.StatusOK, gin.H{
+// 				"status": http.StatusOK,
+// 				"info":   "Success",
+// 			})
+// 		} else {
+// 			ctx.AbortWithStatus(http.StatusInternalServerError)
+// 		}
+// 	} else {
+// 		ctx.AbortWithStatus(http.StatusInternalServerError)
+// 	}
+// }
+
 func (c *EventController) DeleteFileNotulen(ctx *gin.Context) {
-	idEvent := ctx.Param("id")
-	int_idEvent, _ := strconv.Atoi(idEvent)
+	IdNotulenFile := ctx.Param("id")
+	int_IdNotulenFile, _ := strconv.Atoi(IdNotulenFile)
 
-	mainEvent, errMainEvent := c.MainEventRepo.FindEventMainID(int_idEvent)
-
-	if errMainEvent == nil {
-		errNotulen := c.EventNotulenRepo.DeleteEventNotulen(mainEvent.Id)
-		if errNotulen == nil {
-			fmt.Println("XXXXX")
-
-			ctx.JSON(http.StatusOK, gin.H{
-				"status": http.StatusOK,
-				"info":   "Success",
-			})
-		} else {
-			ctx.AbortWithStatus(http.StatusInternalServerError)
-		}
+	data, errNotulenFile := c.EventNotulenRepo.DeleteEventNotulenFiles(int_IdNotulenFile)
+	if errNotulenFile == nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"status":  http.StatusOK,
+			"success": "Delete Success",
+			"data":    data,
+		})
 	} else {
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 	}
 }
 
 func (c *EventController) DeleteFileMateri(ctx *gin.Context) {
-	idEvent := ctx.Param("id")
-	int_idEvent, _ := strconv.Atoi(idEvent)
+	idMateriFile := ctx.Param("id")
+	int_idMateriFile, _ := strconv.Atoi(idMateriFile)
 
-	mainEvent, errMainEvent := c.MainEventRepo.FindEventMainID(int_idEvent)
-
-	if errMainEvent == nil {
-		errDeleteEventMateri := c.EventMateriFileRepo.DeleteEventMateriFile(mainEvent.Id)
-		if errDeleteEventMateri == nil {
-			ctx.JSON(http.StatusOK, gin.H{
-				"status": http.StatusOK,
-				"info":   "Success",
-			})
-		} else {
-			ctx.AbortWithStatus(http.StatusInternalServerError)
-		}
+	data, errMateriFile := c.EventMateriFileRepo.DeleteMateriFiles(int_idMateriFile)
+	if errMateriFile == nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"status":  http.StatusOK,
+			"success": "Delete Success",
+			"data":    data,
+		})
 	} else {
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 	}
 }
 
-// func (c *EventController) StoreNotulen(ctx *gin.Context) {
-// 	var req Authentication.ValidasiStoreNotulen
+func (c *EventController) StoreNotulen(ctx *gin.Context) {
+	var req Authentication.ValidasiStoreNotulen
+	var notulen events.EventNotulen
+	var notulen_files events.EventNotulenFile
 
-// 	if err := ctx.ShouldBind(&req); err != nil {
-// 		var ve validator.ValidationErrors
-// 		if errors.As(err, &ve) {
-// 			out := make([]Authentication.ErrorMsg, len(ve))
-// 			for i, fe := range ve {
-// 				out[i] = Authentication.ErrorMsg{Field: fe.Field(), Message: getErrorMsg(fe)}
-// 			}
-// 			ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"errorcode_": http.StatusServiceUnavailable, "errormsg_": out})
-// 		}
-// 		return
-// 	}
+	if err := ctx.ShouldBind(&req); err != nil {
+		var ve validator.ValidationErrors
+		if errors.As(err, &ve) {
+			out := make([]Authentication.ErrorMsg, len(ve))
+			for i, fe := range ve {
+				out[i] = Authentication.ErrorMsg{Field: fe.Field(), Message: getErrorMsg(fe)}
+			}
+			ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"errorcode_": http.StatusServiceUnavailable, "errormsg_": out})
+		}
+		return
+	}
 
-// 	form, _ := ctx.MultipartForm()
-// 	files := form.File["file[]"]
-// 	filePaths := []string{}
+	// idEvent, _ := strconv.Atoi(req.IdEvent)
 
-// 	// for _, file := range files {
-// 	// 	fileExt := filepath.Ext(file.Filename)
-// 	// 	originalFileName := strings.TrimSuffix(filepath.Base(file.Filename), filepath.Ext(file.Filename))
-// 	// 	now := time.Now()
-// 	// 	filename := fmt.Sprintf("%v", now.Unix()) + "_" + strings.ReplaceAll(strings.ToLower(originalFileName), " ", "-") + fileExt
-// 	// 	filePath := "https://storage.googleapis.com/lumen-oauth-storage/Event/Notulen/2023/" + filename // Change this to a valid local directory path
+	notulen.IdEvent = req.IdEvent
+	notulen.Deskripsi = req.Deskripsi
 
-// 	// 	// if err := ctx.SaveUploadedFile(file, filePath); err != nil {
-// 	// 	// 	ctx.String(http.StatusBadRequest, fmt.Sprintf("err: %s", err.Error()))
-// 	// 	// 	return
-// 	// 	// }
+	notulens, _ := c.EventNotulenRepo.CreateNotulen(notulen)
+	form, _ := ctx.MultipartForm()
+	files := form.File["file"]
 
-// 	// 	filePaths = append(filePaths, filePath)
-// 	// }
+	for _, file := range files {
+		originalFileName := file.Filename
 
-// 	ctx.JSON(http.StatusOK, gin.H{"filepath": filePaths})
-// }
+		fmt.Println(originalFileName)
+
+		// Open the multipart.FileHeader to get a multipart.File
+		fileToUpload, err := file.Open()
+		if err != nil {
+			// Handle the error
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Could not open file",
+			})
+			return
+		}
+
+		file_url, file_name, err := c.EventNotulenRepo.UploadFile(originalFileName, fileToUpload)
+		if err == nil {
+			notulen_files.IdNotulen = notulens.IdNotulen
+			notulen_files.FileName = file_name
+			notulen_files.FileUrl = file_url
+
+			c.EventNotulenRepo.CreateNotulenFiles(notulen_files)
+		}
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status": http.StatusOK,
+		"info":   "Success",
+	})
+
+	// for _, file := range files {
+	// 	fileExt := filepath.Ext(file.Filename)
+	// 	originalFileName := strings.TrimSuffix(filepath.Base(file.Filename), filepath.Ext(file.Filename))
+	// 	now := time.Now()
+	// 	filename := fmt.Sprintf("%v", now.Unix()) + "_" + strings.ReplaceAll(strings.ToLower(originalFileName), " ", "-") + fileExt
+	// 	filePath := "https://storage.googleapis.com/lumen-oauth-storage/Event/Notulen/2023/" + filename // Change this to a valid local directory path
+
+	// 	// if err := ctx.SaveUploadedFile(file, filePath); err != nil {
+	// 	// 	ctx.String(http.StatusBadRequest, fmt.Sprintf("err: %s", err.Error()))
+	// 	// 	return
+	// 	// }
+
+	// 	filePaths = append(filePaths, filePath)
+	// }
+
+	// ctx.JSON(http.StatusOK, gin.H{"filepath": filePaths})
+}
 
 func (c *EventController) StoreFileGCS(ctx *gin.Context) {
 	var req Authentication.ValidasiStoreNotulen
@@ -1270,7 +1410,7 @@ func (c *EventController) StoreFileGCS(ctx *gin.Context) {
 			return
 		}
 
-		imageURL, err := c.EventNotulenRepo.UploadFile(originalFileName, fileToUpload)
+		imageURL, _, err := c.EventNotulenRepo.UploadFile(originalFileName, fileToUpload)
 		if err != nil {
 			// Handle the error
 			ctx.JSON(http.StatusInternalServerError, gin.H{
