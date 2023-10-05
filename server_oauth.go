@@ -6,13 +6,15 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	ginserver "github.com/go-oauth2/gin-server"
 	"github.com/joho/godotenv"
 
 	"github.com/yusufwira/lern-golang-gin/connection"
 	"github.com/yusufwira/lern-golang-gin/controller"
-	"github.com/yusufwira/lern-golang-gin/controller/event_controller"
+	"github.com/yusufwira/lern-golang-gin/controller/mobile_api/event_controller"
+	"github.com/yusufwira/lern-golang-gin/controller/mobile_api/profile_controller"
 	"github.com/yusufwira/lern-golang-gin/controller/tjsl_controller"
 )
 
@@ -23,9 +25,16 @@ func main() {
 	kgtKrywnController := tjsl_controller.NewKgtKrywnController(db.Db, db.StorageClient)
 	koorkgtController := tjsl_controller.NewKoorKgtController(db.Db, db.StorageClient)
 	eventController := event_controller.NewEventController(db.Db, db.StorageClient)
+	userProfileController := profile_controller.NewUsersProfileController(db.Db, db.StorageClient)
 	UserController := controller.NewUserController(db.Db)
 
 	r := gin.Default()
+
+	r.Use(cors.New(cors.Config{
+		AllowOrigins: []string{"http://127.0.0.1:8000"},
+		AllowMethods: []string{"GET", "POST", "PUT", "DELETE"},
+		AllowHeaders: []string{"Origin", "Content-Type"},
+	}))
 
 	connection.Middleware()
 
@@ -55,6 +64,8 @@ func main() {
 		r.GET("/getUserID/:id", func(c *gin.Context) {
 			c.JSON(http.StatusOK, UserController.GetData(c))
 		})
+
+		r.GET("/getKaryawanName", UserController.GetDataKaryawanName)
 
 		r.POST("/postUser", func(c *gin.Context) {
 			c.JSON(http.StatusOK, UserController.Store(c))
@@ -92,7 +103,7 @@ func main() {
 		tjsl.POST("/approve", kgtKrywnController.StoreApprovePengajuanKegiatan)
 		tjsl.POST("/listApprovalTjsl", kgtKrywnController.ListApprvlKgtKrywn)
 		tjsl.GET("/getChartSummary", kgtKrywnController.GetChartSummary)
-		// tjsl.POST("/getLeaderBoard", kgtKrywnController.GetLeaderBoardKgtKrywn)
+		tjsl.POST("/getLeaderBoard", kgtKrywnController.GetLeaderBoardKgtKrywn)
 
 		// Koordinator
 		tjsl.POST("/storeKoordinator", koorkgtController.StoreKoordinator)
@@ -141,5 +152,24 @@ func main() {
 		event.GET("/printDaftarHadir/:id", eventController.PrintDaftarHadir)
 
 	}
+
+	personalInformation := r.Group(os.Getenv("PERSONALINFORMATION_API_URL"))
+	{
+		personalInformation.POST("/storeData", userProfileController.StoreData)
+		personalInformation.POST("/getData", userProfileController.GetData)
+		personalInformation.GET("/getCategory", userProfileController.GetCategory)
+	}
+
+	profile := r.Group(os.Getenv("MOBILE_API_URL"))
+	{
+		profile.POST("/storeProfile", userProfileController.StoreProfile)
+		profile.POST("/storeAboutUs", userProfileController.StoreAboutUs)
+		profile.GET("/showAboutUs/:nik", userProfileController.GetShowAboutUs)
+		profile.GET("/getSosialMediaInformation/:nik", userProfileController.GetSocialMediaInformation)
+
+		profile.POST("/storeInformationContact", userProfileController.StoreInformationContact)
+		profile.GET("/getContactInformation/:nik", userProfileController.GetContactInformation)
+	}
+
 	r.Run(":9096")
 }

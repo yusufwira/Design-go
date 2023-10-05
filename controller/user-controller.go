@@ -5,16 +5,19 @@ import (
 
 	"github.com/gin-gonic/gin"
 	Authentication "github.com/yusufwira/lern-golang-gin/entity/authentication"
+	"github.com/yusufwira/lern-golang-gin/entity/dbo/pihc"
 	users "github.com/yusufwira/lern-golang-gin/entity/users"
 	"gorm.io/gorm"
 )
 
 type UsersController struct {
-	UserRepo *users.UserRepo
+	UserRepo               *users.UserRepo
+	PihcMasterKaryRtDbRepo *pihc.PihcMasterKaryRtDbRepo
 }
 
 func NewUserController(db *gorm.DB) *UsersController {
-	return &UsersController{UserRepo: users.NewUserRepo(db)}
+	return &UsersController{UserRepo: users.NewUserRepo(db),
+		PihcMasterKaryRtDbRepo: pihc.NewPihcMasterKaryRtDbRepo(db)}
 }
 
 func (c *UsersController) Index() []users.User {
@@ -28,6 +31,15 @@ func (c *UsersController) GetData(ctx *gin.Context) []users.User {
 	id := ctx.Param("id")
 	data := c.UserRepo.GetUsersID(user, id, ctx)
 	return data
+}
+
+func (c *UsersController) GetDataKaryawanName(ctx *gin.Context) {
+	name := ctx.PostForm("name")
+	nik := ctx.PostForm("nik")
+	data, _ := c.PihcMasterKaryRtDbRepo.FindUserByName(name, nik)
+	ctx.AbortWithStatusJSON(http.StatusOK, gin.H{
+		"data": data,
+	})
 }
 
 func (c *UsersController) DelData(ctx *gin.Context) []users.User {

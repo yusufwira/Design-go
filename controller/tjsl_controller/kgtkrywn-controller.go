@@ -2,7 +2,6 @@ package tjsl_controller
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -28,7 +27,7 @@ type KgtKrywnController struct {
 }
 
 func NewKgtKrywnController(Db *gorm.DB, StorageClient *storage.Client) *KgtKrywnController {
-	return &KgtKrywnController{KegiatanKaryawanRepo: tjsl.NewKegiatanKaryawanRepo(Db),
+	return &KgtKrywnController{KegiatanKaryawanRepo: tjsl.NewKegiatanKaryawanRepo(Db, StorageClient),
 		KegiatanMasterRepo:      tjsl.NewKegiatanMasterRepo(Db),
 		KegiatanPhotosRepo:      tjsl.NewKegiatanPhotosRepo(Db),
 		KegiatanKoordinatorRepo: tjsl.NewKegiatanKoordinatorRepo(Db),
@@ -342,7 +341,6 @@ func (c *KgtKrywnController) GetChartSummary(ctx *gin.Context) {
 		data2.RekapPerbulan.Month = list_bulan.Month
 		data2.RekapPerbulan.TotalIndividu = list_bulan.TotalIndividu
 
-		fmt.Println("NIL")
 		ctx.JSON(http.StatusOK, gin.H{
 			"status": http.StatusOK,
 			"info":   "Success",
@@ -359,7 +357,12 @@ func (c *KgtKrywnController) GetChartSummary(ctx *gin.Context) {
 		karyawan.KompTitle = dataKaryawan.KompTitle
 		karyawan.DirID = dataKaryawan.DirID
 		karyawan.DirTitle = dataKaryawan.DirTitle
-		karyawan.Photo = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
+		files, err := c.KegiatanKaryawanRepo.FindPhotosKaryawan(dataKaryawan.Nik, dataKaryawan.Company)
+		if err != nil {
+			karyawan.Photo = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
+		} else {
+			karyawan.Photo = "https://storage.googleapis.com/" + files
+		}
 
 		jumlahPerbulan, _ := c.KegiatanKaryawanRepo.RekapPerbulan(req.NIK, req.Tahun, status)
 		for _, dataPerbulan := range jumlahPerbulan {
@@ -400,7 +403,6 @@ func (c *KgtKrywnController) GetChartSummary(ctx *gin.Context) {
 				list_bulan.Num12 = dataPerbulan.JumlahPerbulan
 			}
 			if dataPerbulan.TotalPertahun != 0 {
-				fmt.Println("masuk")
 				list_bulan.TotalIndividu = dataPerbulan.TotalPertahun
 			}
 		}
@@ -439,7 +441,12 @@ func (c *KgtKrywnController) ShowDetailPengajuanKegiatan(ctx *gin.Context) {
 	data.SlugKegiatan = data_kk.Slug
 	data.Nik = data_kk.NIK
 	data.Nama = data_pihc.Nama
-	data.PhotoProfile = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
+	files, err := c.KegiatanKaryawanRepo.FindPhotosKaryawan(data_kk.NIK, data_kk.CompCode)
+	if err != nil {
+		data.PhotoProfile = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
+	} else {
+		data.PhotoProfile = "https://storage.googleapis.com/" + files
+	}
 	data.DeptTitle = data_pihc.DeptTitle
 
 	if data_kk.KegiatanParentId == nil {
@@ -673,7 +680,6 @@ func (c *KgtKrywnController) ListApprvlKgtKrywn(ctx *gin.Context) {
 			SlugKegiatan:    data.Slug,
 			Nik:             data.NIK,
 			Nama:            data.Nama,
-			PhotoProfile:    "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg",
 			Email:           data.Email,
 			PosID:           data.PosID,
 			PosTitle:        data.PosTitle,
@@ -688,6 +694,12 @@ func (c *KgtKrywnController) ListApprvlKgtKrywn(ctx *gin.Context) {
 			Short:           nil,
 			LogoCompany:     "https://storage.googleapis.com/lumen-oauth-storage/company/logo-pi-full.png",
 		}
+		files, err := c.KegiatanKaryawanRepo.FindPhotosKaryawan(data.NIK, data.CompCode)
+		if err != nil {
+			data_list.PhotoProfile = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
+		} else {
+			data_list.PhotoProfile = "https://storage.googleapis.com/" + files
+		}
 		// Short:           pihc_mster_position.Short,
 		list_aprvl = append(list_aprvl, data_list)
 	}
@@ -700,6 +712,7 @@ func (c *KgtKrywnController) ListApprvlKgtKrywn(ctx *gin.Context) {
 }
 func (c *KgtKrywnController) GetLeaderBoardKgtKrywn(ctx *gin.Context) {
 	var req Authentication.ValidationGetLeaderBoard
+
 	if err := ctx.ShouldBind(&req); err != nil {
 		var ve validator.ValidationErrors
 		if errors.As(err, &ve) {
@@ -712,92 +725,13 @@ func (c *KgtKrywnController) GetLeaderBoardKgtKrywn(ctx *gin.Context) {
 		return
 	}
 
-	// status := "Approved"
-	fmt.Println(req.NIK)
-	fmt.Println(req.IsMobile)
-	fmt.Println(req.Tahun)
-	fmt.Println(req.Company)
-	// list_bulan := &Authentication.RekapPerbulan{}
-	// var data Authentication.ListChartSummary
-	// karyawan := &Authentication.Employee{}
+	status := "Approved"
 
-	// dataKaryawan, _ := c.PihcMasterKaryRtRepo.FindUserRekapByNIK(req.NIK)
+	data, _ := c.KegiatanKaryawanRepo.FindLeaderBoardStatusPeriodeCompany(req.Tahun, status, req.Company)
 
-	// if dataKaryawan == nil {
-	// 	var data2 Authentication.ListChartNotFoundDataSummary
-	// 	data2.RekapPerbulan.Month = list_bulan.Month
-	// 	data2.RekapPerbulan.TotalIndividu = list_bulan.TotalIndividu
-
-	// 	fmt.Println("NIL")
-	// 	ctx.JSON(http.StatusOK, gin.H{
-	// 		"status": http.StatusOK,
-	// 		"info":   "Success",
-	// 		"data":   data2,
-	// 	})
-	// } else {
-	// 	karyawan.EmpNama = dataKaryawan.EmpNama
-	// 	karyawan.Nik = dataKaryawan.Nik
-	// 	karyawan.PosID = dataKaryawan.PosID
-	// 	karyawan.PosTitle = dataKaryawan.PosTitle
-	// 	karyawan.DeptID = dataKaryawan.DeptID
-	// 	karyawan.DeptTitle = dataKaryawan.DeptTitle
-	// 	karyawan.KompID = dataKaryawan.KompID
-	// 	karyawan.KompTitle = dataKaryawan.KompTitle
-	// 	karyawan.DirID = dataKaryawan.DirID
-	// 	karyawan.DirTitle = dataKaryawan.DirTitle
-	// 	karyawan.Photo = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
-
-	// 	jumlahPerbulan, _ := c.KegiatanKaryawanRepo.RekapPerbulan(req.NIK, req.Tahun, status)
-	// 	for _, dataPerbulan := range jumlahPerbulan {
-	// 		if dataPerbulan.Bulan == 1 {
-	// 			list_bulan.Num1 = dataPerbulan.JumlahPerbulan
-	// 		}
-	// 		if dataPerbulan.Bulan == 2 {
-	// 			list_bulan.Num2 = dataPerbulan.JumlahPerbulan
-	// 		}
-	// 		if dataPerbulan.Bulan == 3 {
-	// 			list_bulan.Num3 = dataPerbulan.JumlahPerbulan
-	// 		}
-	// 		if dataPerbulan.Bulan == 4 {
-	// 			list_bulan.Num4 = dataPerbulan.JumlahPerbulan
-	// 		}
-	// 		if dataPerbulan.Bulan == 5 {
-	// 			list_bulan.Num5 = dataPerbulan.JumlahPerbulan
-	// 		}
-	// 		if dataPerbulan.Bulan == 6 {
-	// 			list_bulan.Num6 = dataPerbulan.JumlahPerbulan
-	// 		}
-	// 		if dataPerbulan.Bulan == 7 {
-	// 			list_bulan.Num7 = dataPerbulan.JumlahPerbulan
-	// 		}
-	// 		if dataPerbulan.Bulan == 8 {
-	// 			list_bulan.Num8 = dataPerbulan.JumlahPerbulan
-	// 		}
-	// 		if dataPerbulan.Bulan == 9 {
-	// 			list_bulan.Num9 = dataPerbulan.JumlahPerbulan
-	// 		}
-	// 		if dataPerbulan.Bulan == 10 {
-	// 			list_bulan.Num10 = dataPerbulan.JumlahPerbulan
-	// 		}
-	// 		if dataPerbulan.Bulan == 11 {
-	// 			list_bulan.Num11 = dataPerbulan.JumlahPerbulan
-	// 		}
-	// 		if dataPerbulan.Bulan == 12 {
-	// 			list_bulan.Num12 = dataPerbulan.JumlahPerbulan
-	// 		}
-	// 		if dataPerbulan.TotalPertahun != 0 {
-	// 			fmt.Println("masuk")
-	// 			list_bulan.TotalIndividu = dataPerbulan.TotalPertahun
-	// 		}
-	// 	}
-	// 	data.RekapPerbulan.Month = list_bulan.Month
-	// 	data.RekapPerbulan.TotalIndividu = list_bulan.TotalIndividu
-	// 	data.Employee = *karyawan
-
-	// 	ctx.JSON(http.StatusOK, gin.H{
-	// 		"status": http.StatusOK,
-	// 		"info":   "Success",
-	// 		"data":   data,
-	// 	})
-	// }
+	ctx.JSON(http.StatusOK, gin.H{
+		"status": http.StatusOK,
+		"info":   "Success",
+		"data":   data,
+	})
 }

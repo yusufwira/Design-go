@@ -1,6 +1,7 @@
 package pihc
 
 import (
+	"fmt"
 	"time"
 
 	"gorm.io/gorm"
@@ -115,6 +116,7 @@ type PihcMasterKaryRt struct {
 type SpesifikasiRekap struct {
 	EmpNama   string `json:"emp_nama"`
 	Nik       string `json:"nik"`
+	Company   string `json:"company"`
 	PosID     string `json:"pos_id"`
 	PosTitle  string `json:"pos_title"`
 	DeptID    string `json:"dept_id"`
@@ -154,11 +156,31 @@ func (t PihcMasterKaryRtDbRepo) FindUserByNIK(nik string) (PihcMasterKaryRtDb, e
 	return pihc_mkrt, nil
 }
 
+func (t PihcMasterKaryRtDbRepo) FindUserByName(name string, nik string) ([]PihcMasterKaryRtDb, error) {
+	var pihc_mkrt []PihcMasterKaryRtDb
+	if name != "" && nik == "" {
+		err := t.DB.Where("lower(nama) like lower(?)", "%"+name+"%").Find(&pihc_mkrt).Error
+		if err != nil {
+			fmt.Println("ERROR")
+			return pihc_mkrt, err
+		}
+	}
+	if nik != "" && name == "" {
+		err := t.DB.Where("emp_no like ?", "%"+nik+"%").Find(&pihc_mkrt).Error
+		if err != nil {
+			fmt.Println("ERROR")
+			return pihc_mkrt, err
+		}
+	}
+
+	return pihc_mkrt, nil
+}
+
 func (t PihcMasterKaryRtRepo) FindUserRekapByNIK(nik string) (*SpesifikasiRekap, error) {
 	var pihc_mkrt *SpesifikasiRekap
 
 	err := t.DB.Raw(`
-	select nama as emp_nama, emp_no as nik, pos_id as pos_id,
+	select nama as emp_nama, emp_no as nik,company as company, pos_id as pos_id,
 	   pos_title as pos_title , dept_id as dept_id,
 	   dept_title as dept_title, komp_id as komp_id,
 	   komp_title as komp_title, dir_id as dir_id, dir_title as dir_title

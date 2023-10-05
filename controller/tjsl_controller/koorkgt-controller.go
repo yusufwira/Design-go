@@ -15,6 +15,7 @@ import (
 )
 
 type KoorKgtController struct {
+	KegiatanKaryawanRepo    *tjsl.KegiatanKaryawanRepo
 	KegiatanKoordinatorRepo *tjsl.KegiatanKoordinatorRepo
 	KegiatanPhotosRepo      *tjsl.KegiatanPhotosRepo
 	KegiatanMasterRepo      *tjsl.KegiatanMasterRepo
@@ -26,6 +27,7 @@ type KoorKgtController struct {
 
 func NewKoorKgtController(Db *gorm.DB, StorageClient *storage.Client) *KoorKgtController {
 	return &KoorKgtController{KegiatanKoordinatorRepo: tjsl.NewKegiatanKoordinatorRepo(Db),
+		KegiatanKaryawanRepo:   tjsl.NewKegiatanKaryawanRepo(Db, StorageClient),
 		KegiatanPhotosRepo:     tjsl.NewKegiatanPhotosRepo(Db),
 		KoordinatorPersonRepo:  tjsl.NewKoordinatorPersonRepo(Db),
 		PihcMasterKaryDbRepo:   pihc.NewPihcMasterKaryDbRepo(Db),
@@ -193,7 +195,13 @@ func (c *KoorKgtController) ShowDetailKoordinator(ctx *gin.Context) {
 			CreatedAt:     list_data_person.CreatedAt,
 			UpdatedAt:     list_data_person.UpdatedAt,
 			Employee:      data_karyawan_convert,
-			URLPhoto:      "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg",
+		}
+
+		files, err := c.KegiatanKaryawanRepo.FindPhotosKaryawan(data_karyawan.EmpNo, data_karyawan.Company)
+		if err != nil {
+			data_list[i].URLPhoto = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
+		} else {
+			data_list[i].URLPhoto = "https://storage.googleapis.com/" + files
 		}
 
 		// data_list := Authentication.Personal{

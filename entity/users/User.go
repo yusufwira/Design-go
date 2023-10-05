@@ -1,4 +1,4 @@
-package entity
+package users
 
 import (
 	"html"
