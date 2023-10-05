@@ -33,7 +33,7 @@ func main() {
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{"http://127.0.0.1:8000"},
 		AllowMethods: []string{"GET", "POST", "PUT", "DELETE"},
-		AllowHeaders: []string{"Origin", "Content-Type"},
+		AllowHeaders: []string{"Origin", "Content-Type", "x-csrf-token"},
 	}))
 
 	connection.Middleware()
