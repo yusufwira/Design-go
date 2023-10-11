@@ -1,6 +1,10 @@
 package authentication
 
-import "time"
+import (
+	"time"
+
+	"github.com/yusufwira/lern-golang-gin/entity/mobile/profile"
+)
 
 type ValidationSavePersonalInformationEmployee struct {
 	EmployeeId   string `form:"employee_id" binding:"required"`
@@ -30,6 +34,11 @@ type PersonalInformationEmployee struct {
 	Long         *string `json:"long"`
 	UpdatedFrom  *string `json:"updated_from"`
 	UpdatedDate  string  `json:"updated_date"`
+}
+
+type ValidationGetName struct {
+	Nik  string `json:"nik" form:"nik"`
+	Name string `json:"name" form:"name"`
 }
 
 type ValidationStoreContactInformation struct {
@@ -64,6 +73,36 @@ type ValidationStoreAboutUs struct {
 	Hobby string `json:"hobby" form:"hobby"`
 }
 
+type ValidationStoreSkill struct {
+	ValidationRequiredNIK
+	Category []Category `json:"category"`
+}
+
+type ValidationUpdateSkill struct {
+	ID            int `json:"id" form:"id"`
+	IdParentSkill int `json:"id_parent_skill" form:"id_parent_skill"`
+	ValidationRequiredNIK
+	Type string `json:"type" form:"type"`
+	Name string `json:"name" form:"name" binding:"required"`
+}
+
+type Category struct {
+	ID    int     `json:"id"`
+	Name  string  `json:"name"`
+	Skill []Skill `json:"skill"`
+}
+
+type Skill struct {
+	ID       int        `json:"id"`
+	Name     string     `json:"name"`
+	SubSkill []SubSkill `json:"sub_skill"`
+}
+
+type SubSkill struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
 type GetStoreProfile struct {
 	NIK           string    `json:"nik"`
 	Bio           *string   `json:"bio"`
@@ -92,6 +131,20 @@ type ContactInformation struct {
 	NoTelp2 *string `json:"no_telp_2"`
 	Email1  *string `json:"email_1"`
 	Email2  *string `json:"email_2"`
+}
+
+type ShowSkills struct {
+	profile.ProfileSkill
+	Skill []ProfileMainSkill `json:"skill"`
+}
+
+type ProfileMainSkill struct {
+	profile.ProfileSkill
+	SubSkill []ProfileSubSkill `json:"sub_skill"`
+}
+
+type ProfileSubSkill struct {
+	profile.ProfileSkill
 }
 
 type ShowAboutUs struct {

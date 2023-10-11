@@ -168,6 +168,9 @@ func main() {
 		profile.GET("/getSosialMediaInformation/:nik", userProfileController.GetSocialMediaInformation)
 
 		profile.POST("/storeInformationContact", userProfileController.StoreInformationContact)
+		profile.POST("/storeSkill", userProfileController.StoreSkill)
+		profile.POST("/updateSkill", userProfileController.UpdateSkill)
+		profile.GET("/getSkill/:nik", userProfileController.GetSkill)
 		profile.GET("/getContactInformation/:nik", userProfileController.GetContactInformation)
 	}
 

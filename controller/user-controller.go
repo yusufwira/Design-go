@@ -34,9 +34,10 @@ func (c *UsersController) GetData(ctx *gin.Context) []users.User {
 }
 
 func (c *UsersController) GetDataKaryawanName(ctx *gin.Context) {
-	name := ctx.PostForm("name")
-	nik := ctx.PostForm("nik")
-	data, _ := c.PihcMasterKaryRtDbRepo.FindUserByName(name, nik)
+	var req Authentication.ValidationGetName
+	// name := ctx.PostForm("name")
+	// nik := ctx.PostForm("nik")
+	data, _ := c.PihcMasterKaryRtDbRepo.FindUserByName(req.Name, req.Nik)
 	ctx.AbortWithStatusJSON(http.StatusOK, gin.H{
 		"data": data,
 	})
