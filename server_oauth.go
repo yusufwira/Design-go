@@ -171,7 +171,9 @@ func main() {
 		profile.POST("/storeInformationContact", userProfileController.StoreInformationContact)
 		profile.POST("/storeSkill", userProfileController.StoreSkill)
 		profile.POST("/updateSkill", userProfileController.UpdateSkill)
+		profile.POST("/deleteSkill", userProfileController.DeleteSkill)
 		profile.GET("/getSkill/:nik", userProfileController.GetSkill)
+		profile.GET("/getPengalamanKerja/:nik", userProfileController.GetPengalamanKerja)
 		profile.GET("/getContactInformation/:nik", userProfileController.GetContactInformation)
 	}
 

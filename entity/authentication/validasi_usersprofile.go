@@ -86,6 +86,11 @@ type ValidationUpdateSkill struct {
 	Name string `json:"name" form:"name" binding:"required"`
 }
 
+type ValidationDeleteSkill struct {
+	ID            int `json:"id" form:"id"`
+	Type string `json:"type" form:"type"`
+}
+
 type Category struct {
 	ID    int     `json:"id"`
 	Name  string  `json:"name"`

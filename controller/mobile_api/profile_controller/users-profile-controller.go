@@ -520,6 +520,7 @@ func (c *UsersProfileController) StoreSkill(ctx *gin.Context) {
 		"success": "Success",
 	})
 }
+
 func (c *UsersProfileController) UpdateSkill(ctx *gin.Context) {
 	var req Authentication.ValidationUpdateSkill
 
@@ -829,4 +830,163 @@ func (c *UsersProfileController) GetSkill(ctx *gin.Context) {
 			"data":    nil,
 		})
 	}
+}
+
+func (c *UsersProfileController) DeleteSkill(ctx *gin.Context) {
+	var req Authentication.ValidationDeleteSkill
+
+	if err := ctx.ShouldBind(&req); err != nil {
+		var ve validator.ValidationErrors
+		if errors.As(err, &ve) {
+			out := make([]Authentication.ErrorMsg, len(ve))
+			for i, fe := range ve {
+				out[i] = Authentication.ErrorMsg{Field: fe.Field(), Message: getErrorMsg(fe)}
+			}
+			ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"errorcode_": http.StatusServiceUnavailable, "errormsg_": out})
+		}
+		return
+	}
+
+	var skillProfile []profile.ProfileSkill
+	var data []profile.ProfileSkill
+	if req.Type == "Kategori" {
+		catSkill, err := c.ProfileSkillRepo.FindProfileCategorySkill(req.ID)
+		if err == nil {
+			skillProfile = append(skillProfile, catSkill)
+
+			mainSkill, err2 := c.ProfileSkillRepo.FindProfileSkillArr(catSkill.ID)
+			if err2 == nil {
+				for _, dataMainSkill := range mainSkill {
+					skillProfile = append(skillProfile, dataMainSkill)
+
+					subSkill, err3 := c.ProfileSkillRepo.FindProfileSkillArr(dataMainSkill.ID)
+					if err3 == nil {
+						skillProfile = append(skillProfile, subSkill...)
+					}
+				}
+			}
+			c.ProfileSkillRepo.DeleteC(skillProfile)
+
+			ctx.JSON(http.StatusOK, gin.H{
+				"status":  http.StatusOK,
+				"success": "Success",
+				"data":    data,
+			})
+		}
+	}
+	if req.Type == "Skill" {
+		mainSkill, err := c.ProfileSkillRepo.FindProfileSkillIndiv(req.ID)
+
+		if err == nil {
+			skillProfile = append(skillProfile, mainSkill)
+
+			subSkill, err2 := c.ProfileSkillRepo.FindProfileSkillArr(mainSkill.ID)
+
+			if err2 == nil {
+				skillProfile = append(skillProfile, subSkill...)
+			}
+			c.ProfileSkillRepo.DeleteC(skillProfile)
+
+			ctx.JSON(http.StatusOK, gin.H{
+				"status":  http.StatusOK,
+				"success": "Success",
+				"data":    data,
+			})
+		}
+	}
+	if req.Type == "Sub" {
+		subSkill, err := c.ProfileSkillRepo.FindProfileSkillIndiv(req.ID)
+
+		if err == nil {
+			skillProfile = append(skillProfile, subSkill)
+
+			c.ProfileSkillRepo.DeleteC(skillProfile)
+
+			ctx.JSON(http.StatusOK, gin.H{
+				"status":  http.StatusOK,
+				"success": "Success",
+				"data":    data,
+			})
+		}
+	}
+}
+
+func (c *UsersProfileController) GetPengalamanKerja(ctx *gin.Context) {
+	
+	// var req Authentication.ValidationDeleteSkill
+
+	// if err := ctx.ShouldBind(&req); err != nil {
+	// 	var ve validator.ValidationErrors
+	// 	if errors.As(err, &ve) {
+	// 		out := make([]Authentication.ErrorMsg, len(ve))
+	// 		for i, fe := range ve {
+	// 			out[i] = Authentication.ErrorMsg{Field: fe.Field(), Message: getErrorMsg(fe)}
+	// 		}
+	// 		ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"errorcode_": http.StatusServiceUnavailable, "errormsg_": out})
+	// 	}
+	// 	return
+	// }
+
+	// var skillProfile []profile.ProfileSkill
+	// var data []profile.ProfileSkill
+	// if req.Type == "Kategori" {
+	// 	catSkill, err := c.ProfileSkillRepo.FindProfileCategorySkill(req.ID)
+	// 	if err == nil {
+	// 		skillProfile = append(skillProfile, catSkill)
+
+	// 		mainSkill, err2 := c.ProfileSkillRepo.FindProfileSkillArr(catSkill.ID)
+	// 		if err2 == nil {
+	// 			for _, dataMainSkill := range mainSkill {
+	// 				skillProfile = append(skillProfile, dataMainSkill)
+
+	// 				subSkill, err3 := c.ProfileSkillRepo.FindProfileSkillArr(dataMainSkill.ID)
+	// 				if err3 == nil {
+	// 					skillProfile = append(skillProfile, subSkill...)
+	// 				}
+	// 			}
+	// 		}
+	// 		c.ProfileSkillRepo.DeleteC(skillProfile)
+
+	// 		ctx.JSON(http.StatusOK, gin.H{
+	// 			"status":  http.StatusOK,
+	// 			"success": "Success",
+	// 			"data":    data,
+	// 		})
+	// 	}
+	// }
+	// if req.Type == "Skill" {
+	// 	mainSkill, err := c.ProfileSkillRepo.FindProfileSkillIndiv(req.ID)
+
+	// 	if err == nil {
+	// 		skillProfile = append(skillProfile, mainSkill)
+
+	// 		subSkill, err2 := c.ProfileSkillRepo.FindProfileSkillArr(mainSkill.ID)
+
+	// 		if err2 == nil {
+	// 			skillProfile = append(skillProfile, subSkill...)
+	// 		}
+	// 		c.ProfileSkillRepo.DeleteC(skillProfile)
+
+	// 		ctx.JSON(http.StatusOK, gin.H{
+	// 			"status":  http.StatusOK,
+	// 			"success": "Success",
+	// 			"data":    data,
+	// 		})
+	// 	}
+	// }
+	// if req.Type == "Sub" {
+	// 	subSkill, err := c.ProfileSkillRepo.FindProfileSkillIndiv(req.ID)
+
+	// 	if err == nil {
+	// 		skillProfile = append(skillProfile, subSkill)
+
+	// 		c.ProfileSkillRepo.DeleteC(skillProfile)
+
+	// 		ctx.JSON(http.StatusOK, gin.H{
+	// 			"status":  http.StatusOK,
+	// 			"success": "Success",
+	// 			"data":    data,
+	// 		})
+	// 	}
+	// }
 }

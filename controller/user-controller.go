@@ -151,8 +151,19 @@ func (c *UsersController) Store(ctx *gin.Context) users.User {
 func (c *UsersController) Login(ctx *gin.Context) {
 	var input Authentication.ValidationLogin
 
-	if err := ctx.ShouldBindJSON(&input); err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": "Username / Password Tidak Boleh Kosong"})
+	// if err := ctx.ShouldBindJSON(&input); err != nil {
+	// 	ctx.JSON(http.StatusNotFound, gin.H{"error": "Username / Password Tidak Boleh Kosong"})
+	// 	return
+	// }
+	if err := ctx.ShouldBind(&input); err != nil {
+		var ve validator.ValidationErrors
+		if errors.As(err, &ve) {
+			out := make([]Authentication.ErrorMsg, len(ve))
+			for i, fe := range ve {
+				out[i] = Authentication.ErrorMsg{Field: fe.Field(), Message: getErrorMsg(fe)}
+			}
+			ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"errorcode_": http.StatusServiceUnavailable, "errormsg_": out})
+		}
 		return
 	}
 

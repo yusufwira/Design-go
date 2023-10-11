@@ -96,6 +96,7 @@ func (t ProfileRepo) Update(p Profile) (Profile, error) {
 	}
 	return p, nil
 }
+
 func (t ProfileSkillRepo) Create(p ProfileSkill) (ProfileSkill, error) {
 	err := t.DB.Create(&p).Error
 	if err != nil {
@@ -195,6 +196,15 @@ func (t ProfileSkillRepo) UpdateC(p []ProfileSkill) ([]ProfileSkill, error) {
 	return p, nil
 }
 
+func (t ProfileSkillRepo) DeleteC(p []ProfileSkill) ([]ProfileSkill, error) {
+	err := t.DB.Delete(&p).Error
+	if err != nil {
+		return p, err
+	}
+
+	return p, nil
+}
+
 func (t AboutUsRepo) Create(au AboutUs) (AboutUs, error) {
 	err := t.DB.Create(&au).Error
 	if err != nil {
@@ -239,9 +249,9 @@ func (t ProfileSkillRepo) FindProfileCategorySkillArr(nik string) ([]ProfileSkil
 	return profile, nil
 }
 
-func (t ProfileSkillRepo) FindProfileSkillArr(nik string, id int) ([]ProfileSkill, error) {
+func (t ProfileSkillRepo) FindProfileSkillArr(id int) ([]ProfileSkill, error) {
 	var profile []ProfileSkill
-	err := t.DB.Where("nik=? AND id_parent_skill=?", nik, id).Find(&profile).Error
+	err := t.DB.Where("id_parent_skill=?", id).Find(&profile).Error
 	if err != nil {
 		return profile, err
 	}
@@ -279,6 +289,15 @@ func (t ProfileSkillRepo) GetProfileSkillArr(nik string, typeSkill string) ([]Pr
 func (t ProfileSkillRepo) FindProfileSkill(id int, parent int) (ProfileSkill, error) {
 	var profile ProfileSkill
 	err := t.DB.Where("id=? AND id_parent_skill=?", id, parent).First(&profile).Error
+	if err != nil {
+		return profile, err
+	}
+	return profile, nil
+}
+
+func (t ProfileSkillRepo) FindProfileSkillIndiv(id int) (ProfileSkill, error) {
+	var profile ProfileSkill
+	err := t.DB.Where("id=?", id).First(&profile).Error
 	if err != nil {
 		return profile, err
 	}
