@@ -65,7 +65,7 @@ func main() {
 			c.JSON(http.StatusOK, UserController.GetData(c))
 		})
 
-		r.GET("/getKaryawanName", UserController.GetDataKaryawanName)
+		r.POST("/getKaryawanName", UserController.GetDataKaryawanName)
 
 		r.POST("/postUser", func(c *gin.Context) {
 			c.JSON(http.StatusOK, UserController.Store(c))

@@ -37,7 +37,7 @@ type PersonalInformationEmployee struct {
 }
 
 type ValidationGetName struct {
-	Nik  string `json:"nik" form:"nik"`
+	Nik string `json:"nik" form:"nik"`
 	Name string `json:"name" form:"name"`
 }
 

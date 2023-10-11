@@ -1,9 +1,11 @@
 package controller
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	Authentication "github.com/yusufwira/lern-golang-gin/entity/authentication"
 	"github.com/yusufwira/lern-golang-gin/entity/dbo/pihc"
 	users "github.com/yusufwira/lern-golang-gin/entity/users"
@@ -18,6 +20,18 @@ type UsersController struct {
 func NewUserController(db *gorm.DB) *UsersController {
 	return &UsersController{UserRepo: users.NewUserRepo(db),
 		PihcMasterKaryRtDbRepo: pihc.NewPihcMasterKaryRtDbRepo(db)}
+}
+
+func getErrorMsg(fe validator.FieldError) string {
+	switch fe.Tag() {
+	case "required":
+		return (fe.Field() + " wajib di isi")
+	case "min":
+		return ("Peserta yang diundang minimal " + fe.Param() + " orang")
+	case "validyear":
+		return ("Field has an invalid value: " + fe.Field() + fe.Tag())
+	}
+	return "Unknown error"
 }
 
 func (c *UsersController) Index() []users.User {
@@ -35,12 +49,34 @@ func (c *UsersController) GetData(ctx *gin.Context) []users.User {
 
 func (c *UsersController) GetDataKaryawanName(ctx *gin.Context) {
 	var req Authentication.ValidationGetName
+
+	if err := ctx.ShouldBind(&req); err != nil {
+		var ve validator.ValidationErrors
+		if errors.As(err, &ve) {
+			out := make([]Authentication.ErrorMsg, len(ve))
+			for i, fe := range ve {
+				out[i] = Authentication.ErrorMsg{Field: fe.Field(), Message: getErrorMsg(fe)}
+			}
+			ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"errorcode_": http.StatusServiceUnavailable, "errormsg_": out})
+		}
+		return
+	}
+
 	// name := ctx.PostForm("name")
 	// nik := ctx.PostForm("nik")
-	data, _ := c.PihcMasterKaryRtDbRepo.FindUserByName(req.Name, req.Nik)
-	ctx.AbortWithStatusJSON(http.StatusOK, gin.H{
-		"data": data,
-	})
+	data, err := c.PihcMasterKaryRtDbRepo.FindUserByName(req.Name, req.Nik)
+
+	if err == nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"data": data,
+		})
+	} else {
+		ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+			"status": http.StatusNotFound,
+			"data":   "Data Tidak Ditemukan!!",
+		})
+	}
+
 }
 
 func (c *UsersController) DelData(ctx *gin.Context) []users.User {
