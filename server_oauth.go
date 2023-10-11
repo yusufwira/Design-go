@@ -26,7 +26,7 @@ func main() {
 	koorkgtController := tjsl_controller.NewKoorKgtController(db.Db, db.StorageClient)
 	eventController := event_controller.NewEventController(db.Db, db.StorageClient)
 	userProfileController := profile_controller.NewUsersProfileController(db.Db, db.StorageClient)
-	UserController := controller.NewUserController(db.Db)
+	UserController := controller.NewUserController(db.Db, db.StorageClient)
 
 	r := gin.Default()
 
@@ -65,7 +65,8 @@ func main() {
 			c.JSON(http.StatusOK, UserController.GetData(c))
 		})
 
-		r.POST("/getKaryawanName", UserController.GetDataKaryawanName)
+		r.POST("/getKaryawanNameAll", UserController.GetDataKaryawanNameAll)
+		r.POST("/getKaryawanNameIndiv", UserController.GetDataKaryawanNameIndiv)
 
 		r.POST("/postUser", func(c *gin.Context) {
 			c.JSON(http.StatusOK, UserController.Store(c))
