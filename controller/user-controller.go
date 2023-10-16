@@ -184,31 +184,21 @@ func (c *UsersController) Login(ctx *gin.Context) {
 			"position":      karyawan.PosID,
 		})
 	} else {
-		if user.Id != 0 {
-			if len(input.Password) < 8 {
-				ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-					"status":  http.StatusUnauthorized,
-					"message": "The password must be at least 8 characters."},
-				)
-			} else {
-				ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-					"status":  http.StatusUnauthorized,
-					"message": "Username dan password kurang benar"},
-				)
-			}
-		}
-		if user.Id == 0 {
-			if len(input.Password) < 8 {
-				ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-					"status":  http.StatusUnauthorized,
-					"message": "The password must be at least 8 characters."},
-				)
-			} else {
-				ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-					"status":  http.StatusUnauthorized,
-					"message": "Data karyawan belum terdapat pada database PISMART"},
-				)
-			}
+		if len(input.Password) < 8 {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"status":  http.StatusUnauthorized,
+				"message": "The password must be at least 8 characters."},
+			)
+		}else if user.Id != 0 {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"status":  http.StatusUnauthorized,
+				"message": "Username dan password kurang benar"},
+			)
+		}else if user.Id == 0 {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"status":  http.StatusUnauthorized,
+				"message": "Data karyawan belum terdapat pada database PISMART"},
+			)
 		}
 	}
 }
