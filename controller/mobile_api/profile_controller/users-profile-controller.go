@@ -1,32 +1,50 @@
 package profile_controller
 
 import (
+	"encoding/csv"
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
+	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	Authentication "github.com/yusufwira/lern-golang-gin/entity/authentication"
+	"github.com/yusufwira/lern-golang-gin/entity/dbo/pihc"
 	"github.com/yusufwira/lern-golang-gin/entity/mobile/profile"
 	"github.com/yusufwira/lern-golang-gin/entity/users"
 	"gorm.io/gorm"
 )
 
 type UsersProfileController struct {
-	UserProfileRepo  *users.UserProfileRepo
-	ProfileRepo      *profile.ProfileRepo
-	AboutUsRepo      *profile.AboutUsRepo
-	ProfileSkillRepo *profile.ProfileSkillRepo
+	UserProfileRepo          *users.UserProfileRepo
+	ProfileRepo              *profile.ProfileRepo
+	AboutUsRepo              *profile.AboutUsRepo
+	ProfileSkillRepo         *profile.ProfileSkillRepo
+	PengalamanKerjaRepo      *profile.PengalamanKerjaRepo
+	PhotoProfileRepo         *profile.PhotoProfileRepo
+	PihcKaryawanMutasiPIRepo *pihc.PihcKaryawanMutasiPIRepo
+	PihcMasterKaryDbRepo     *pihc.PihcMasterKaryDbRepo
+	PihcMasterCompanyRepo    *pihc.PihcMasterCompanyRepo
+	ViewOrganisasiRepo       *pihc.ViewOrganisasiRepo
 }
 
 func NewUsersProfileController(Db *gorm.DB, StorageClient *storage.Client) *UsersProfileController {
 	return &UsersProfileController{UserProfileRepo: users.NewUserProfileRepo(Db),
-		ProfileRepo:      profile.NewProfileRepo(Db),
-		AboutUsRepo:      profile.NewAboutUsRepo(Db),
-		ProfileSkillRepo: profile.NewProfileSkillRepo(Db)}
+		ProfileRepo:              profile.NewProfileRepo(Db),
+		AboutUsRepo:              profile.NewAboutUsRepo(Db),
+		ProfileSkillRepo:         profile.NewProfileSkillRepo(Db),
+		PengalamanKerjaRepo:      profile.NewPengalamanKerjaRepo(Db),
+		PhotoProfileRepo:         profile.NewPhotoProfileRepo(Db, StorageClient),
+		PihcKaryawanMutasiPIRepo: pihc.NewPihcKaryawanMutasiPIRepo(Db),
+		PihcMasterKaryDbRepo:     pihc.NewPihcMasterKaryDbRepo(Db),
+		PihcMasterCompanyRepo:    pihc.NewPihcMasterCompanyRepo(Db),
+		ViewOrganisasiRepo:       pihc.NewViewOrganisasiRepo(Db)}
 }
 
 func getErrorMsg(fe validator.FieldError) string {
@@ -751,73 +769,48 @@ func (c *UsersProfileController) UpdateSkill(ctx *gin.Context) {
 
 func (c *UsersProfileController) GetSkill(ctx *gin.Context) {
 	Nik := ctx.Param("nik")
-	var data []Authentication.ShowSkills
+	data := []Authentication.ShowSkills{}
 
 	typeCat := "category_skill"
-	personalCategory, err := c.ProfileSkillRepo.GetProfileSkillArr(Nik, typeCat)
+	personalCategory, _ := c.ProfileSkillRepo.GetProfileSkillArr(Nik, typeCat)
 
-	typeMainSkill := "main_skill"
-	personalMainSkill, _ := c.ProfileSkillRepo.GetProfileSkillArr(Nik, typeMainSkill)
+	if personalCategory != nil {
+		for _, cat := range personalCategory {
+			typeMainSkill := "main_skill"
+			personalMainSkill, _ := c.ProfileSkillRepo.GetProfileSkillArr(Nik, typeMainSkill)
 
-	typeSubSkill := "sub_skill"
-	personalSubSkill, _ := c.ProfileSkillRepo.GetProfileSkillArr(Nik, typeSubSkill)
+			typeSubSkill := "sub_skill"
+			personalSubSkill, _ := c.ProfileSkillRepo.GetProfileSkillArr(Nik, typeSubSkill)
+			mainskill := []Authentication.ProfileMainSkill{}
 
-	for _, cat := range personalCategory {
-		var mainskill []Authentication.ProfileMainSkill
+			for _, mainskll := range personalMainSkill {
+				subskill := []Authentication.ProfileSubSkill{}
 
-		for _, mainskll := range personalMainSkill {
-			var subskill []Authentication.ProfileSubSkill
+				for _, subskll := range personalSubSkill {
+					if subskll.IdParentSkill != nil {
+						if mainskll.ID == *subskll.IdParentSkill {
+							subskill = append(subskill, struct{ profile.ProfileSkill }{subskll})
+						}
+					}
+				}
 
-			for _, subskll := range personalSubSkill {
-				if subskll.IdParentSkill != nil {
-					if mainskll.ID == *subskll.IdParentSkill {
-						subskill = append(subskill, struct{ profile.ProfileSkill }{subskll})
+				if mainskll.IdParentSkill != nil {
+					if cat.ID == *mainskll.IdParentSkill {
+						mainSkills := Authentication.ProfileMainSkill{
+							ProfileSkill: mainskll,
+							SubSkill:     subskill,
+						}
+						mainskill = append(mainskill, mainSkills)
 					}
 				}
 			}
 
-			if mainskll.IdParentSkill != nil {
-				if cat.ID == *mainskll.IdParentSkill {
-					mainSkills := Authentication.ProfileMainSkill{
-						ProfileSkill: mainskll,
-						SubSkill:     subskill,
-					}
-					mainskill = append(mainskill, mainSkills)
-				}
+			catSkills := Authentication.ShowSkills{
+				ProfileSkill: cat,
+				Skill:        mainskill,
 			}
+			data = append(data, catSkills)
 		}
-
-		catSkills := Authentication.ShowSkills{
-			ProfileSkill: cat,
-			Skill:        mainskill,
-		}
-		data = append(data, catSkills)
-	}
-
-	// 	personalMainSkill, _ := c.ProfileSkillRepo.FindProfileSkillArr(cat.Nik, cat.ID)
-	// 	for _, mainSkill := range personalMainSkill {
-	// 		var subskill []Authentication.ProfileSubSkill
-
-	// 		personalSubSkill, _ := c.ProfileSkillRepo.FindProfileSkillArr(mainSkill.Nik, mainSkill.ID)
-
-	// 		for _, dataSubSkill := range personalSubSkill {
-	// 			subskill = append(subskill, struct{ profile.ProfileSkill }{dataSubSkill})
-	// 		}
-
-	// 		mainSkills := Authentication.ProfileMainSkill{
-	// 			ProfileSkill: mainSkill,
-	// 			SubSkill:     subskill,
-	// 		}
-	// 		mainskill = append(mainskill, mainSkills)
-	// 	}
-	// 	catSkills := Authentication.ShowSkills{
-	// 		ProfileSkill: cat,
-	// 		Skill:        mainskill,
-	// 	}
-	// 	data = append(data, catSkills)
-	// }
-
-	if err == nil {
 		ctx.JSON(http.StatusOK, gin.H{
 			"status":  http.StatusOK,
 			"success": "Success",
@@ -827,7 +820,7 @@ func (c *UsersProfileController) GetSkill(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{
 			"status":  http.StatusOK,
 			"success": "Data Tidak Ditemukan!!",
-			"data":    nil,
+			"data":    data,
 		})
 	}
 }
@@ -911,82 +904,535 @@ func (c *UsersProfileController) DeleteSkill(ctx *gin.Context) {
 	}
 }
 
+type ByValidFrom []Authentication.PengalamanKerja
+
+func (a ByValidFrom) Len() int           { return len(a) }
+func (a ByValidFrom) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByValidFrom) Less(i, j int) bool { return a[i].ValidFrom > a[j].ValidFrom }
+
 func (c *UsersProfileController) GetPengalamanKerja(ctx *gin.Context) {
-	
-	// var req Authentication.ValidationDeleteSkill
+	Nik := ctx.Param("nik")
+	var data []Authentication.PengalamanKerja
+	var merged []profile.PengalamanKerja
 
-	// if err := ctx.ShouldBind(&req); err != nil {
-	// 	var ve validator.ValidationErrors
-	// 	if errors.As(err, &ve) {
-	// 		out := make([]Authentication.ErrorMsg, len(ve))
-	// 		for i, fe := range ve {
-	// 			out[i] = Authentication.ErrorMsg{Field: fe.Field(), Message: getErrorMsg(fe)}
-	// 		}
-	// 		ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"errorcode_": http.StatusServiceUnavailable, "errormsg_": out})
-	// 	}
-	// 	return
-	// }
+	if string(Nik[0]) == "8" {
+		nik_lama := Nik[1:]
+		result, err := c.PengalamanKerjaRepo.FindRiwayatJabatan(nik_lama)
+		if err == nil {
+			merged = append(merged, result...)
+		}
+	}
+	if string(Nik[0]) == "1" {
+		krywn, err := c.PihcKaryawanMutasiPIRepo.FindPihcKaryawanMutasiPI(Nik)
+		if err == nil {
+			result, err1 := c.PengalamanKerjaRepo.FindRiwayatJabatan(krywn.EmpNo)
+			if err1 == nil {
+				merged = append(merged, result...)
+			}
+		}
+	}
+	result, err := c.PengalamanKerjaRepo.FindRiwayatJabatan(Nik)
+	if err == nil {
+		merged = append(merged, result...)
+	}
 
-	// var skillProfile []profile.ProfileSkill
-	// var data []profile.ProfileSkill
-	// if req.Type == "Kategori" {
-	// 	catSkill, err := c.ProfileSkillRepo.FindProfileCategorySkill(req.ID)
-	// 	if err == nil {
-	// 		skillProfile = append(skillProfile, catSkill)
+	for _, riwayat := range merged {
+		// Membuang tanda kurung
+		riwayat.RiwayatJabatan = strings.Trim(riwayat.RiwayatJabatan, "()")
 
-	// 		mainSkill, err2 := c.ProfileSkillRepo.FindProfileSkillArr(catSkill.ID)
-	// 		if err2 == nil {
-	// 			for _, dataMainSkill := range mainSkill {
-	// 				skillProfile = append(skillProfile, dataMainSkill)
+		// Membuat pembaca CSV
+		reader := csv.NewReader(strings.NewReader(riwayat.RiwayatJabatan))
+		reader.Comma = ','
+		// Membaca data
+		values, err := reader.Read()
+		fmt.Println(values)
+		if err != nil {
+			fmt.Println("Gagal membaca data:", err)
+			return
+		}
 
-	// 				subSkill, err3 := c.ProfileSkillRepo.FindProfileSkillArr(dataMainSkill.ID)
-	// 				if err3 == nil {
-	// 					skillProfile = append(skillProfile, subSkill...)
-	// 				}
-	// 			}
-	// 		}
-	// 		c.ProfileSkillRepo.DeleteC(skillProfile)
+		// Menggunakan regular expression untuk membersihkan nilai-nilai yang dalam tanda kutip
+		re := regexp.MustCompile(`"(.+?)"`)
+		for i, value := range values {
+			matches := re.FindStringSubmatch(value)
+			if len(matches) > 1 {
+				values[i] = matches[1]
+			}
+		}
 
-	// 		ctx.JSON(http.StatusOK, gin.H{
-	// 			"status":  http.StatusOK,
-	// 			"success": "Success",
-	// 			"data":    data,
-	// 		})
-	// 	}
-	// }
-	// if req.Type == "Skill" {
-	// 	mainSkill, err := c.ProfileSkillRepo.FindProfileSkillIndiv(req.ID)
+		// Pastikan values memiliki setidaknya 8 elemen (sesuaikan jika perlu)
+		if len(values) >= 8 {
+			if values[4] != "" {
+				// Hapus tanda kutip dari string yang dibungkus dalam tanda kutip
+				result := Authentication.PengalamanKerja{
+					Grade:        strings.Trim(values[2], " \""),
+					PositionId:   strings.Trim(values[3], " \""),
+					PositionName: strings.Trim(values[4], " \""),
+					Unit1:        strings.Trim(values[6], " \""),
+					Unit2:        strings.Trim(values[7], " \""),
+				}
+				// Get the current year
+				currentYear := time.Now().Year()
 
-	// 	if err == nil {
-	// 		skillProfile = append(skillProfile, mainSkill)
+				// Parse the date string
+				parsedTimeValidFrom, _ := time.Parse("2006-01-02 15:04:05", values[0])
+				parsedTimeValidTo, _ := time.Parse("2006-01-02 15:04:05", values[1])
+				// Replace the year with the current year
+				// updatedTime := parsedTimeValidTo.AddDate(9999-currentYear, 0, 0)
 
-	// 		subSkill, err2 := c.ProfileSkillRepo.FindProfileSkillArr(mainSkill.ID)
+				// Format the updated time as a string
+				validFrom := parsedTimeValidFrom.Format("2006-01-02")
+				validTo := parsedTimeValidTo.Format("2006-01-02")
+				validTo = strings.Replace(validTo, "9999", fmt.Sprintf("%d", currentYear), -1)
+				result.ValidFrom = strings.Trim(validFrom, " \"")
+				result.ValidTo = strings.Trim(validTo, " \"")
 
-	// 		if err2 == nil {
-	// 			skillProfile = append(skillProfile, subSkill...)
-	// 		}
-	// 		c.ProfileSkillRepo.DeleteC(skillProfile)
+				data = append(data, result)
+			}
+		} else {
+			fmt.Println("Data tidak lengkap")
+		}
+	}
 
-	// 		ctx.JSON(http.StatusOK, gin.H{
-	// 			"status":  http.StatusOK,
-	// 			"success": "Success",
-	// 			"data":    data,
-	// 		})
-	// 	}
-	// }
-	// if req.Type == "Sub" {
-	// 	subSkill, err := c.ProfileSkillRepo.FindProfileSkillIndiv(req.ID)
+	// Menggunakan sort.Sort dengan jenis khusus ByValidFrom
+	sort.Sort(ByValidFrom(data))
 
-	// 	if err == nil {
-	// 		skillProfile = append(skillProfile, subSkill)
+	// Menggunakan sort.Slice dengan fungsi penilaian khusus
+	// sort.Slice(data, func(i, j int) bool {
+	// 	return data[i].ValidFrom > data[j].ValidFrom
+	// })
 
-	// 		c.ProfileSkillRepo.DeleteC(skillProfile)
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":  http.StatusOK,
+		"success": "Success",
+		"data":    data,
+	})
+}
+func (c *UsersProfileController) ShowProfile(ctx *gin.Context) {
+	Nik := ctx.Param("nik")
+	var data Authentication.ProfilePribadi
 
-	// 		ctx.JSON(http.StatusOK, gin.H{
-	// 			"status":  http.StatusOK,
-	// 			"success": "Success",
-	// 			"data":    data,
-	// 		})
-	// 	}
-	// }
+	data_karyawan, err := c.PihcMasterKaryDbRepo.FindUserByNIK(Nik)
+	if err == nil {
+		data.PihcMasterKary.EmpNo = data_karyawan.EmpNo
+		data.PihcMasterKary.Nama = data_karyawan.Nama
+		data.PihcMasterKary.Gender = data_karyawan.Gender
+		data.PihcMasterKary.Agama = data_karyawan.Agama
+		data.PihcMasterKary.StatusKawin = data_karyawan.StatusKawin
+		data.PihcMasterKary.Anak = data_karyawan.Anak
+		data.PihcMasterKary.Mdg = strconv.Itoa(data_karyawan.Mdg)
+		data.PihcMasterKary.EmpGrade = data_karyawan.EmpGrade
+		data.PihcMasterKary.EmpGradeTitle = data_karyawan.EmpGradeTitle
+		data.PihcMasterKary.Area = data_karyawan.Area
+		data.PihcMasterKary.AreaTitle = data_karyawan.AreaTitle
+		data.PihcMasterKary.SubArea = data_karyawan.SubArea
+		data.PihcMasterKary.SubAreaTitle = data_karyawan.SubAreaTitle
+		data.PihcMasterKary.Contract = data_karyawan.Contract
+		data.PihcMasterKary.Pendidikan = data_karyawan.Pendidikan
+		data.PihcMasterKary.Company = data_karyawan.Company
+		if data_karyawan.Lokasi != "" {
+			data.PihcMasterKary.Lokasi = &data_karyawan.Lokasi
+		}
+		data.PihcMasterKary.EmployeeStatus = data_karyawan.EmployeeStatus
+		data.PihcMasterKary.Email = data_karyawan.Email
+		data.PihcMasterKary.HP = data_karyawan.HP
+		data.PihcMasterKary.TglLahir = data_karyawan.TglLahir.Format(time.DateOnly)
+		data.PihcMasterKary.PosID = data_karyawan.PosID
+		data.PihcMasterKary.PosTitle = data_karyawan.PosTitle
+		data.PihcMasterKary.SupPosID = data_karyawan.SupPosID
+		data.PihcMasterKary.PosGrade = data_karyawan.PosGrade
+		data.PihcMasterKary.PosKategori = data_karyawan.PosKategori
+		data.PihcMasterKary.OrgID = data_karyawan.OrgID
+		data.PihcMasterKary.OrgTitle = data_karyawan.OrgTitle
+		data.PihcMasterKary.DeptID = data_karyawan.DeptID
+		data.PihcMasterKary.DeptTitle = data_karyawan.DeptTitle
+		data.PihcMasterKary.KompID = data_karyawan.KompID
+		data.PihcMasterKary.KompTitle = data_karyawan.KompTitle
+		data.PihcMasterKary.DirID = data_karyawan.DirID
+		data.PihcMasterKary.DirTitle = data_karyawan.DirTitle
+		data.PihcMasterKary.PosLevel = data_karyawan.PosLevel
+		data.PihcMasterKary.SupEmpNo = data_karyawan.SupEmpNo
+		data.PihcMasterKary.BagID = data_karyawan.BagID
+		data.PihcMasterKary.BagTitle = data_karyawan.BagTitle
+		if data_karyawan.SeksiID != "" {
+			data.PihcMasterKary.SeksiID = &data_karyawan.SeksiID
+		}
+		if data_karyawan.SeksiTitle != "" {
+			data.PihcMasterKary.SeksiTitle = &data_karyawan.SeksiTitle
+		}
+		if data_karyawan.PreNameTitle != "" {
+			data.PihcMasterKary.PreNameTitle = &data_karyawan.PreNameTitle
+		}
+		if data_karyawan.PostNameTitle != "" {
+			data.PihcMasterKary.PostNameTitle = &data_karyawan.PostNameTitle
+		}
+		if data_karyawan.NoNPWP != "" {
+			data.PihcMasterKary.NoNPWP = &data_karyawan.NoNPWP
+		}
+		if data_karyawan.BankAccount != "" {
+			data.PihcMasterKary.BankAccount = &data_karyawan.BankAccount
+		}
+		if data_karyawan.BankName != "" {
+			data.PihcMasterKary.BankName = &data_karyawan.BankName
+		}
+		data.PihcMasterKary.MdgDate = data_karyawan.MdgDate
+		if data_karyawan.PayScale != "" {
+			data.PihcMasterKary.PayScale = &data_karyawan.PayScale
+		}
+		data.PihcMasterKary.CCCode = data_karyawan.CCCode
+		data.PihcMasterKary.Nickname = data_karyawan.Nickname
+
+		domisili, _ := c.UserProfileRepo.FindProfileUsers(data.EmpNo)
+		if domisili.Nik != "" {
+			data_domisili := users.UserProfile{
+				Nik:         domisili.Nik,
+				Alamat:      domisili.Alamat,
+				Kelurahan:   domisili.Kelurahan,
+				Kecamatan:   domisili.Kecamatan,
+				Kabupaten:   domisili.Kabupaten,
+				Provinsi:    domisili.Provinsi,
+				Kodepos:     domisili.Kodepos,
+				Domisili:    domisili.Domisili,
+				PosisiMap:   domisili.PosisiMap,
+				Email2:      domisili.Email2,
+				UpdatedBy:   domisili.UpdatedBy,
+				NoTelp1:     domisili.NoTelp1,
+				NoTelp2:     domisili.NoTelp2,
+				Lat:         domisili.Lat,
+				Long:        domisili.Long,
+				Email1:      domisili.Email1,
+				UpdatedFrom: domisili.UpdatedFrom,
+				UpdatedDate: domisili.UpdatedDate.Format(time.DateTime),
+				IsAdmin:     domisili.IsAdmin,
+			}
+
+			data.Domisili = &data_domisili
+		}
+
+		data_profile, _ := c.ProfileRepo.FindProfile(domisili.Nik)
+		if data_profile.ID != 0 {
+			profileMobile := &Authentication.MobileProfile{
+				Profile:     data_profile,
+				UserProfile: *data.Domisili,
+			}
+			data.ProfileMobile = profileMobile
+		}
+
+		about, _ := c.AboutUsRepo.FindProfileAboutUs(data_profile.Nik)
+		if about.ID != 0 {
+			data.AboutUs = &about
+		}
+
+		company, _ := c.PihcMasterCompanyRepo.FindPihcMsterCompany(data_karyawan.Company)
+		data.Companys = company
+
+		typeCat := "category_skill"
+		personalCategory, _ := c.ProfileSkillRepo.GetProfileSkillArr(data_karyawan.EmpNo, typeCat)
+		if personalCategory != nil {
+			typeMainSkill := "main_skill"
+			personalMainSkill, _ := c.ProfileSkillRepo.GetProfileSkillArr(data_karyawan.EmpNo, typeMainSkill)
+
+			typeSubSkill := "sub_skill"
+			personalSubSkill, _ := c.ProfileSkillRepo.GetProfileSkillArr(data_karyawan.EmpNo, typeSubSkill)
+			for _, cat := range personalCategory {
+				mainskill := []Authentication.ProfileMainSkill{}
+
+				for _, mainskll := range personalMainSkill {
+					subskill := []Authentication.ProfileSubSkill{}
+
+					for _, subskll := range personalSubSkill {
+						if subskll.IdParentSkill != nil {
+							if mainskll.ID == *subskll.IdParentSkill {
+								subskill = append(subskill, struct{ profile.ProfileSkill }{subskll})
+							}
+						}
+					}
+
+					if mainskll.IdParentSkill != nil {
+						if cat.ID == *mainskll.IdParentSkill {
+							mainSkills := Authentication.ProfileMainSkill{
+								ProfileSkill: mainskll,
+								SubSkill:     subskill,
+							}
+							mainskill = append(mainskill, mainSkills)
+						}
+					}
+				}
+
+				catSkills := Authentication.ShowSkills{
+					ProfileSkill: cat,
+					Skill:        mainskill,
+				}
+				data.Skill = append(data.Skill, catSkills)
+			}
+		} else {
+			data.Skill = []Authentication.ShowSkills{}
+		}
+
+		data.CompanyLogo = "https://storage.googleapis.com/lumen-oauth-storage/company/logo-pi-full.png"
+		photoProfile, _ := c.PhotoProfileRepo.FindPhotoProfile(data_karyawan.EmpNo)
+		if photoProfile.Url != "" {
+			data.PhotoProfile = photoProfile.Url
+		} else {
+			data.PhotoProfile = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
+		}
+		data.PhotoProfileDefault = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
+
+		organization, _ := c.ViewOrganisasiRepo.FindViewOrganization(data_karyawan.EmpNo)
+
+		data.Organisasi = append(data.Organisasi, organization.Unit1)
+		data.Organisasi = append(data.Organisasi, organization.Unit2)
+		data.Organisasi = append(data.Organisasi, organization.Org3)
+		data.Organisasi = append(data.Organisasi, organization.Org4)
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"status":  http.StatusOK,
+			"success": "Success",
+			"data":    data,
+		})
+	} else {
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+	}
+}
+func (c *UsersProfileController) UpdatePhotoProfile(ctx *gin.Context) {
+	var req Authentication.ValidationPhotoProfile
+	var data Authentication.ProfilePribadi
+	var photoProfile profile.PhotoProfile
+
+	if err := ctx.ShouldBind(&req); err != nil {
+		var ve validator.ValidationErrors
+		if errors.As(err, &ve) {
+			out := make([]Authentication.ErrorMsg, len(ve))
+			for i, fe := range ve {
+				out[i] = Authentication.ErrorMsg{Field: fe.Field(), Message: getErrorMsg(fe)}
+			}
+			ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"errorcode_": http.StatusServiceUnavailable, "errormsg_": out})
+		}
+		return
+	}
+
+	data_karyawan, err := c.PihcMasterKaryDbRepo.FindUserByNIK(req.NIK)
+	if err == nil {
+		file, _ := ctx.FormFile("photo")
+
+		originalFileName := file.Filename
+		fmt.Println(originalFileName)
+
+		fileToUpload, err := file.Open()
+		if err != nil {
+			// Handle the error
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Could not open file",
+			})
+			return
+		}
+
+		imageURL, file_name, err := c.PhotoProfileRepo.UploadFilePhotoProfile(data_karyawan.EmpNo, originalFileName, fileToUpload)
+		// file_url, file_name, err := c.EventNotulenRepo.UploadFile(originalFileName, fileToUpload)
+		if err == nil {
+			pp, _ := c.PhotoProfileRepo.FindPhotoProfile(data_karyawan.EmpNo)
+			fmt.Println(pp.Id)
+			if pp.Id != 0 {
+				fmt.Println("UPDATE")
+				pp.Name = file_name
+				pp.Url = imageURL
+
+				updatePP, _ := c.PhotoProfileRepo.Update(pp)
+				photoProfile = updatePP
+			} else {
+				fmt.Println("CREATE")
+				pp.Name = file_name
+				pp.Url = imageURL
+				pp.EmpNo = data_karyawan.EmpNo
+
+				createPP, _ := c.PhotoProfileRepo.Create(pp)
+				photoProfile = createPP
+			}
+		}
+		if err != nil {
+			// Handle the error
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Could not upload file",
+			})
+			return
+		}
+		data.PihcMasterKary.EmpNo = data_karyawan.EmpNo
+		data.PihcMasterKary.Nama = data_karyawan.Nama
+		data.PihcMasterKary.Gender = data_karyawan.Gender
+		data.PihcMasterKary.Agama = data_karyawan.Agama
+		data.PihcMasterKary.StatusKawin = data_karyawan.StatusKawin
+		data.PihcMasterKary.Anak = data_karyawan.Anak
+		data.PihcMasterKary.Mdg = strconv.Itoa(data_karyawan.Mdg)
+		data.PihcMasterKary.EmpGrade = data_karyawan.EmpGrade
+		data.PihcMasterKary.EmpGradeTitle = data_karyawan.EmpGradeTitle
+		data.PihcMasterKary.Area = data_karyawan.Area
+		data.PihcMasterKary.AreaTitle = data_karyawan.AreaTitle
+		data.PihcMasterKary.SubArea = data_karyawan.SubArea
+		data.PihcMasterKary.SubAreaTitle = data_karyawan.SubAreaTitle
+		data.PihcMasterKary.Contract = data_karyawan.Contract
+		data.PihcMasterKary.Pendidikan = data_karyawan.Pendidikan
+		data.PihcMasterKary.Company = data_karyawan.Company
+		if data_karyawan.Lokasi != "" {
+			data.PihcMasterKary.Lokasi = &data_karyawan.Lokasi
+		}
+		data.PihcMasterKary.EmployeeStatus = data_karyawan.EmployeeStatus
+		data.PihcMasterKary.Email = data_karyawan.Email
+		data.PihcMasterKary.HP = data_karyawan.HP
+		data.PihcMasterKary.TglLahir = data_karyawan.TglLahir.Format(time.DateOnly)
+		data.PihcMasterKary.PosID = data_karyawan.PosID
+		data.PihcMasterKary.PosTitle = data_karyawan.PosTitle
+		data.PihcMasterKary.SupPosID = data_karyawan.SupPosID
+		data.PihcMasterKary.PosGrade = data_karyawan.PosGrade
+		data.PihcMasterKary.PosKategori = data_karyawan.PosKategori
+		data.PihcMasterKary.OrgID = data_karyawan.OrgID
+		data.PihcMasterKary.OrgTitle = data_karyawan.OrgTitle
+		data.PihcMasterKary.DeptID = data_karyawan.DeptID
+		data.PihcMasterKary.DeptTitle = data_karyawan.DeptTitle
+		data.PihcMasterKary.KompID = data_karyawan.KompID
+		data.PihcMasterKary.KompTitle = data_karyawan.KompTitle
+		data.PihcMasterKary.DirID = data_karyawan.DirID
+		data.PihcMasterKary.DirTitle = data_karyawan.DirTitle
+		data.PihcMasterKary.PosLevel = data_karyawan.PosLevel
+		data.PihcMasterKary.SupEmpNo = data_karyawan.SupEmpNo
+		data.PihcMasterKary.BagID = data_karyawan.BagID
+		data.PihcMasterKary.BagTitle = data_karyawan.BagTitle
+		if data_karyawan.SeksiID != "" {
+			data.PihcMasterKary.SeksiID = &data_karyawan.SeksiID
+		}
+		if data_karyawan.SeksiTitle != "" {
+			data.PihcMasterKary.SeksiTitle = &data_karyawan.SeksiTitle
+		}
+		if data_karyawan.PreNameTitle != "" {
+			data.PihcMasterKary.PreNameTitle = &data_karyawan.PreNameTitle
+		}
+		if data_karyawan.PostNameTitle != "" {
+			data.PihcMasterKary.PostNameTitle = &data_karyawan.PostNameTitle
+		}
+		if data_karyawan.NoNPWP != "" {
+			data.PihcMasterKary.NoNPWP = &data_karyawan.NoNPWP
+		}
+		if data_karyawan.BankAccount != "" {
+			data.PihcMasterKary.BankAccount = &data_karyawan.BankAccount
+		}
+		if data_karyawan.BankName != "" {
+			data.PihcMasterKary.BankName = &data_karyawan.BankName
+		}
+		data.PihcMasterKary.MdgDate = data_karyawan.MdgDate
+		if data_karyawan.PayScale != "" {
+			data.PihcMasterKary.PayScale = &data_karyawan.PayScale
+		}
+		data.PihcMasterKary.CCCode = data_karyawan.CCCode
+		data.PihcMasterKary.Nickname = data_karyawan.Nickname
+
+		domisili, _ := c.UserProfileRepo.FindProfileUsers(data.EmpNo)
+
+		if domisili.Nik != "" {
+			data_domisili := users.UserProfile{
+				Nik:         domisili.Nik,
+				Alamat:      domisili.Alamat,
+				Kelurahan:   domisili.Kelurahan,
+				Kecamatan:   domisili.Kecamatan,
+				Kabupaten:   domisili.Kabupaten,
+				Provinsi:    domisili.Provinsi,
+				Kodepos:     domisili.Kodepos,
+				Domisili:    domisili.Domisili,
+				PosisiMap:   domisili.PosisiMap,
+				Email2:      domisili.Email2,
+				UpdatedBy:   domisili.UpdatedBy,
+				NoTelp1:     domisili.NoTelp1,
+				NoTelp2:     domisili.NoTelp2,
+				Lat:         domisili.Lat,
+				Long:        domisili.Long,
+				Email1:      domisili.Email1,
+				UpdatedFrom: domisili.UpdatedFrom,
+				UpdatedDate: domisili.UpdatedDate.Format(time.DateTime),
+				IsAdmin:     domisili.IsAdmin,
+			}
+
+			data.Domisili = &data_domisili
+		}
+
+		data_profile, _ := c.ProfileRepo.FindProfile(domisili.Nik)
+		if data_profile.ID != 0 {
+			profileMobile := &Authentication.MobileProfile{
+				Profile:     data_profile,
+				UserProfile: *data.Domisili,
+			}
+			data.ProfileMobile = profileMobile
+		}
+
+		about, _ := c.AboutUsRepo.FindProfileAboutUs(data_profile.Nik)
+		if about.ID != 0 {
+			data.AboutUs = &about
+		}
+
+		company, _ := c.PihcMasterCompanyRepo.FindPihcMsterCompany(data_karyawan.Company)
+		data.Companys = company
+
+		typeCat := "category_skill"
+		personalCategory, _ := c.ProfileSkillRepo.GetProfileSkillArr(data_karyawan.EmpNo, typeCat)
+		if personalCategory != nil {
+			typeMainSkill := "main_skill"
+			personalMainSkill, _ := c.ProfileSkillRepo.GetProfileSkillArr(data_karyawan.EmpNo, typeMainSkill)
+
+			typeSubSkill := "sub_skill"
+			personalSubSkill, _ := c.ProfileSkillRepo.GetProfileSkillArr(data_karyawan.EmpNo, typeSubSkill)
+			for _, cat := range personalCategory {
+				mainskill := []Authentication.ProfileMainSkill{}
+
+				for _, mainskll := range personalMainSkill {
+					subskill := []Authentication.ProfileSubSkill{}
+
+					for _, subskll := range personalSubSkill {
+						if subskll.IdParentSkill != nil {
+							if mainskll.ID == *subskll.IdParentSkill {
+								subskill = append(subskill, struct{ profile.ProfileSkill }{subskll})
+							}
+						}
+					}
+
+					if mainskll.IdParentSkill != nil {
+						if cat.ID == *mainskll.IdParentSkill {
+							mainSkills := Authentication.ProfileMainSkill{
+								ProfileSkill: mainskll,
+								SubSkill:     subskill,
+							}
+							mainskill = append(mainskill, mainSkills)
+						}
+					}
+				}
+
+				catSkills := Authentication.ShowSkills{
+					ProfileSkill: cat,
+					Skill:        mainskill,
+				}
+				data.Skill = append(data.Skill, catSkills)
+			}
+		} else {
+			data.Skill = []Authentication.ShowSkills{}
+		}
+
+		data.CompanyLogo = "https://storage.googleapis.com/lumen-oauth-storage/company/logo-pi-full.png"
+		if photoProfile.Url != "" {
+			data.PhotoProfile = photoProfile.Url
+		} else {
+			data.PhotoProfile = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
+		}
+		data.PhotoProfileDefault = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
+
+		organization, _ := c.ViewOrganisasiRepo.FindViewOrganization(data_karyawan.EmpNo)
+
+		data.Organisasi = append(data.Organisasi, organization.Unit1)
+		data.Organisasi = append(data.Organisasi, organization.Unit2)
+		data.Organisasi = append(data.Organisasi, organization.Org3)
+		data.Organisasi = append(data.Organisasi, organization.Org4)
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"status":  http.StatusOK,
+			"success": "Success",
+			"data":    data,
+		})
+	} else {
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+	}
 }

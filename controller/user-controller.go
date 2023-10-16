@@ -170,8 +170,57 @@ func (c *UsersController) Login(ctx *gin.Context) {
 	user, err := c.UserRepo.LoginCheck(input.Username, input.Password)
 
 	if err == nil {
-		ctx.JSON(http.StatusOK, user)
+
+		karyawan, _ := c.PihcMasterKaryRtDbRepo.FindUserByNIK(user.Nik)
+		ctx.JSON(http.StatusOK, gin.H{
+			"status":        http.StatusOK,
+			"user_id":       user.Id,
+			"user_name":     user.Name,
+			"comp_code":     karyawan.Company,
+			"email":         user.Email,
+			"hp":            karyawan.HP,
+			"user_org_name": karyawan.OrgTitle,
+			"model_type":    user.UserType,
+			"nik":           user.Nik,
+			"position":      karyawan.PosID,
+		})
 	} else {
 		ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Username / Password Salah"})
+	}
+}
+
+func (c *UsersController) Register(ctx *gin.Context) {
+	var input Authentication.ValidationRegister
+
+	if err := ctx.ShouldBind(&input); err != nil {
+		var ve validator.ValidationErrors
+		if errors.As(err, &ve) {
+			out := make([]Authentication.ErrorMsg, len(ve))
+			for i, fe := range ve {
+				out[i] = Authentication.ErrorMsg{Field: fe.Field(), Message: getErrorMsg(fe)}
+			}
+			ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"errorcode_": http.StatusServiceUnavailable, "errormsg_": out})
+		}
+		return
+	}
+	user, err := c.UserRepo.RegisterCheck(input.Username, input.Password)
+	if err != nil {
+		user.Username = input.Username
+		user.Password = input.Password
+		user.Email = input.Email
+		user.Nik = input.Nik
+		user.UserType = input.Type
+
+		c.UserRepo.Create(user)
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"status": http.StatusOK,
+			"data":   "Data Berhasil Ditambahkan",
+		})
+	} else {
+		ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{
+			"status": http.StatusServiceUnavailable,
+			"data":   nil,
+		})
 	}
 }

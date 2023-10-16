@@ -1,6 +1,7 @@
 package users
 
 import (
+	"fmt"
 	"html"
 	"math/rand"
 	"net/http"
@@ -8,22 +9,23 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"golang.org/x/crypto/bcrypt"
+	bcrypt "golang.org/x/crypto/bcrypt"
+
 	"gorm.io/gorm"
 )
 
 type User struct {
-	Id uint `json:"id" gorm:"primary_key"`
-	// Name          string    `json:"name"`
-	// Email         string    `json:"email"`
-	// Nik           string    `json:"nik"`
-	Password string `json:"password"`
-	// RememberToken string    `json:"remember_token"`
-	Username string `json:"username"`
-	// Type          string    `json:"type"`
-	// UserType      string    `json:"user_type"`
-	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
-	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
+	Id            uint      `json:"id" gorm:"primary_key"`
+	Name          string    `json:"name"`
+	Email         string    `json:"email"`
+	Nik           string    `json:"nik"`
+	Password      string    `json:"password"`
+	RememberToken string    `json:"remember_token"`
+	Username      string    `json:"username"`
+	Type          string    `json:"type"`
+	UserType      string    `json:"user_type"`
+	CreatedAt     time.Time `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt     time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 }
 
 func (User) TableName() string {
@@ -96,10 +98,22 @@ func (u UserRepo) LoginCheck(username string, password string) (User, error) {
 	err_username := u.DB.Where("username=?", username).Take(&user).Error
 	if err_username == nil {
 		err_pw := user.ValidatePassword(password)
+		// err_pw := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 		if err_pw == nil {
+			fmt.Println("Masuk2")
 			return user, nil
 		}
 		return User{}, err_pw
+	}
+	return User{}, err_username
+}
+
+func (u UserRepo) RegisterCheck(username string, password string) (User, error) {
+	var user User
+
+	err_username := u.DB.Where("username=?", username).Take(&user).Error
+	if err_username == nil {
+		return User{}, nil
 	}
 	return User{}, err_username
 }

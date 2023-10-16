@@ -229,6 +229,42 @@ func (c *KoorKgtController) ShowDetailKoordinator(ctx *gin.Context) {
 }
 
 func convertSourceTargetDataKaryawan(source pihc.PihcMasterKaryDb) pihc.PihcMasterKary {
+	var location *string
+	var seksiID *string
+	var seksiTitle *string
+	var preName *string
+	var postName *string
+	var NoNPWP *string
+	var bankAccount *string
+	var bankName *string
+	var payScale *string
+	if source.Lokasi != "" {
+		location = &source.Lokasi
+	}
+	if source.SeksiID != "" {
+		seksiID = &source.SeksiID
+	}
+	if source.SeksiTitle != "" {
+		seksiTitle = &source.SeksiTitle
+	}
+	if source.PreNameTitle != "" {
+		preName = &source.PreNameTitle
+	}
+	if source.PostNameTitle != "" {
+		postName = &source.PostNameTitle
+	}
+	if source.NoNPWP != "" {
+		NoNPWP = &source.NoNPWP
+	}
+	if source.BankAccount != "" {
+		bankAccount = &source.BankAccount
+	}
+	if source.BankName != "" {
+		bankName = &source.BankName
+	}
+	if source.PayScale != "" {
+		payScale = &source.PayScale
+	}
 	return pihc.PihcMasterKary{
 		EmpNo:          source.EmpNo,
 		Nama:           source.Nama,
@@ -242,18 +278,18 @@ func convertSourceTargetDataKaryawan(source pihc.PihcMasterKaryDb) pihc.PihcMast
 		Area:           source.Area,
 		AreaTitle:      source.AreaTitle,
 		SubArea:        source.SubArea,
-		SubAreaTtitle:  source.SubAreaTtitle,
+		SubAreaTitle:  source.SubAreaTitle,
 		Contract:       source.Contract,
 		Pendidikan:     source.Pendidikan,
 		Company:        source.Company,
-		Lokasi:         source.Lokasi,
+		Lokasi:         location,
 		EmployeeStatus: source.EmployeeStatus,
 		Email:          source.Email,
 		HP:             source.HP,
 		TglLahir:       source.TglLahir.Format("2006-01-02"),
 		PosID:          source.PosID,
 		PosTitle:       source.PosTitle,
-		SubPosID:       source.SubPosID,
+		SupPosID:       source.SupPosID,
 		PosGrade:       source.PosGrade,
 		PosKategori:    source.PosKategori,
 		OrgID:          source.OrgID,
@@ -268,15 +304,15 @@ func convertSourceTargetDataKaryawan(source pihc.PihcMasterKaryDb) pihc.PihcMast
 		SupEmpNo:       source.SupEmpNo,
 		BagID:          source.BagID,
 		BagTitle:       source.BagTitle,
-		SeksiID:        source.SeksiID,
-		SeksiTitle:     source.SeksiTitle,
-		PreNameTitle:   source.PreNameTitle,
-		PostNameTitle:  source.PostNameTitle,
-		NoNPWP:         source.NoNPWP,
-		BankAccount:    source.BankAccount,
-		BankName:       source.BankName,
+		SeksiID:        seksiID,
+		SeksiTitle:     seksiTitle,
+		PreNameTitle:   preName,
+		PostNameTitle:  postName,
+		NoNPWP:         NoNPWP,
+		BankAccount:    bankAccount,
+		BankName:       bankName,
 		MdgDate:        source.MdgDate,
-		PayScale:       source.PayScale,
+		PayScale:       payScale,
 		CCCode:         source.CCCode,
 		Nickname:       source.Nickname,
 	}

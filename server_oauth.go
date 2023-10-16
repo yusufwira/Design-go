@@ -36,6 +36,8 @@ func main() {
 		AllowHeaders: []string{"Origin", "Content-Type", "x-csrf-token"},
 	}))
 
+	r.Use(gin.Recovery())
+
 	connection.Middleware()
 
 	auth := r.Group("/oauth2")
@@ -43,7 +45,7 @@ func main() {
 		auth.GET("/token", ginserver.HandleTokenRequest)
 	}
 
-	api := r.Group("/api")
+	api := auth.Group("/api")
 	{
 		fmt.Println("masuk")
 		api.Use(ginserver.HandleTokenVerify())
@@ -80,6 +82,7 @@ func main() {
 		})
 
 		r.POST("/login", UserController.Login)
+		r.POST("/register", UserController.Register)
 	}
 
 	err := godotenv.Load()
@@ -172,9 +175,11 @@ func main() {
 		profile.POST("/storeSkill", userProfileController.StoreSkill)
 		profile.POST("/updateSkill", userProfileController.UpdateSkill)
 		profile.POST("/deleteSkill", userProfileController.DeleteSkill)
+		profile.POST("/updatePhotoProfile", userProfileController.UpdatePhotoProfile)
 		profile.GET("/getSkill/:nik", userProfileController.GetSkill)
 		profile.GET("/getPengalamanKerja/:nik", userProfileController.GetPengalamanKerja)
 		profile.GET("/getContactInformation/:nik", userProfileController.GetContactInformation)
+		profile.GET("/showProfile/:nik", userProfileController.ShowProfile)
 	}
 
 	r.Run(":9096")

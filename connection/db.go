@@ -54,7 +54,7 @@ func Database() *dB {
 	// 		return time.Now().UTC()
 	// 	},
 	// 	})
-	//db, err := gorm.Open(postgres.Open("postgres://postgres:postgres@localhost:5432/postgres"), &gorm.Config{})
+	// db, errs := gorm.Open(postgres.Open("postgres://postgres:postgres@localhost:5432/postgres"), &gorm.Config{})
 	if errs != nil {
 		panic("failed to connect database")
 	}

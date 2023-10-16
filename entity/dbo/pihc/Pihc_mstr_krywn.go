@@ -19,7 +19,7 @@ type PihcMasterKaryDb struct {
 	Area           string    `json:"area"`
 	AreaTitle      string    `json:"area_title"`
 	SubArea        string    `json:"sub_area"`
-	SubAreaTtitle  string    `json:"sub_area_title"`
+	SubAreaTitle   string    `json:"sub_area_title"`
 	Contract       string    `json:"contract"`
 	Pendidikan     string    `json:"pendidikan"`
 	Company        string    `json:"company"`
@@ -30,7 +30,7 @@ type PihcMasterKaryDb struct {
 	TglLahir       time.Time `json:"tgl_lahir"`
 	PosID          string    `json:"pos_id"`
 	PosTitle       string    `json:"pos_title"`
-	SubPosID       string    `json:"sup_pos_id"`
+	SupPosID       string    `json:"sup_pos_id"`
 	PosGrade       string    `json:"pos_grade"`
 	PosKategori    string    `json:"pos_kategori"`
 	OrgID          string    `json:"org_id"`
@@ -71,18 +71,18 @@ type PihcMasterKary struct {
 	Area           string  `json:"area"`
 	AreaTitle      string  `json:"area_title"`
 	SubArea        string  `json:"sub_area"`
-	SubAreaTtitle  string  `json:"sub_area_title"`
+	SubAreaTitle   string  `json:"sub_area_title"`
 	Contract       string  `json:"contract"`
 	Pendidikan     string  `json:"pendidikan"`
 	Company        string  `json:"company"`
-	Lokasi         string  `json:"lokasi"`
+	Lokasi         *string `json:"lokasi"`
 	EmployeeStatus string  `json:"employee_status"`
 	Email          string  `json:"email"`
 	HP             string  `json:"hp"`
 	TglLahir       string  `json:"tgl_lahir"`
 	PosID          string  `json:"pos_id"`
 	PosTitle       string  `json:"pos_title"`
-	SubPosID       string  `json:"sup_pos_id"`
+	SupPosID       string  `json:"sup_pos_id"`
 	PosGrade       string  `json:"pos_grade"`
 	PosKategori    string  `json:"pos_kategori"`
 	OrgID          string  `json:"org_id"`
@@ -97,15 +97,15 @@ type PihcMasterKary struct {
 	SupEmpNo       string  `json:"sup_emp_no"`
 	BagID          string  `json:"bag_id"`
 	BagTitle       string  `json:"bag_title"`
-	SeksiID        string  `json:"seksi_id"`
-	SeksiTitle     string  `json:"seksi_title"`
-	PreNameTitle   string  `json:"pre_name_title"`
-	PostNameTitle  string  `json:"post_name_title"`
-	NoNPWP         string  `json:"no_npwp"`
-	BankAccount    string  `json:"bank_account"`
-	BankName       string  `json:"bank_name"`
+	SeksiID        *string `json:"seksi_id"`
+	SeksiTitle     *string `json:"seksi_title"`
+	PreNameTitle   *string `json:"pre_name_title"`
+	PostNameTitle  *string `json:"post_name_title"`
+	NoNPWP         *string `json:"no_npwp"`
+	BankAccount    *string `json:"bank_account"`
+	BankName       *string `json:"bank_name"`
 	MdgDate        string  `json:"mdg_date"`
-	PayScale       string  `json:"PayScale"`
+	PayScale       *string `json:"PayScale"`
 	CCCode         string  `json:"cc_code"`
 	Nickname       string  `json:"nickname"`
 }

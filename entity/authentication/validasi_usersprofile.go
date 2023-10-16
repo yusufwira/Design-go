@@ -3,7 +3,9 @@ package authentication
 import (
 	"time"
 
+	"github.com/yusufwira/lern-golang-gin/entity/dbo/pihc"
 	"github.com/yusufwira/lern-golang-gin/entity/mobile/profile"
+	"github.com/yusufwira/lern-golang-gin/entity/users"
 )
 
 type ValidationSavePersonalInformationEmployee struct {
@@ -37,7 +39,7 @@ type PersonalInformationEmployee struct {
 }
 
 type ValidationGetName struct {
-	Nik string `json:"nik" form:"nik"`
+	Nik  string `json:"nik" form:"nik"`
 	Name string `json:"name" form:"name"`
 }
 
@@ -87,7 +89,7 @@ type ValidationUpdateSkill struct {
 }
 
 type ValidationDeleteSkill struct {
-	ID            int `json:"id" form:"id"`
+	ID   int    `json:"id" form:"id"`
 	Type string `json:"type" form:"type"`
 }
 
@@ -136,6 +138,37 @@ type ContactInformation struct {
 	NoTelp2 *string `json:"no_telp_2"`
 	Email1  *string `json:"email_1"`
 	Email2  *string `json:"email_2"`
+}
+
+type PengalamanKerja struct {
+	ValidFrom    string `json:"valid_from"`
+	ValidTo      string `json:"valid_to"`
+	Grade        string `json:"grade"`
+	PositionId   string `json:"position_id"`
+	PositionName string `json:"position_name"`
+	Unit1        string `json:"unit_1"`
+	Unit2        string `json:"unit_2"`
+}
+
+type ProfilePribadi struct {
+	pihc.PihcMasterKary
+	Domisili            *users.UserProfile     `json:"domisili"`
+	ProfileMobile       *MobileProfile         `json:"profile_mobile"`
+	AboutUs             *profile.AboutUs       `json:"about_us"`
+	Companys            pihc.PihcMasterCompany `json:"companys"`
+	Skill               []ShowSkills           `json:"skill"`
+	CompanyLogo         string                 `json:"company_logo"`
+	PhotoProfile        string                 `json:"photo_profile"`
+	PhotoProfileDefault string                 `json:"photo_profile_default"`
+	Organisasi          []string               `json:"organisasi"`
+}
+type ValidationPhotoProfile struct {
+	ValidationRequiredNIK
+}
+
+type MobileProfile struct {
+	profile.Profile
+	UserProfile users.UserProfile `json:"user_profile"`
 }
 
 type ShowSkills struct {

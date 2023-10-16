@@ -12,6 +12,15 @@ type ValidationLogin struct {
 	Password string `json:"password" form:"password" binding:"required"`
 }
 
+type ValidationRegister struct {
+	Username string `json:"username" form:"username" binding:"required"`
+	Password string `json:"password" form:"password" binding:"required"`
+	Email    string `json:"email" form:"email" binding:"required"`
+	Name     string `json:"name" form:"name" binding:"required"`
+	Nik      string `json:"nik" form:"nik" binding:"required"`
+	Type     string `json:"type" form:"type"`
+}
+
 type ValidationLMK struct {
 	NIK   string `json:"nik" form:"nik" binding:"required"`
 	Tahun string `json:"tahun" form:"tahun" binding:"required"`
