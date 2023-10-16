@@ -97,8 +97,8 @@ func (u UserRepo) LoginCheck(username string, password string) (User, error) {
 
 	err_username := u.DB.Where("username=?", username).Take(&user).Error
 	if err_username == nil {
-		err_pw := user.ValidatePassword(password)
-		// err_pw := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+		// err_pw := user.ValidatePassword(password)
+		err_pw := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 		if err_pw == nil {
 			fmt.Println("Masuk2")
 			return user, nil
