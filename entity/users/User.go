@@ -103,9 +103,9 @@ func (u UserRepo) LoginCheck(username string, password string) (User, error) {
 			fmt.Println("Masuk2")
 			return user, nil
 		}
-		return User{}, err_pw
+		return user, err_pw
 	}
-	return User{}, err_username
+	return user, err_username
 }
 
 func (u UserRepo) RegisterCheck(username string, password string) (User, error) {

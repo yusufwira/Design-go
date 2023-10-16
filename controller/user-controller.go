@@ -170,7 +170,6 @@ func (c *UsersController) Login(ctx *gin.Context) {
 	user, err := c.UserRepo.LoginCheck(input.Username, input.Password)
 
 	if err == nil {
-
 		karyawan, _ := c.PihcMasterKaryRtDbRepo.FindUserByNIK(user.Nik)
 		ctx.JSON(http.StatusOK, gin.H{
 			"status":        http.StatusOK,
@@ -185,7 +184,22 @@ func (c *UsersController) Login(ctx *gin.Context) {
 			"position":      karyawan.PosID,
 		})
 	} else {
-		ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Username / Password Salah"})
+		if len(input.Password) != 8 {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"status":  http.StatusUnauthorized,
+				"message": "The password must be at least 8 characters."},
+			)
+		} else if user.Id == 0 {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"status":  http.StatusUnauthorized,
+				"message": "Data karyawan belum terdapat pada database PISMART"},
+			)
+		} else {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"status":  http.StatusUnauthorized,
+				"message": "Username dan password kurang benar"},
+			)
+		}
 	}
 }
 
