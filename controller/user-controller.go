@@ -178,7 +178,7 @@ func (c *UsersController) Login(ctx *gin.Context) {
 			"comp_code":     karyawan.Company,
 			"email":         user.Email,
 			"hp":            karyawan.HP,
-			"user_org_name": karyawan.OrgTitle,
+			"user_org_name": karyawan.DeptTitle,
 			"model_type":    user.UserType,
 			"nik":           user.Nik,
 			"position":      karyawan.PosID,
