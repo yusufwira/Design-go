@@ -17,6 +17,7 @@ import (
 	Authentication "github.com/yusufwira/lern-golang-gin/entity/authentication"
 	"github.com/yusufwira/lern-golang-gin/entity/dbo/pihc"
 	"github.com/yusufwira/lern-golang-gin/entity/mobile/profile"
+	"github.com/yusufwira/lern-golang-gin/entity/tjsl"
 	"github.com/yusufwira/lern-golang-gin/entity/users"
 	"gorm.io/gorm"
 )
@@ -28,6 +29,7 @@ type UsersProfileController struct {
 	ProfileSkillRepo         *profile.ProfileSkillRepo
 	PengalamanKerjaRepo      *profile.PengalamanKerjaRepo
 	PhotoProfileRepo         *profile.PhotoProfileRepo
+	KegiatanKaryawanRepo     *tjsl.KegiatanKaryawanRepo
 	PihcKaryawanMutasiPIRepo *pihc.PihcKaryawanMutasiPIRepo
 	PihcMasterKaryDbRepo     *pihc.PihcMasterKaryDbRepo
 	PihcMasterCompanyRepo    *pihc.PihcMasterCompanyRepo
@@ -41,6 +43,7 @@ func NewUsersProfileController(Db *gorm.DB, StorageClient *storage.Client) *User
 		ProfileSkillRepo:         profile.NewProfileSkillRepo(Db),
 		PengalamanKerjaRepo:      profile.NewPengalamanKerjaRepo(Db),
 		PhotoProfileRepo:         profile.NewPhotoProfileRepo(Db, StorageClient),
+		KegiatanKaryawanRepo:     tjsl.NewKegiatanKaryawanRepo(Db, StorageClient),
 		PihcKaryawanMutasiPIRepo: pihc.NewPihcKaryawanMutasiPIRepo(Db),
 		PihcMasterKaryDbRepo:     pihc.NewPihcMasterKaryDbRepo(Db),
 		PihcMasterCompanyRepo:    pihc.NewPihcMasterCompanyRepo(Db),
@@ -338,6 +341,65 @@ func (c *UsersProfileController) StoreProfile(ctx *gin.Context) {
 			"ResponseCode":   0,
 			"ResponseString": "OK",
 			"data":           result,
+		})
+	}
+}
+
+func (c *UsersProfileController) DataPegawai(ctx *gin.Context) {
+	var req Authentication.ValidationDataPegawai
+	var data []Authentication.DataPegawai
+
+	if err := ctx.ShouldBind(&req); err != nil {
+		var ve validator.ValidationErrors
+		if errors.As(err, &ve) {
+			out := make([]Authentication.ErrorMsg, len(ve))
+			for i, fe := range ve {
+				out[i] = Authentication.ErrorMsg{Field: fe.Field(), Message: getErrorMsg(fe)}
+			}
+			ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"errorcode_": http.StatusServiceUnavailable, "errormsg_": out})
+		}
+		return
+	}
+
+	karyawan, err := c.PihcMasterKaryDbRepo.FindUserByKeyArr(req.Key)
+
+	if err == nil {
+		for _, dataKaryawan := range karyawan {
+			company, _ := c.PihcMasterCompanyRepo.FindPihcMsterCompany(dataKaryawan.Company)
+			photos, err1 := c.KegiatanKaryawanRepo.FindPhotosKaryawan(dataKaryawan.EmpNo, dataKaryawan.Company)
+			if err1 != nil {
+				photos = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
+			} else {
+				photos = "https://storage.googleapis.com/" + photos
+			}
+			empty := Authentication.DataPegawai{
+				Nik:                 dataKaryawan.EmpNo,
+				Nama:                dataKaryawan.Nama,
+				CompanyName:         company.Name,
+				Skill:               nil,
+				PhotoProfile:        photos,
+				PhotoProfileDefault: "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg",
+				CompanyLogo:         "https://storage.googleapis.com/lumen-oauth-storage/company/logo-pi-full.png",
+			}
+
+			if dataKaryawan.DeptTitle == "" {
+				empty.DeptTitle = dataKaryawan.KompTitle
+			} else {
+				empty.DeptTitle = dataKaryawan.DeptTitle
+			}
+			data = append(data, empty)
+		}
+		ctx.JSON(http.StatusOK, gin.H{
+			"status":  http.StatusOK,
+			"success": "Success",
+			"data":    data,
+		})
+	} else {
+		data = []Authentication.DataPegawai{}
+		ctx.JSON(http.StatusOK, gin.H{
+			"status":  http.StatusOK,
+			"success": "Success",
+			"data":    data,
 		})
 	}
 }

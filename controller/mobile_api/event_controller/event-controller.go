@@ -727,6 +727,7 @@ func (c *EventController) StoreDispose(ctx *gin.Context) {
 		for _, nikPerson := range values {
 			ev_person.IdEvent = req.EventID
 			ev_person.Nik = nikPerson
+
 			idParent, _ := strconv.Atoi(req.Nik)
 			ev_person.IdParent = &idParent
 			ev_person.StatusKehadiran = "menunggu"

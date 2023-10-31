@@ -16,12 +16,14 @@ import (
 
 type UsersController struct {
 	UserRepo               *users.UserRepo
+	OauthClientRepo        *users.OauthClientRepo
 	PihcMasterKaryRtDbRepo *pihc.PihcMasterKaryRtDbRepo
 	KegiatanKaryawanRepo   *tjsl.KegiatanKaryawanRepo
 }
 
 func NewUserController(db *gorm.DB, StorageClient *storage.Client) *UsersController {
 	return &UsersController{UserRepo: users.NewUserRepo(db),
+		OauthClientRepo:        users.NewOauthClientRepo(db),
 		PihcMasterKaryRtDbRepo: pihc.NewPihcMasterKaryRtDbRepo(db),
 		KegiatanKaryawanRepo:   tjsl.NewKegiatanKaryawanRepo(db, StorageClient)}
 }
@@ -69,6 +71,20 @@ func (c *UsersController) GetDataKaryawanNameAll(ctx *gin.Context) {
 	// name := ctx.PostForm("name")
 	// nik := ctx.PostForm("nik")
 	data, err := c.PihcMasterKaryRtDbRepo.FindUserByNameArr(req.Name, req.Nik)
+
+	if err == nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"data": data,
+		})
+	} else {
+		ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+			"status": http.StatusNotFound,
+			"data":   "Data Tidak Ditemukan!!",
+		})
+	}
+}
+func (c *UsersController) GetDataKaryawanAll(ctx *gin.Context) {
+	data, err := c.PihcMasterKaryRtDbRepo.FindUserArr()
 
 	if err == nil {
 		ctx.JSON(http.StatusOK, gin.H{
@@ -170,18 +186,113 @@ func (c *UsersController) Login(ctx *gin.Context) {
 	user, err := c.UserRepo.LoginCheck(input.Username, input.Password)
 
 	if err == nil {
+		// clients, _ := c.OauthClientRepo.FindOauthClient(user.Id)
+		// client_id := strconv.FormatUint(uint64(clients.Id), 10)
+
+		// manager := manage.NewDefaultManager()
+		// fmt.Println("X1")
+		// manager.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)
+		// fmt.Println("X2")
+
+		// // token store
+		// manager.MustTokenStorage(store.NewMemoryTokenStore())
+		// fmt.Println("X3")
+
+		// // generate jwt access token
+		// manager.MapAccessGenerate(generates.NewAccessGenerate())
+		// fmt.Println("X4")
+
+		// // client store
+		// clientStore := store.NewClientStore()
+		// fmt.Println("X5")
+
+		// clientInfo := &models.Client{
+		// 	ID:     client_id,
+		// 	Secret: clients.Secret,
+		// 	Domain: "http://localhost:9094",
+		// }
+		// fmt.Println("X6")
+		// clientStore.Set(client_id, clientInfo)
+		// fmt.Println("X7")
+		// manager.MapClientStorage(clientStore)
+		// fmt.Println("X8")
+
+		// // Define a custom grant type handler
+		// manager.SetAuthorizeCodeTokenCfg(&manage.Config{AccessTokenExp: 0})
+		// fmt.Println("X9")
+
+		// // SetClientTokenCfg set the client grant token config
+		// manager.SetClientTokenCfg(&manage.Config{
+		// 	AccessTokenExp:    time.Hour * 24 * 365 * 10, // 10 years
+		// 	RefreshTokenExp:   time.Hour * 24 * 365 * 10, // 10 years
+		// 	IsGenerateRefresh: true,
+		// })
+		// fmt.Println("X10")
+
+		// // Set the access token and refresh token configuration
+		// manager.SetPasswordTokenCfg(&manage.Config{
+		// 	AccessTokenExp:    time.Hour * 24 * 365 * 10, // 10 years
+		// 	RefreshTokenExp:   time.Hour * 24 * 365 * 10, // 10 years
+		// 	IsGenerateRefresh: true,
+		// })
+		// fmt.Println("X11")
+
+		// // Initialize the oauth2 service
+		// // ginserver.InitServerWithManager(newGinServer, manager)
+		// ginserver.InitServer(manager)
+		// fmt.Println("X12")
+		// ginserver.SetAllowGetAccessRequest(true)
+		// fmt.Println("X13")
+		// ginserver.SetClientInfoHandler(server.ClientFormHandler)
+		// fmt.Println("X14")
+		// ginserver.SetAllowedGrantType("password")
+		// fmt.Println("X15")
+		// ginserver.SetPasswordAuthorizationHandler(func(ctx context.Context, clientID, username, password string) (userID string, err error) {
+		// 	// Implement your authentication logic here and return the userID if valid
+		// 	if username == user.Username && password == user.Password {
+		// 		userID = client_id
+		// 		fmt.Println("X16")
+		// 	}
+		// 	fmt.Println("X17")
+		// 	return
+		// })
+		// fmt.Println("X18")
+
+		// url := "http://localhost:9096/oauth2/token?grant_type=password&client_id=" + client_id + "&client_secret=" + clients.Secret + "&username=" + user.Username + "&password=" + user.Password
+		// resp, err1 := http.Get(url)
+		// fmt.Println("X19")
+		// if err1 != nil {
+		// 	fmt.Println("ERRORRR")
+		// }
+		// fmt.Println("X20")
+		// body, err2 := ioutil.ReadAll(resp.Body)
+		// if err2 != nil {
+		// 	fmt.Println("ERRORRR2")
+		// }
+		// fmt.Println("X21")
+
+		// var data Authentication.Token
+		// if err := json.Unmarshal(body, &data); err != nil {
+		// 	fmt.Println("X22")
+		// 	fmt.Println("Error unmarshaling JSON:", err)
+		// 	return
+		// }
+		// fmt.Println("X23")
+
 		karyawan, _ := c.PihcMasterKaryRtDbRepo.FindUserByNIK(user.Nik)
 		ctx.JSON(http.StatusOK, gin.H{
-			"status":        http.StatusOK,
-			"user_id":       user.Id,
-			"user_name":     user.Name,
-			"comp_code":     karyawan.Company,
-			"email":         user.Email,
-			"hp":            karyawan.HP,
-			"user_org_name": karyawan.DeptTitle,
-			"model_type":    user.UserType,
-			"nik":           user.Nik,
-			"position":      karyawan.PosID,
+			"status":         http.StatusOK,
+			"user_id":        user.Id,
+			"user_name":      user.Name,
+			"comp_code":      karyawan.Company,
+			"email":          user.Email,
+			"hp":             karyawan.HP,
+			"user_org_name":  karyawan.OrgTitle,
+			"user_dept_name": karyawan.DeptTitle,
+			"model_type":     user.UserType,
+			"nik":            user.Nik,
+			"position":       karyawan.PosID,
+			// "token":          data,
 		})
 	} else {
 		if len(input.Password) < 8 {
@@ -189,12 +300,12 @@ func (c *UsersController) Login(ctx *gin.Context) {
 				"status":  http.StatusUnauthorized,
 				"message": "The password must be at least 8 characters."},
 			)
-		}else if user.Id != 0 {
+		} else if user.Id != 0 {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"status":  http.StatusUnauthorized,
 				"message": "Username dan password kurang benar"},
 			)
-		}else if user.Id == 0 {
+		} else if user.Id == 0 {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"status":  http.StatusUnauthorized,
 				"message": "Data karyawan belum terdapat pada database PISMART"},

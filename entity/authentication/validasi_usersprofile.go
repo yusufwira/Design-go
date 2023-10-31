@@ -69,6 +69,21 @@ type ValidationStoreProfile struct {
 	LinkTiktok    *string `json:"link_tiktok"`
 }
 
+type ValidationDataPegawai struct {
+	Key string `form:"key" json:"key" binding:"required"`
+}
+
+type DataPegawai struct {
+	Nik                 string  `json:"nik"`
+	Nama                string  `json:"nama"`
+	DeptTitle           string  `json:"dept_title"`
+	CompanyName         string  `json:"company_name"`
+	Skill               *string `json:"skill"`
+	PhotoProfile        string  `json:"photo_profile"`
+	PhotoProfileDefault string  `json:"photo_profile_default"`
+	CompanyLogo         string  `json:"company_logo"`
+}
+
 type ValidationStoreAboutUs struct {
 	ValidationRequiredNIK
 	Desc  string `json:"desc" form:"desc"`

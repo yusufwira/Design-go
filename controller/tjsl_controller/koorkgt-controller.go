@@ -278,7 +278,7 @@ func convertSourceTargetDataKaryawan(source pihc.PihcMasterKaryDb) pihc.PihcMast
 		Area:           source.Area,
 		AreaTitle:      source.AreaTitle,
 		SubArea:        source.SubArea,
-		SubAreaTitle:  source.SubAreaTitle,
+		SubAreaTitle:   source.SubAreaTitle,
 		Contract:       source.Contract,
 		Pendidikan:     source.Pendidikan,
 		Company:        source.Company,

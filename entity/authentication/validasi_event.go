@@ -58,8 +58,9 @@ type ValidasiKonfirmasi struct {
 }
 
 type ValidasiKonfirmasiNik struct {
-	Nik string `form:"nik" binding:"required"`
+	Nik string `form:"nik" json:"nik" binding:"required"`
 }
+
 type ValidasiKonfirmasiCategoryRoom struct {
 	CategoryRoom string `form:"category_room" binding:"required"`
 }

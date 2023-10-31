@@ -13,6 +13,7 @@ import (
 
 	"github.com/yusufwira/lern-golang-gin/connection"
 	"github.com/yusufwira/lern-golang-gin/controller"
+	"github.com/yusufwira/lern-golang-gin/controller/cuti_karyawan_controller"
 	"github.com/yusufwira/lern-golang-gin/controller/mobile_api/event_controller"
 	"github.com/yusufwira/lern-golang-gin/controller/mobile_api/profile_controller"
 	"github.com/yusufwira/lern-golang-gin/controller/tjsl_controller"
@@ -27,6 +28,7 @@ func main() {
 	eventController := event_controller.NewEventController(db.Db, db.StorageClient)
 	userProfileController := profile_controller.NewUsersProfileController(db.Db, db.StorageClient)
 	UserController := controller.NewUserController(db.Db, db.StorageClient)
+	cutiKrywnController := cuti_karyawan_controller.NewCutiKrywnController(db.Db)
 
 	r := gin.Default()
 
@@ -36,13 +38,12 @@ func main() {
 		AllowHeaders: []string{"Origin", "Content-Type", "x-csrf-token"},
 	}))
 
+	// connection.Middleware()
 	r.Use(gin.Recovery())
-
-	connection.Middleware()
 
 	auth := r.Group("/oauth2")
 	{
-		auth.GET("/token", ginserver.HandleTokenRequest)
+		auth.GET("/token", connection.Middleware)
 	}
 
 	api := auth.Group("/api")
@@ -59,7 +60,7 @@ func main() {
 			c.String(http.StatusOK, "not found")
 		})
 
-		r.GET("/getUserOuath", func(c *gin.Context) {
+		api.GET("/getUserOuath", func(c *gin.Context) {
 			c.JSON(http.StatusOK, UserController.Index())
 		})
 
@@ -68,6 +69,7 @@ func main() {
 		})
 
 		r.POST("/getKaryawanNameAll", UserController.GetDataKaryawanNameAll)
+		r.GET("/getKaryawanAll", UserController.GetDataKaryawanAll)
 		r.POST("/getKaryawanNameIndiv", UserController.GetDataKaryawanNameIndiv)
 
 		r.POST("/postUser", func(c *gin.Context) {
@@ -180,7 +182,25 @@ func main() {
 		profile.GET("/getPengalamanKerja/:nik", userProfileController.GetPengalamanKerja)
 		profile.GET("/getContactInformation/:nik", userProfileController.GetContactInformation)
 		profile.GET("/showProfile/:nik", userProfileController.ShowProfile)
+
+		profile.GET("/dataPegawai", userProfileController.DataPegawai)
 	}
 
-	r.Run(":9096")
+	cuti := r.Group(os.Getenv("CUTI_URL"))
+	{
+		// PENGAJUAN CUTI
+		cuti.POST("/storeCuti", cutiKrywnController.StoreCutiKaryawan)
+		cuti.GET("/getTipeAbsenSaldoPengajuan", cutiKrywnController.GetTipeAbsenSaldoPengajuan)
+
+		// SALDO CUTI
+		cuti.POST("/storeAdminSaldo", cutiKrywnController.StoreAdminSaldoCutiKaryawan)
+		cuti.POST("/listAdminSaldo", cutiKrywnController.ListAdminSaldoCutiKaryawan)
+		cuti.GET("/getAdminSaldoCuti/:id_saldo_cuti", cutiKrywnController.GetAdminSaldoCuti)
+		cuti.GET("/getAdminTipeAbsen", cutiKrywnController.GetAdminTipeAbsen)
+		cuti.DELETE("/deleteAdminSaldoCuti/:id_saldo_cuti", cutiKrywnController.DeleteAdminSaldoCuti)
+	}
+
+	// r.Run("10.0.99.247:9096") // Home
+	r.Run("10.9.12.150:9096") // Kresna
+	// r.Run("10.21.121.109:9096") // Kemanggisan
 }

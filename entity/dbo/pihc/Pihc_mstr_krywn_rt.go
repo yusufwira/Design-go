@@ -175,6 +175,17 @@ func (t PihcMasterKaryRtDbRepo) FindUserByNameArr(name string, nik string) ([]Pi
 
 	return pihc_mkrt, nil
 }
+func (t PihcMasterKaryRtDbRepo) FindUserArr() ([]PihcMasterKaryRtDb, error) {
+	var pihc_mkrt []PihcMasterKaryRtDb
+
+	err := t.DB.Find(&pihc_mkrt).Error
+	if err != nil {
+		fmt.Println("ERROR")
+		return pihc_mkrt, err
+	}
+
+	return pihc_mkrt, nil
+}
 
 func (t PihcMasterKaryRtDbRepo) FindUserByNameIndiv(name string, nik string) (PihcMasterKaryRtDb, error) {
 	var pihc_mkrt PihcMasterKaryRtDb

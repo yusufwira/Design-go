@@ -28,16 +28,42 @@ type User struct {
 	UpdatedAt     time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 }
 
+type OauthClient struct {
+	Id                   uint      `json:"id" gorm:"primary_key"`
+	UserId               uint      `json:"user_id"`
+	Name                 string    `json:"name"`
+	Secret               string    `json:"secret"`
+	Provider             string    `json:"provider"`
+	Redirect             string    `json:"redirect"`
+	PersonalAccessClient bool      `json:"personal_access_client"`
+	PasswordClient       bool      `json:"password_client"`
+	Revoked              bool      `json:"revoked"`
+	CreatedAt            time.Time `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt            time.Time `json:"updated_at" gorm:"autoUpdateTime"`
+}
+
 func (User) TableName() string {
 	return "public.users"
+}
+
+func (OauthClient) TableName() string {
+	return "oauth.oauth_clients"
 }
 
 type UserRepo struct {
 	DB *gorm.DB
 }
 
+type OauthClientRepo struct {
+	DB *gorm.DB
+}
+
 func NewUserRepo(db *gorm.DB) *UserRepo {
 	return &UserRepo{DB: db}
+}
+
+func NewOauthClientRepo(db *gorm.DB) *OauthClientRepo {
+	return &OauthClientRepo{DB: db}
 }
 
 func (u UserRepo) Create(user User) {
@@ -139,4 +165,14 @@ func StringWithCharset(length int, charset string) string {
 
 func String(length int) string {
 	return StringWithCharset(length, charset)
+}
+
+func (ou OauthClientRepo) FindOauthClient(u_id uint) (OauthClient, error) {
+	var client OauthClient
+
+	err_username := ou.DB.Where("user_id=?", u_id).Take(&client).Error
+	if err_username == nil {
+		return client, nil
+	}
+	return client, err_username
 }
