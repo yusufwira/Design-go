@@ -7,22 +7,43 @@ import (
 )
 
 type PengajuanAbsen struct {
-	IDPengajuanAbsen   int       `json:"id_pengajuan_absen"`
-	Nik                string    `json:"nik" gorm:"default:null"`
-	CompCode           string    `json:"comp_code" gorm:"default:null"`
-	TipeAbsenId        *string   `json:"tipe_absen_id" gorm:"default:null"`
-	Deskripsi          *string   `json:"deskripsi" gorm:"default:null"`
-	MulaiAbsen         time.Time `json:"mulai_absen" gorm:"default:null"`
-	AkhirAbsen         time.Time `json:"akhir_absen" gorm:"default:null"`
-	TglPengajuan       time.Time `json:"tgl_pengajuan" gorm:"default:null"`
-	Status             *string   `json:"status" gorm:"default:null"`
-	CreatedBy          *string   `json:"created_by" gorm:"default:null"`
-	CreatedAt          time.Time `json:"created_at" gorm:"autoCreateTime"`
-	UpdatedAt          time.Time `json:"updated_at" gorm:"autoUpdateTime"`
-	Keterangan         *string   `json:"keterangan" gorm:"default:null"`
-	Periode            *string   `json:"periode" gorm:"default:null"`
-	JumlahHariKalender *int      `json:"jumlah_hari_kalender" gorm:"default:null"`
-	JumlahHariKerja    *int      `json:"jumlah_hari_kerja" gorm:"default:null"`
+	IdPengajuanAbsen int       `json:"id_pengajuan_absen" gorm:"primary_key"`
+	Nik              string    `json:"nik" gorm:"default:null"`
+	CompCode         string    `json:"comp_code" gorm:"default:null"`
+	TipeAbsenId      *string   `json:"tipe_absen_id" gorm:"default:null"`
+	Deskripsi        *string   `json:"deskripsi" gorm:"default:null"`
+	MulaiAbsen       time.Time `json:"mulai_absen" gorm:"default:null"`
+	AkhirAbsen       time.Time `json:"akhir_absen" gorm:"default:null"`
+	TglPengajuan     time.Time `json:"tgl_pengajuan" gorm:"default:null"`
+	Status           *string   `json:"status" gorm:"default:null"`
+	CreatedBy        *string   `json:"created_by" gorm:"default:null"`
+	CreatedAt        time.Time `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt        time.Time `json:"updated_at" gorm:"autoUpdateTime"`
+	Keterangan       *string   `json:"keterangan" gorm:"default:null"`
+	Periode          *string   `json:"periode" gorm:"default:null"`
+	ApprovedBy       *string   `json:"approved_by" gorm:"default:null"`
+	JmlHariKalendar  *int      `json:"jml_hari_kalendar" gorm:"default:null"`
+	JmlHariKerja     *int      `json:"jml_hari_kerja" gorm:"default:null"`
+}
+
+type MyPengajuanAbsen struct {
+	IdPengajuanAbsen int    `json:"id_pengajuan_absen"`
+	Nik              string `json:"nik"`
+	CompCode         string `json:"comp_code"`
+	TipeAbsen        `json:"tipe_absen"`
+	Deskripsi        *string   `json:"deskripsi"`
+	MulaiAbsen       string    `json:"mulai_absen"`
+	AkhirAbsen       string    `json:"akhir_absen"`
+	TglPengajuan     string    `json:"tgl_pengajuan"`
+	Status           *string   `json:"status"`
+	CreatedBy        *string   `json:"created_by"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
+	Keterangan       *string   `json:"keterangan"`
+	Periode          *string   `json:"periode"`
+	ApprovedBy       *string   `json:"approved_by"`
+	JmlHariKalendar  *int      `json:"jml_hari_kalendar"`
+	JmlHariKerja     *int      `json:"jml_hari_kerja"`
 }
 
 type HistoryPengajuanAbsen struct {
@@ -41,14 +62,14 @@ type HistoryPengajuanAbsen struct {
 	Keterangan              *string   `json:"keterangan" gorm:"default:null"`
 	Periode                 *string   `json:"periode" gorm:"default:null"`
 	ApprovedBy              *string   `json:"approved_by" gorm:"default:null"`
-	JumlahHariKalender      *int      `json:"jumlah_hari_kalender" gorm:"default:null"`
-	JumlahHariKerja         *int      `json:"jumlah_hari_kerja" gorm:"default:null"`
+	JmlHariKalendar         *int      `json:"jml_hari_kalendar" gorm:"default:null"`
+	JmlHariKerja            *int      `json:"jml_hari_kerja" gorm:"default:null"`
 }
 
 type FileAbsen struct {
 	IdFileAbsen      int       `json:"id_file_absen" gorm:"primary_key"`
-	PengajuanAbsenId string    `json:"pengajuan_absen_id" gorm:"default:null"`
-	FileName         *string   `json:"filename" gorm:"default:null"`
+	PengajuanAbsenId int       `json:"pengajuan_absen_id" gorm:"default:null"`
+	Filename         *string   `json:"filename" gorm:"default:null"`
 	Url              *string   `json:"url" gorm:"default:null"`
 	Extension        *string   `json:"extension" gorm:"default:null"`
 	CreatedAt        time.Time `json:"created_at" gorm:"autoCreateTime"`
@@ -97,7 +118,7 @@ type HistorySaldoCuti struct {
 
 type TransaksiCuti struct {
 	IdTransaksiCuti  int       `json:"id_transaksi_cuti" gorm:"primary_key"`
-	PengajuanAbsenId string    `json:"pengajuan_absen_id" gorm:"default:null"`
+	PengajuanAbsenId int       `json:"pengajuan_absen_id" gorm:"default:null"`
 	Nik              string    `json:"nik" gorm:"default:null"`
 	Periode          string    `json:"periode" gorm:"default:null"`
 	JumlahCuti       int       `json:"jumlah_cuti" gorm:"default:null"`
@@ -187,6 +208,15 @@ func (t SaldoCutiRepo) Update(sc SaldoCuti) (SaldoCuti, error) {
 	}
 	return sc, nil
 }
+func (t SaldoCutiRepo) UpdateArr(sc []SaldoCuti) ([]SaldoCuti, error) {
+	for _, data := range sc {
+		err := t.DB.Where("id_saldo_cuti=?", data.IdSaldoCuti).Save(&data).Error
+		if err != nil {
+			return sc, err
+		}
+	}
+	return sc, nil
+}
 
 func (t SaldoCutiRepo) DelAdminSaldoCuti(idSaldo int) (SaldoCuti, error) {
 	var sc SaldoCuti
@@ -215,9 +245,30 @@ func (t SaldoCutiRepo) FindSaldoCutiKaryawanAdmin(nik string, tahun string) ([]S
 	}
 	return sc, nil
 }
+func (t SaldoCutiRepo) FindSaldoCutiTipeAbsenPeriode(nik string, tipe string, tahun string) (SaldoCuti, error) {
+	var sc SaldoCuti
+	err := t.DB.Where("nik=? AND tipe_absen_id=? AND periode=?", nik, tipe, tahun).Take(&sc).Error
+	if err != nil {
+		return sc, err
+	}
+	return sc, nil
+}
 
-func (t SaldoCutiRepo) GetSaldoCutiPerTipe(id string, nik string, tahun string) ([]SaldoCuti, error) {
-	var sc []SaldoCuti
+// func (t SaldoCutiRepo) GetSaldoCutiPerTipe(id string, nik string, tahun string) ([]SaldoCuti, error) {
+// 	var sc []SaldoCuti
+// 	beforeTahunInt, _ := strconv.Atoi(tahun)
+// 	beforeTahunInt--
+// 	beforeTahunStr := strconv.Itoa(beforeTahunInt)
+// 	err := t.DB.Where("tipe_absen_id=? AND nik=? AND periode IN (?,?)", id, nik, tahun, beforeTahunStr).Find(&sc).Error
+// 	if err != nil {
+// 		return sc, err
+// 	}
+
+// 	return sc, nil
+// }
+
+func (t SaldoCutiRepo) GetSaldoCutiPerTipe(id string, nik string, tahun string) (SaldoCuti, error) {
+	var sc SaldoCuti
 	err := t.DB.Where("tipe_absen_id=? AND nik=? AND periode=?", id, nik, tahun).Take(&sc).Error
 	if err != nil {
 		return sc, err
@@ -264,7 +315,16 @@ func (t TipeAbsenRepo) Update(tc TipeAbsen) (TipeAbsen, error) {
 
 }
 
-func (t TipeAbsenRepo) FindTipeAbsen(compCode string) ([]TipeAbsen, error) {
+func (t TipeAbsenRepo) FindTipeAbsenSaldo(compCode string) ([]TipeAbsen, error) {
+	var tc []TipeAbsen
+	err := t.DB.Where("comp_code=? AND (max_absen is null or max_absen = 0)", compCode).Order("nama_tipe_absen ASC").Find(&tc).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return tc, nil
+}
+func (t TipeAbsenRepo) FindTipeAbsenPengajuan(compCode string) ([]TipeAbsen, error) {
 	var tc []TipeAbsen
 	err := t.DB.Where("comp_code=?", compCode).Order("nama_tipe_absen ASC").Find(&tc).Error
 	if err != nil {
@@ -293,6 +353,14 @@ func (t FileAbsenRepo) Create(fc FileAbsen) (FileAbsen, error) {
 	return fc, nil
 }
 
+func (t FileAbsenRepo) CreateArr(fc []FileAbsen) ([]FileAbsen, error) {
+	err := t.DB.Create(&fc).Error
+	if err != nil {
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (t FileAbsenRepo) Update(fc FileAbsen) (FileAbsen, error) {
 	err := t.DB.Where("pengajuan_absen_id=?", fc.PengajuanAbsenId).Save(&fc).Error
 	if err != nil {
@@ -301,7 +369,24 @@ func (t FileAbsenRepo) Update(fc FileAbsen) (FileAbsen, error) {
 	return fc, nil
 }
 
-// PENGAJUAN CUTI
+func (t FileAbsenRepo) Delete(fc FileAbsen) (FileAbsen, error) {
+	err := t.DB.Delete(&fc).Error
+	if err != nil {
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (t FileAbsenRepo) FindFileAbsenByIDPengajuan(id_pengajuan int) ([]FileAbsen, error) {
+	var fc []FileAbsen
+	err := t.DB.Where("pengajuan_absen_id=?", id_pengajuan).Find(&fc).Error
+	if err != nil {
+		return fc, err
+	}
+	return fc, nil
+}
+
+// PENGAJUAN ABSEN
 func (t PengajuanAbsenRepo) Create(pc PengajuanAbsen) (PengajuanAbsen, error) {
 	err := t.DB.Create(&pc).Error
 	if err != nil {
@@ -311,9 +396,61 @@ func (t PengajuanAbsenRepo) Create(pc PengajuanAbsen) (PengajuanAbsen, error) {
 }
 
 func (t PengajuanAbsenRepo) Update(pc PengajuanAbsen) (PengajuanAbsen, error) {
-	err := t.DB.Where("id_pengajuan_absen=?", pc.IDPengajuanAbsen).Save(&pc).Error
+	err := t.DB.Where("id_pengajuan_absen=?", pc.IdPengajuanAbsen).Save(&pc).Error
 	if err != nil {
 		return pc, err
 	}
 	return pc, nil
+}
+
+func (t PengajuanAbsenRepo) FindDataNIKPeriode(nik string, tahun string) ([]PengajuanAbsen, error) {
+	var pengajuan_absen []PengajuanAbsen
+	err := t.DB.Where("nik=? AND periode=?", nik, tahun).Find(&pengajuan_absen).Error
+	if err != nil {
+		return pengajuan_absen, err
+	}
+	return pengajuan_absen, nil
+}
+func (t PengajuanAbsenRepo) FindDataIdPengajuan(id int) (PengajuanAbsen, error) {
+	var pengajuan_absen PengajuanAbsen
+	err := t.DB.Where("id_pengajuan_absen=?", id).Take(&pengajuan_absen).Error
+	if err != nil {
+		return pengajuan_absen, err
+	}
+	return pengajuan_absen, nil
+}
+
+func (t PengajuanAbsenRepo) FindDataNIKPeriodeStatus(nik string, tahun string, stats string) ([]PengajuanAbsen, error) {
+	var pengajuan_absen []PengajuanAbsen
+	err := t.DB.Where("approved_by=? AND periode=? AND status=?", nik, tahun, stats).Find(&pengajuan_absen).Error
+	if err != nil {
+		return pengajuan_absen, err
+	}
+	return pengajuan_absen, nil
+}
+
+// Transaksi Cuti
+func (t TransaksiCutiRepo) FindDataTransaksiIDPengajuan(id int) ([]TransaksiCuti, error) {
+	var traksaksi_cuti []TransaksiCuti
+	err := t.DB.Where("pengajuan_absen_id=?", id).Find(&traksaksi_cuti).Error
+	if err != nil {
+		return traksaksi_cuti, err
+	}
+	return traksaksi_cuti, nil
+}
+
+func (t TransaksiCutiRepo) Create(tc TransaksiCuti) (TransaksiCuti, error) {
+	err := t.DB.Create(&tc).Error
+	if err != nil {
+		return tc, err
+	}
+	return tc, nil
+}
+
+func (t TransaksiCutiRepo) Delete(tc TransaksiCuti) (TransaksiCuti, error) {
+	err := t.DB.Delete(&tc).Error
+	if err != nil {
+		return tc, err
+	}
+	return tc, nil
 }

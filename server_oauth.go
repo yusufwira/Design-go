@@ -191,6 +191,11 @@ func main() {
 		// PENGAJUAN CUTI
 		cuti.POST("/storeCuti", cutiKrywnController.StoreCutiKaryawan)
 		cuti.GET("/getTipeAbsenSaldoPengajuan", cutiKrywnController.GetTipeAbsenSaldoPengajuan)
+		cuti.GET("/myCuti", cutiKrywnController.GetMyPengajuanCuti)
+		// cuti.GET("/showPengajuanCuti/:id_pengajuan_absen", cutiKrywnController.ShowDetailPengajuanCuti)
+		// tjsl.GET("/showPengajuan/:slug", kgtKrywnController.ShowDetailPengajuanKegiatan)
+		cuti.POST("/listApprovalCuti", cutiKrywnController.ListApprvlCuti)
+		cuti.POST("/approve", cutiKrywnController.StoreApprovePengajuanAbsen)
 
 		// SALDO CUTI
 		cuti.POST("/storeAdminSaldo", cutiKrywnController.StoreAdminSaldoCutiKaryawan)
@@ -202,5 +207,6 @@ func main() {
 
 	// r.Run("10.0.99.247:9096") // Home
 	r.Run("10.9.12.150:9096") // Kresna
-	// r.Run("10.21.121.109:9096") // Kemanggisan
+	// r.Run(":9096") // local
+	// r.Run("10.21.121.194:9096") // Kemanggisan
 }
