@@ -121,6 +121,7 @@ type TransaksiCuti struct {
 	PengajuanAbsenId int       `json:"pengajuan_absen_id" gorm:"default:null"`
 	Nik              string    `json:"nik" gorm:"default:null"`
 	Periode          string    `json:"periode" gorm:"default:null"`
+	TipeHari         string    `json:"tipe_hari" gorm:"default:null"`
 	JumlahCuti       int       `json:"jumlah_cuti" gorm:"default:null"`
 	CreatedAt        time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt        time.Time `json:"updated_at" gorm:"autoUpdateTime"`
@@ -427,6 +428,16 @@ func (t PengajuanAbsenRepo) FindDataNIKPeriodeStatus(nik string, tahun string, s
 		return pengajuan_absen, err
 	}
 	return pengajuan_absen, nil
+}
+
+func (t PengajuanAbsenRepo) DelPengajuanCuti(id int) (PengajuanAbsen, error) {
+	var sc PengajuanAbsen
+	err := t.DB.Where("id_pengajuan_absen = ?", id).First(&sc).Error
+	if err == nil {
+		t.DB.Where("id_pengajuan_absen = ?", id).Delete(&sc)
+		return sc, nil
+	}
+	return sc, err
 }
 
 // Transaksi Cuti

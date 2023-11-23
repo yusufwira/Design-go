@@ -120,6 +120,7 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 			JmlHariKerja := 0
 			jmlhHariKalender := 0
 
+			transaksi_cuti := cuti.TransaksiCuti{}
 			if *tipeAbsen.TipeMaxAbsen == "hari_kalender" {
 				for currentDate := sck.MulaiAbsen; jmlhHariKalender != *tipeAbsen.MaxAbsen; currentDate = currentDate.AddDate(0, 0, 1) {
 					jmlhHariKalender++
@@ -128,6 +129,9 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 					}
 				}
 				sck.AkhirAbsen = sck.MulaiAbsen.AddDate(0, 0, jmlhHariKalender-1)
+				// Transaksi Cuti
+				transaksi_cuti.TipeHari = "hari_kalender"
+				transaksi_cuti.JumlahCuti = jmlhHariKalender
 			} else if *tipeAbsen.TipeMaxAbsen == "hari_kerja" {
 				for currentDate := sck.MulaiAbsen; JmlHariKerja != *tipeAbsen.MaxAbsen; currentDate = currentDate.AddDate(0, 0, 1) {
 					jmlhHariKalender++
@@ -136,6 +140,9 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 					}
 				}
 				sck.AkhirAbsen = sck.MulaiAbsen.AddDate(0, 0, jmlhHariKalender-1)
+				// Transaksi Cuti
+				transaksi_cuti.TipeHari = "hari_kerja"
+				transaksi_cuti.JumlahCuti = JmlHariKerja
 			}
 			sck.JmlHariKalendar = &jmlhHariKalender
 			sck.JmlHariKerja = &JmlHariKerja
@@ -152,7 +159,18 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 				}
 				fsc = append(fsc, files)
 			}
+			// CREATE FileAbsen
 			files, _ := c.FileAbsenRepo.CreateArr(fsc)
+
+			// Transaksi Cuti
+			transaksi_cuti.PengajuanAbsenId = sckData.IdPengajuanAbsen
+			transaksi_cuti.Nik = sckData.Nik
+			if sckData.Periode != nil {
+				transaksi_cuti.Periode = *sckData.Periode
+			}
+
+			// CREATE Transaksi Cuti
+			c.TransaksiCutiRepo.Create(transaksi_cuti)
 
 			if files == nil {
 				files = []cuti.FileAbsen{}
@@ -425,6 +443,7 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 									Nik:              sckData.Nik,
 									Periode:          transaction.Periode,
 									JumlahCuti:       transaction.JmlhCuti,
+									TipeHari:         "hari_kerja",
 								}
 								c.TransaksiCutiRepo.Create(transaksi_cuti)
 							}
@@ -454,6 +473,11 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 						"keterangan": keterangan,
 					})
 				}
+			} else {
+				ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{
+					"status":     http.StatusServiceUnavailable,
+					"keterangan": "Berada diluar Masa Berlaku",
+				})
 			}
 		}
 	} else {
@@ -883,8 +907,40 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 						"keterangan": keterangan,
 					})
 				}
+			} else {
+				ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{
+					"status":     http.StatusServiceUnavailable,
+					"keterangan": "Berada diluar Masa Berlaku",
+				})
 			}
 		}
+	}
+}
+func (c *CutiKrywnController) ShowDetailPengajuanCuti(ctx *gin.Context) {
+	data := Authentication.PengajuanAbsens{}
+	id := ctx.Param("id_pengajuan_absen")
+	id_pengajuan, _ := strconv.Atoi(id)
+
+	data_pengajuan, err_pengajuan := c.PengajuanAbsenRepo.FindDataIdPengajuan(id_pengajuan)
+	data_tipe_absen, _ := c.TipeAbsenRepo.FindTipeAbsenByID(*data_pengajuan.TipeAbsenId)
+	data_file_absen, _ := c.FileAbsenRepo.FindFileAbsenByIDPengajuan(data_pengajuan.IdPengajuanAbsen)
+
+	convert := convertSourceTargetMyPengajuanAbsen(data_pengajuan, data_tipe_absen)
+
+	if data_file_absen == nil {
+		data_file_absen = []cuti.FileAbsen{}
+	}
+	data.MyPengajuanAbsen = convert
+	data.File = data_file_absen
+
+	if err_pengajuan == nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"status": http.StatusOK,
+			"info":   "Success",
+			"data":   data,
+		})
+	} else {
+		ctx.AbortWithStatus(http.StatusInternalServerError)
 	}
 }
 func (c *CutiKrywnController) GetMyPengajuanCuti(ctx *gin.Context) {
@@ -925,7 +981,39 @@ func (c *CutiKrywnController) GetMyPengajuanCuti(ctx *gin.Context) {
 		})
 	}
 }
+func (c *CutiKrywnController) DeletePengajuanCuti(ctx *gin.Context) {
+	id := ctx.Param("id_pengajuan_absen")
 
+	id_pengajuan_absen, _ := strconv.Atoi(id)
+	pengajuanAbsen, err := c.PengajuanAbsenRepo.DelPengajuanCuti(id_pengajuan_absen)
+	if *pengajuanAbsen.Status == "WaitApproved" {
+		tipeAbsen, _ := c.TipeAbsenRepo.FindTipeAbsenByID(*pengajuanAbsen.TipeAbsenId)
+		transaksi_cuti, _ := c.TransaksiCutiRepo.FindDataTransaksiIDPengajuan(pengajuanAbsen.IdPengajuanAbsen)
+		if tipeAbsen.MaxAbsen == nil {
+			for _, tr := range transaksi_cuti {
+				saldo, _ := c.SaldoCutiRepo.FindSaldoCutiTipeAbsenPeriode(tr.Nik, tipeAbsen.IdTipeAbsen, tr.Periode)
+				saldo.Saldo = saldo.Saldo + tr.JumlahCuti
+				c.SaldoCutiRepo.Update(saldo)
+				c.TransaksiCutiRepo.Delete(tr)
+			}
+		} else {
+			for _, tr := range transaksi_cuti {
+				c.TransaksiCutiRepo.Delete(tr)
+			}
+		}
+	}
+
+	if err == nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"status": http.StatusOK,
+			"info":   "success",
+		})
+	} else {
+		ctx.AbortWithStatus(http.StatusServiceUnavailable)
+	}
+}
+
+// Approval Cuti
 func (c *CutiKrywnController) ListApprvlCuti(ctx *gin.Context) {
 	var req Authentication.ValidationNIKTahun
 	list_aprvl := []Authentication.ListApprovalCuti{}
@@ -962,10 +1050,14 @@ func (c *CutiKrywnController) ListApprvlCuti(ctx *gin.Context) {
 				TipeAbsen:        tipeAbsen,
 				MulaiAbsen:       result.MulaiAbsen,
 				AkhirAbsen:       result.AkhirAbsen,
+				TglPengajuan:     result.TglPengajuan,
 				FileAbsen:        files,
 			}
 			if karyawan.Nama != nil && *karyawan.Nama != "" {
 				list_pengajuan.Nama = *karyawan.Nama
+			}
+			if result.Status != nil && *result.Status != "" {
+				list_pengajuan.Status = *result.Status
 			}
 			if result.Deskripsi != nil && *result.Deskripsi != "" {
 				list_pengajuan.Deskripsi = *result.Deskripsi
@@ -977,6 +1069,54 @@ func (c *CutiKrywnController) ListApprvlCuti(ctx *gin.Context) {
 			"info":   "Success",
 			"data":   list_aprvl,
 		})
+	} else {
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+	}
+}
+
+func (c *CutiKrywnController) ShowDetailApprovalPengajuanCuti(ctx *gin.Context) {
+	id := ctx.Param("id_pengajuan_absen")
+	id_pengajuan, _ := strconv.Atoi(id)
+
+	list_aprvl := Authentication.ListApprovalCuti{}
+
+	dataDB, err := c.PengajuanAbsenRepo.FindDataIdPengajuan(id_pengajuan)
+
+	if err == nil {
+		tipeAbsen, _ := c.TipeAbsenRepo.FindTipeAbsenByID(*dataDB.TipeAbsenId)
+		karyawan, _ := c.PihcMasterKaryDbRepo.FindUserByNIK(dataDB.Nik)
+		files, _ := c.FileAbsenRepo.FindFileAbsenByIDPengajuan(dataDB.IdPengajuanAbsen)
+		if files == nil {
+			files = []cuti.FileAbsen{}
+		}
+
+		result := convertSourceTargetMyPengajuanAbsen(dataDB, tipeAbsen)
+
+		list_aprvl.IdPengajuanAbsen = result.IdPengajuanAbsen
+		list_aprvl.Nik = result.Nik
+		list_aprvl.TipeAbsen = tipeAbsen
+		list_aprvl.MulaiAbsen = result.MulaiAbsen
+		list_aprvl.AkhirAbsen = result.AkhirAbsen
+		list_aprvl.TglPengajuan = result.TglPengajuan
+		list_aprvl.FileAbsen = files
+
+		if karyawan.Nama != nil && *karyawan.Nama != "" {
+			list_aprvl.Nama = *karyawan.Nama
+		}
+		if result.Status != nil && *result.Status != "" {
+			list_aprvl.Status = *result.Status
+		}
+		if result.Deskripsi != nil && *result.Deskripsi != "" {
+			list_aprvl.Deskripsi = *result.Deskripsi
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"status": http.StatusOK,
+			"info":   "Success",
+			"data":   list_aprvl,
+		})
+	} else {
+		ctx.AbortWithStatus(http.StatusInternalServerError)
 	}
 }
 

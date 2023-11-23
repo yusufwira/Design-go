@@ -145,6 +145,26 @@ type GetMyPengajuanAbsen struct {
 	JmlHariKerja     int       `json:"jml_hari_kerja"`
 }
 
+// type ShowDetailPengajuanAbsen struct {
+// 	IdPengajuanAbsen int              `json:"id_pengajuan_absen"`
+// 	Nik              string           `json:"nik"`
+// 	CompCode         string           `json:"comp_code"`
+// 	TipeAbsen        *cuti.TipeAbsen  `json:"tipe_absen"`
+// 	File             []cuti.FileAbsen `json:"files"`
+// 	Deskripsi        *string          `json:"deskripsi"`
+// 	MulaiAbsen       string           `json:"mulai_absen"`
+// 	AkhirAbsen       string           `json:"akhir_absen"`
+// 	TglPengajuan     string           `json:"tgl_pengajuan"`
+// 	Status           *string          `json:"status"`
+// 	CreatedBy        *string          `json:"created_by"`
+// 	CreatedAt        time.Time        `json:"created_at"`
+// 	UpdatedAt        time.Time        `json:"updated_at"`
+// 	Keterangan       *string          `json:"keterangan"`
+// 	Periode          *string          `json:"periode"`
+// 	JmlHariKalendar  *int             `json:"jml_hari_kalendar"`
+// 	JmlHariKerja     int              `json:"jml_hari_kerja"`
+// }
+
 type PengajuanAbsens struct {
 	cuti.MyPengajuanAbsen
 	File []cuti.FileAbsen `json:"files"`
@@ -166,7 +186,9 @@ type ListApprovalCuti struct {
 	Nama             string `json:"nama"`
 	cuti.TipeAbsen   `json:"tipe_absen"`
 	Deskripsi        string           `json:"deskripsi"`
+	TglPengajuan     string           `json:"tgl_pengajuan"`
 	MulaiAbsen       string           `json:"mulai_absen"`
 	AkhirAbsen       string           `json:"akhir_absen"`
+	Status           string           `json:"status"`
 	FileAbsen        []cuti.FileAbsen `json:"file_absen"`
 }
