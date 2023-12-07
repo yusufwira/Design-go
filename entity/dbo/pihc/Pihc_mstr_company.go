@@ -61,6 +61,14 @@ func (t PihcMasterCompanyRepo) FindPihcMsterCompany(comp_code string) (PihcMaste
 	}
 	return pihc_mc, nil
 }
+func (t PihcMasterCompanyRepo) FindPihcMsterCompanyArray(comp_code []string) ([]PihcMasterCompany, error) {
+	var pihc_mc []PihcMasterCompany
+	err := t.DB.Where("code in(?)", comp_code).Find(&pihc_mc).Error
+	if err != nil {
+		return pihc_mc, err
+	}
+	return pihc_mc, nil
+}
 
 func (t ViewOrganisasiRepo) FindViewOrganization(nik string) (ViewOrganisasi, error) {
 	var vo ViewOrganisasi

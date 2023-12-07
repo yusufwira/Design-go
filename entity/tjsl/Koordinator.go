@@ -147,7 +147,7 @@ func convertSourceTargetDataKaryawanRt(source pihc.PihcMasterKaryRtDb) pihc.Pihc
 		TglLahir:       source.TglLahir.Format("2006-01-02"),
 		PosID:          source.PosID,
 		PosTitle:       source.PosTitle,
-		SubPosID:       source.SubPosID,
+		SubPosID:       source.SupPosID,
 		PosGrade:       source.PosGrade,
 		PosKategori:    source.PosKategori,
 		OrgID:          source.OrgID,

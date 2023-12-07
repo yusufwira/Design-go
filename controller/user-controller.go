@@ -1,14 +1,24 @@
 package controller
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"io/ioutil"
 	"net/http"
+	"net/url"
+	"strconv"
 
 	"cloud.google.com/go/storage"
 	"github.com/gin-gonic/gin"
+
+	// erroroauth "github.com/go-oauth2/oauth2/v4/errors"
+
 	"github.com/go-playground/validator/v10"
 	Authentication "github.com/yusufwira/lern-golang-gin/entity/authentication"
 	"github.com/yusufwira/lern-golang-gin/entity/dbo/pihc"
+	role "github.com/yusufwira/lern-golang-gin/entity/public/role"
 	"github.com/yusufwira/lern-golang-gin/entity/tjsl"
 	users "github.com/yusufwira/lern-golang-gin/entity/users"
 	"gorm.io/gorm"
@@ -19,12 +29,16 @@ type UsersController struct {
 	OauthClientRepo        *users.OauthClientRepo
 	PihcMasterKaryRtDbRepo *pihc.PihcMasterKaryRtDbRepo
 	KegiatanKaryawanRepo   *tjsl.KegiatanKaryawanRepo
+	ModelHasRoleRepo       *role.ModelHasRoleRepo
+	RolesRepo              *role.RolesRepo
 }
 
 func NewUserController(db *gorm.DB, StorageClient *storage.Client) *UsersController {
 	return &UsersController{UserRepo: users.NewUserRepo(db),
 		OauthClientRepo:        users.NewOauthClientRepo(db),
 		PihcMasterKaryRtDbRepo: pihc.NewPihcMasterKaryRtDbRepo(db),
+		ModelHasRoleRepo:       role.NewModelHasRoleRepo(db),
+		RolesRepo:              role.NewRolesRepo(db),
 		KegiatanKaryawanRepo:   tjsl.NewKegiatanKaryawanRepo(db, StorageClient)}
 }
 
@@ -118,16 +132,21 @@ func (c *UsersController) GetDataKaryawanNameIndiv(ctx *gin.Context) {
 	data, err := c.PihcMasterKaryRtDbRepo.FindUserByNameIndiv(req.Name, req.Nik)
 
 	if err == nil {
-		photos, err1 := c.KegiatanKaryawanRepo.FindPhotosKaryawan(data.EmpNo, data.Company)
-
-		if err1 != nil {
-			photos = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
-		} else {
-			photos = "https://storage.googleapis.com/" + photos
+		// photos, err1 := c.KegiatanKaryawanRepo.FindPhotosKaryawan(data.EmpNo, data.Company)
+		// if err1 != nil {
+		// 	photos = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
+		// } else {
+		// 	photos = "https://storage.googleapis.com/" + photos
+		// }
+		foto := "https://storage.googleapis.com/lumen-oauth-storage/DataKaryawan/Foto/" + data.Company + "/" + data.EmpNo + ".jpg"
+		respons, err := http.Get(foto)
+		if err != nil || respons.StatusCode != http.StatusOK {
+			foto = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
 		}
+
 		ctx.JSON(http.StatusOK, gin.H{
 			"data":   data,
-			"photos": photos,
+			"photos": foto,
 		})
 	} else {
 		ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{
@@ -164,6 +183,10 @@ func (c *UsersController) Store(ctx *gin.Context) users.User {
 	return user
 }
 
+// var (
+// 	clientInfo = &models.Client{}
+// )
+
 func (c *UsersController) Login(ctx *gin.Context) {
 	var input Authentication.ValidationLogin
 
@@ -186,30 +209,39 @@ func (c *UsersController) Login(ctx *gin.Context) {
 	user, err := c.UserRepo.LoginCheck(input.Username, input.Password)
 
 	if err == nil {
-		// clients, _ := c.OauthClientRepo.FindOauthClient(user.Id)
-		// client_id := strconv.FormatUint(uint64(clients.Id), 10)
+		// FROM DATABASE
+		clients, _ := c.OauthClientRepo.FindOauthClient(user.Id)
+		client_id := strconv.FormatUint(uint64(clients.Id), 10)
 
+		// // CREATE MANAGER
 		// manager := manage.NewDefaultManager()
-		// fmt.Println("X1")
-		// manager.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)
-		// fmt.Println("X2")
+		// // fmt.Println("X1")
+		// manager.SetPasswordTokenCfg(manage.DefaultPasswordTokenCfg)
+		// // fmt.Println("X2")
 
-		// // token store
+		// // // token store
 		// manager.MustTokenStorage(store.NewMemoryTokenStore())
-		// fmt.Println("X3")
+		// // fmt.Println("X3")
 
-		// // generate jwt access token
+		// // // generate jwt access token
 		// manager.MapAccessGenerate(generates.NewAccessGenerate())
-		// fmt.Println("X4")
+		// // fmt.Println("X4")
+		// manager.MapClientStorage(store.NewClientStore())
 
 		// // client store
 		// clientStore := store.NewClientStore()
-		// fmt.Println("X5")
+		// // fmt.Println("X5")
 
+		// clientInfo.ID = client_id
+		// clientInfo.Secret = clients.Secret
+		// clientInfo.Domain = "http://localhost:9096"
+		// a := models.NewToken().ClientID
+		// b := models.NewToken().UserID
+		// fmt.Println(a, b)
 		// clientInfo := &models.Client{
 		// 	ID:     client_id,
 		// 	Secret: clients.Secret,
-		// 	Domain: "http://localhost:9094",
+		// 	Domain: "http://localhost:9096",
 		// }
 		// fmt.Println("X6")
 		// clientStore.Set(client_id, clientInfo)
@@ -235,53 +267,92 @@ func (c *UsersController) Login(ctx *gin.Context) {
 		// 	RefreshTokenExp:   time.Hour * 24 * 365 * 10, // 10 years
 		// 	IsGenerateRefresh: true,
 		// })
-		// fmt.Println("X11")
 
 		// // Initialize the oauth2 service
-		// // ginserver.InitServerWithManager(newGinServer, manager)
+		// ginserver.InitServerWithManager(newGinServer, manager)
+		// fmt.Println("A")
+		// srv := server.NewDefaultServer(manager)
 		// ginserver.InitServer(manager)
-		// fmt.Println("X12")
-		// ginserver.SetAllowGetAccessRequest(true)
-		// fmt.Println("X13")
-		// ginserver.SetClientInfoHandler(server.ClientFormHandler)
-		// fmt.Println("X14")
-		// ginserver.SetAllowedGrantType("password")
-		// fmt.Println("X15")
-		// ginserver.SetPasswordAuthorizationHandler(func(ctx context.Context, clientID, username, password string) (userID string, err error) {
+		// srv.SetAllowGetAccessRequest(true)
+		// srv.SetClientInfoHandler(server.ClientFormHandler)
+		// srv.SetAllowedGrantType("password")
+		// fmt.Println("B")
+		// srv.SetPasswordAuthorizationHandler(func(ctx context.Context, clientID, username, password string) (userID string, err error) {
 		// 	// Implement your authentication logic here and return the userID if valid
+		// 	fmt.Println("C")
 		// 	if username == user.Username && password == user.Password {
 		// 		userID = client_id
-		// 		fmt.Println("X16")
+		// 		fmt.Println("D")
 		// 	}
-		// 	fmt.Println("X17")
+		// 	fmt.Println("E")
 		// 	return
 		// })
-		// fmt.Println("X18")
-
-		// url := "http://localhost:9096/oauth2/token?grant_type=password&client_id=" + client_id + "&client_secret=" + clients.Secret + "&username=" + user.Username + "&password=" + user.Password
-		// resp, err1 := http.Get(url)
-		// fmt.Println("X19")
-		// if err1 != nil {
-		// 	fmt.Println("ERRORRR")
+		// userID, _ := srv.PasswordAuthorizationHandler(ctx, client_id, user.Username, user.Password)
+		// fmt.Println(userID)
+		// fmt.Println(clientInfo.Secret)
+		// fmt.Println(clientInfo.ID)
+		// err := srv.HandleTokenRequest(ctx.Writer, ctx.Request)
+		// if err != nil {
+		// 	if err, ok := err.(*erroroauth.Response.Error()); ok {
+		// 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		// 	} else {
+		// 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		// 	}
 		// }
-		// fmt.Println("X20")
-		// body, err2 := ioutil.ReadAll(resp.Body)
-		// if err2 != nil {
-		// 	fmt.Println("ERRORRR2")
-		// }
-		// fmt.Println("X21")
 
-		// var data Authentication.Token
-		// if err := json.Unmarshal(body, &data); err != nil {
-		// 	fmt.Println("X22")
-		// 	fmt.Println("Error unmarshaling JSON:", err)
+		// TIDAK MASUK ke function
+		// ginserver.SetPasswordAuthorizationHandler(func(ctx context.Context, clientID, username, password string) (userID string, err error) {
+		// 	// Implement your authentication logic here and return the userID if valid
+		// 	fmt.Println("C")
+		// 	if username == user.Username && password == user.Password {
+		// 		userID = client_id
+		// 		fmt.Println("D")
+		// 	}
+		// 	fmt.Println("E")
 		// 	return
-		// }
-		// fmt.Println("X23")
+		// })
+		fmt.Println("D")
+
+		values := url.Values{}
+		values.Set("grant_type", "password")
+		values.Set("client_id", client_id)
+		values.Set("client_secret", clients.Secret)
+		values.Set("username", user.Username)
+		values.Set("password", user.Password)
+
+		resp, err1 := http.Get("http://localhost:9096/api/token?" + values.Encode())
+		if err1 != nil {
+			fmt.Println("ERRORRR")
+		}
+		body, err2 := ioutil.ReadAll(resp.Body)
+		if err2 != nil {
+			fmt.Println("ERRORRR2")
+		}
+
+		fmt.Println("Response Body:", string(body))
+		fmt.Println("Content-Type:", resp.Header.Get("Content-Type"))
+
+		trimmedBody := bytes.TrimSpace(body)
+		var data Authentication.Token
+		if err := json.Unmarshal(trimmedBody, &data); err != nil {
+			fmt.Println("Error unmarshaling JSON:", err)
+			return
+		}
 
 		karyawan, _ := c.PihcMasterKaryRtDbRepo.FindUserByNIK(user.Nik)
+		is_superior := c.PihcMasterKaryRtDbRepo.IsSuperior(karyawan.PosID)
+
+		roles, _ := c.RolesRepo.FindRoleByUser(karyawan.EmpNo)
+		defaultRole := role.MyRole{
+			Name:     "KARYAWAN",
+			CompCode: nil,
+		}
+		if roles == nil {
+			roles = append(roles, defaultRole)
+		}
 		ctx.JSON(http.StatusOK, gin.H{
 			"status":         http.StatusOK,
+			"success":        "Login Success",
 			"user_id":        user.Id,
 			"user_name":      user.Name,
 			"comp_code":      karyawan.Company,
@@ -292,7 +363,9 @@ func (c *UsersController) Login(ctx *gin.Context) {
 			"model_type":     user.UserType,
 			"nik":            user.Nik,
 			"position":       karyawan.PosID,
-			// "token":          data,
+			"roles":          roles,
+			"is_superior":    is_superior,
+			"token":          data,
 		})
 	} else {
 		if len(input.Password) < 8 {

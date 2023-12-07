@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/yusufwira/lern-golang-gin/entity/cuti"
+	"github.com/yusufwira/lern-golang-gin/entity/dbo/pihc"
 )
 
 type ValidasiStoreCutiKaryawan struct {
@@ -47,6 +48,10 @@ type ValidasiListSaldoCuti struct {
 
 type ValidationNIKTahun struct {
 	ValidationLMK
+}
+type ValidationNIKTahunStatus struct {
+	ValidationLMK
+	Status string `form:"status" json:"status"`
 }
 
 type ValidationApprovalAtasanPengajuanAbsen struct {
@@ -181,14 +186,17 @@ type GetTipeAbsenKaryawanSaldo struct {
 }
 
 type ListApprovalCuti struct {
-	IdPengajuanAbsen int    `json:"id_pengajuan_absen"`
-	Nik              string `json:"nik"`
-	Nama             string `json:"nama"`
-	cuti.TipeAbsen   `json:"tipe_absen"`
-	Deskripsi        string           `json:"deskripsi"`
-	TglPengajuan     string           `json:"tgl_pengajuan"`
-	MulaiAbsen       string           `json:"mulai_absen"`
-	AkhirAbsen       string           `json:"akhir_absen"`
-	Status           string           `json:"status"`
-	FileAbsen        []cuti.FileAbsen `json:"file_absen"`
+	IdPengajuanAbsen       int `json:"id_pengajuan_absen"`
+	pihc.PihcMasterKary    `json:"karyawan"`
+	pihc.PihcMasterCompany `json:"companys"`
+	cuti.TipeAbsen         `json:"tipe_absen"`
+	Deskripsi              string           `json:"deskripsi"`
+	TglPengajuan           string           `json:"tgl_pengajuan"`
+	MulaiAbsen             string           `json:"mulai_absen"`
+	AkhirAbsen             string           `json:"akhir_absen"`
+	Status                 string           `json:"status"`
+	FileAbsen              []cuti.FileAbsen `json:"file_absen"`
+	Periode                *string          `json:"periode"`
+	Foto                   string           `json:"foto"`
+	FotoDefault            string           `json:"foto_default"`
 }

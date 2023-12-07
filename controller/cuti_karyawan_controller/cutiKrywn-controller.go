@@ -51,6 +51,96 @@ func getErrorMsg(fe validator.FieldError) string {
 	return "Unknown error"
 }
 
+// Convert Db to struct
+func convertSourceTargetDataKaryawan(source pihc.PihcMasterKaryDb) pihc.PihcMasterKary {
+	var location *string
+	var seksiID *string
+	var seksiTitle *string
+	var preName *string
+	var postName *string
+	var NoNPWP *string
+	var bankAccount *string
+	var bankName *string
+	var payScale *string
+	if source.Lokasi != "" {
+		location = &source.Lokasi
+	}
+	if source.SeksiID != "" {
+		seksiID = &source.SeksiID
+	}
+	if source.SeksiTitle != "" {
+		seksiTitle = &source.SeksiTitle
+	}
+	if source.PreNameTitle != "" {
+		preName = &source.PreNameTitle
+	}
+	if source.PostNameTitle != "" {
+		postName = &source.PostNameTitle
+	}
+	if source.NoNPWP != "" {
+		NoNPWP = &source.NoNPWP
+	}
+	if source.BankAccount != "" {
+		bankAccount = &source.BankAccount
+	}
+	if source.BankName != "" {
+		bankName = &source.BankName
+	}
+	if source.PayScale != "" {
+		payScale = &source.PayScale
+	}
+	return pihc.PihcMasterKary{
+		EmpNo:          source.EmpNo,
+		Nama:           source.Nama,
+		Gender:         source.Gender,
+		Agama:          source.Agama,
+		StatusKawin:    source.StatusKawin,
+		Anak:           source.Anak,
+		Mdg:            "0",
+		EmpGrade:       source.EmpGrade,
+		EmpGradeTitle:  source.EmpGradeTitle,
+		Area:           source.Area,
+		AreaTitle:      source.AreaTitle,
+		SubArea:        source.SubArea,
+		SubAreaTitle:   source.SubAreaTitle,
+		Contract:       source.Contract,
+		Pendidikan:     source.Pendidikan,
+		Company:        source.Company,
+		Lokasi:         location,
+		EmployeeStatus: source.EmployeeStatus,
+		Email:          source.Email,
+		HP:             source.HP,
+		TglLahir:       source.TglLahir.Format("2006-01-02"),
+		PosID:          source.PosID,
+		PosTitle:       source.PosTitle,
+		SupPosID:       source.SupPosID,
+		PosGrade:       source.PosGrade,
+		PosKategori:    source.PosKategori,
+		OrgID:          source.OrgID,
+		OrgTitle:       source.OrgTitle,
+		DeptID:         source.DeptID,
+		DeptTitle:      source.DeptTitle,
+		KompID:         source.KompID,
+		KompTitle:      source.KompTitle,
+		DirID:          source.DirID,
+		DirTitle:       source.DirTitle,
+		PosLevel:       source.PosLevel,
+		SupEmpNo:       source.SupEmpNo,
+		BagID:          source.BagID,
+		BagTitle:       source.BagTitle,
+		SeksiID:        seksiID,
+		SeksiTitle:     seksiTitle,
+		PreNameTitle:   preName,
+		PostNameTitle:  postName,
+		NoNPWP:         NoNPWP,
+		BankAccount:    bankAccount,
+		BankName:       bankName,
+		MdgDate:        source.MdgDate,
+		PayScale:       payScale,
+		CCCode:         source.CCCode,
+		Nickname:       source.Nickname,
+	}
+}
 func convertSourceTargetMyPengajuanAbsen(source cuti.PengajuanAbsen, source2 cuti.TipeAbsen) cuti.MyPengajuanAbsen {
 	return cuti.MyPengajuanAbsen{
 		IdPengajuanAbsen: source.IdPengajuanAbsen,
@@ -110,7 +200,11 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 		periode := strconv.Itoa(time.Now().Year())
 		sck.Periode = &periode
 		sck.CreatedBy = &req.CreatedBy
-		approvedBy := "82105096"
+		dataKaryawan, _ := c.PihcMasterKaryDbRepo.FindUserByNIK(sck.Nik)
+		for dataKaryawan.PosTitle != "Wakil Direktur Utama" {
+			dataKaryawan, _ = c.PihcMasterKaryDbRepo.FindUserAtasanBySupPosID(dataKaryawan.SupPosID)
+		}
+		approvedBy := dataKaryawan.EmpNo
 		sck.ApprovedBy = &approvedBy
 
 		tipeAbsen, _ := c.TipeAbsenRepo.FindTipeAbsenByID(*sck.TipeAbsenId)
@@ -186,7 +280,7 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 			})
 		} else {
 			// MaxAbsen == nil (Menggunakan Saldo)
-			existSaldo, saldoCuti, _ := c.SaldoCutiRepo.FindExistSaldo(req.TipeAbsenId, sck.Nik, req.MulaiAbsen, req.AkhirAbsen)
+			existSaldo, saldoCuti, _ := c.SaldoCutiRepo.FindExistSaldo2Periode(req.TipeAbsenId, sck.Nik, req.MulaiAbsen, req.AkhirAbsen)
 
 			if existSaldo {
 				// Ada Saldo
@@ -308,7 +402,7 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 								if nextyear {
 									fmt.Println("nextyear")
 									tahun, _ := strconv.Atoi(dataSaldo.Periode)
-									scNextYear, _ := c.SaldoCutiRepo.FindSaldoCutiTipeAbsenPeriode(dataSaldo.Nik, dataSaldo.TipeAbsenId, strconv.Itoa(tahun+1))
+									scNextYear, _ := c.SaldoCutiRepo.GetSaldoCutiPerTipe(dataSaldo.Nik, dataSaldo.TipeAbsenId, strconv.Itoa(tahun+1))
 									if scNextYear.Saldo-indexHutang >= 0 {
 										fmt.Println(scNextYear.Saldo)
 										scNextYear.Saldo = scNextYear.Saldo - indexHutang
@@ -353,7 +447,7 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 							if nextyear {
 								fmt.Println("nextyear")
 								tahun, _ := strconv.Atoi(dataSaldo.Periode)
-								scNextYear, _ := c.SaldoCutiRepo.FindSaldoCutiTipeAbsenPeriode(dataSaldo.Nik, dataSaldo.TipeAbsenId, strconv.Itoa(tahun+1))
+								scNextYear, _ := c.SaldoCutiRepo.GetSaldoCutiPerTipe(dataSaldo.Nik, dataSaldo.TipeAbsenId, strconv.Itoa(tahun+1))
 								if scNextYear.Saldo-indexHutang >= 0 {
 									fmt.Println(scNextYear.Saldo)
 									scNextYear.Saldo = scNextYear.Saldo - indexHutang
@@ -493,7 +587,7 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 				// Transaksi
 				transaksi, _ := c.TransaksiCutiRepo.FindDataTransaksiIDPengajuan(pengajuan_absen.IdPengajuanAbsen)
 				for _, data_transaksi := range transaksi {
-					saldo_cuti, err_saldo := c.SaldoCutiRepo.FindSaldoCutiTipeAbsenPeriode(pengajuan_absen.Nik, *pengajuan_absen.TipeAbsenId, data_transaksi.Periode)
+					saldo_cuti, err_saldo := c.SaldoCutiRepo.GetSaldoCutiPerTipe(pengajuan_absen.Nik, *pengajuan_absen.TipeAbsenId, data_transaksi.Periode)
 					if err_saldo == nil {
 						saldo_cuti.Saldo = saldo_cuti.Saldo + data_transaksi.JumlahCuti
 						c.SaldoCutiRepo.Update(saldo_cuti)
@@ -525,7 +619,7 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 				// Transaksi
 				transaksi, _ := c.TransaksiCutiRepo.FindDataTransaksiIDPengajuan(pengajuan_absen.IdPengajuanAbsen)
 				for _, data_transaksi := range transaksi {
-					saldo_cuti, err_saldo := c.SaldoCutiRepo.FindSaldoCutiTipeAbsenPeriode(pengajuan_absen.Nik, *pengajuan_absen.TipeAbsenId, data_transaksi.Periode)
+					saldo_cuti, err_saldo := c.SaldoCutiRepo.GetSaldoCutiPerTipe(pengajuan_absen.Nik, *pengajuan_absen.TipeAbsenId, data_transaksi.Periode)
 					if err_saldo == nil {
 						saldo_cuti.Saldo = saldo_cuti.Saldo + data_transaksi.JumlahCuti
 						c.SaldoCutiRepo.Update(saldo_cuti)
@@ -625,7 +719,7 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 			})
 		} else {
 			// MaxAbsen == nil (Menggunakan Saldo)
-			existSaldo, saldoCuti, _ := c.SaldoCutiRepo.FindExistSaldo(req.TipeAbsenId, pengajuan_absen.Nik, req.MulaiAbsen, req.AkhirAbsen)
+			existSaldo, saldoCuti, _ := c.SaldoCutiRepo.FindExistSaldo2Periode(req.TipeAbsenId, pengajuan_absen.Nik, req.MulaiAbsen, req.AkhirAbsen)
 
 			if existSaldo {
 				// Ada Saldo
@@ -747,7 +841,7 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 								if nextyear {
 									fmt.Println("nextyear")
 									tahun, _ := strconv.Atoi(dataSaldo.Periode)
-									scNextYear, _ := c.SaldoCutiRepo.FindSaldoCutiTipeAbsenPeriode(dataSaldo.Nik, dataSaldo.TipeAbsenId, strconv.Itoa(tahun+1))
+									scNextYear, _ := c.SaldoCutiRepo.GetSaldoCutiPerTipe(dataSaldo.Nik, dataSaldo.TipeAbsenId, strconv.Itoa(tahun+1))
 									if scNextYear.Saldo-indexHutang >= 0 {
 										fmt.Println(scNextYear.Saldo)
 										scNextYear.Saldo = scNextYear.Saldo - indexHutang
@@ -792,7 +886,7 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 							if nextyear {
 								fmt.Println("nextyear")
 								tahun, _ := strconv.Atoi(dataSaldo.Periode)
-								scNextYear, _ := c.SaldoCutiRepo.FindSaldoCutiTipeAbsenPeriode(dataSaldo.Nik, dataSaldo.TipeAbsenId, strconv.Itoa(tahun+1))
+								scNextYear, _ := c.SaldoCutiRepo.GetSaldoCutiPerTipe(dataSaldo.Nik, dataSaldo.TipeAbsenId, strconv.Itoa(tahun+1))
 								if scNextYear.Saldo-indexHutang >= 0 {
 									fmt.Println(scNextYear.Saldo)
 									scNextYear.Saldo = scNextYear.Saldo - indexHutang
@@ -991,7 +1085,7 @@ func (c *CutiKrywnController) DeletePengajuanCuti(ctx *gin.Context) {
 		transaksi_cuti, _ := c.TransaksiCutiRepo.FindDataTransaksiIDPengajuan(pengajuanAbsen.IdPengajuanAbsen)
 		if tipeAbsen.MaxAbsen == nil {
 			for _, tr := range transaksi_cuti {
-				saldo, _ := c.SaldoCutiRepo.FindSaldoCutiTipeAbsenPeriode(tr.Nik, tipeAbsen.IdTipeAbsen, tr.Periode)
+				saldo, _ := c.SaldoCutiRepo.GetSaldoCutiPerTipe(tr.Nik, tipeAbsen.IdTipeAbsen, tr.Periode)
 				saldo.Saldo = saldo.Saldo + tr.JumlahCuti
 				c.SaldoCutiRepo.Update(saldo)
 				c.TransaksiCutiRepo.Delete(tr)
@@ -1015,10 +1109,10 @@ func (c *CutiKrywnController) DeletePengajuanCuti(ctx *gin.Context) {
 
 // Approval Cuti
 func (c *CutiKrywnController) ListApprvlCuti(ctx *gin.Context) {
-	var req Authentication.ValidationNIKTahun
+	var req Authentication.ValidationNIKTahunStatus
 	list_aprvl := []Authentication.ListApprovalCuti{}
 
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := ctx.ShouldBind(&req); err != nil {
 		var ve validator.ValidationErrors
 		if errors.As(err, &ve) {
 			out := make([]Authentication.ErrorMsg, len(ve))
@@ -1027,43 +1121,131 @@ func (c *CutiKrywnController) ListApprvlCuti(ctx *gin.Context) {
 			}
 			ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"errorcode_": http.StatusServiceUnavailable, "errormsg_": out})
 		}
+		fmt.Println("A")
 		return
 	}
 
-	status := "WaitApproved"
+	var dataDB []cuti.PengajuanAbsen
+	var err error
 
-	dataDB, err := c.PengajuanAbsenRepo.FindDataNIKPeriodeStatus(req.NIK, req.Tahun, status)
+	if req.Status == "WaitApproved" {
+		dB, errs := c.PengajuanAbsenRepo.FindDataNIKPeriodeApprovalWaiting(req.NIK, req.Tahun, req.Status)
+		err = errs
+		dataDB = dB
+	} else {
+		dB, errs := c.PengajuanAbsenRepo.FindDataNIKPeriodeApproval(req.NIK, req.Tahun)
+		err = errs
+		dataDB = dB
+	}
+	// status := "WaitApproved"
+
+	var arrNIK []string
+	var arrTipeAbsenID []string
+	var arrCompany []string
+	var arrIdPengajuanAbsen []int
 
 	if err == nil {
 		for _, myCuti := range dataDB {
-			tipeAbsen, _ := c.TipeAbsenRepo.FindTipeAbsenByID(*myCuti.TipeAbsenId)
-			karyawan, _ := c.PihcMasterKaryDbRepo.FindUserByNIK(myCuti.Nik)
-			files, _ := c.FileAbsenRepo.FindFileAbsenByIDPengajuan(myCuti.IdPengajuanAbsen)
-			if files == nil {
-				files = []cuti.FileAbsen{}
-			}
+			arrIdPengajuanAbsen = append(arrIdPengajuanAbsen, myCuti.IdPengajuanAbsen)
+			arrNIK = append(arrNIK, myCuti.Nik)
+			arrTipeAbsenID = append(arrTipeAbsenID, *myCuti.TipeAbsenId)
+		}
+		karyawan, _ := c.PihcMasterKaryDbRepo.FindUserByNIKArray(arrNIK)
+		tipeAbsen, _ := c.TipeAbsenRepo.FindTipeAbsenByIDArray(arrTipeAbsenID)
+		files, _ := c.FileAbsenRepo.FindFileAbsenByIDPengajuanArray(arrIdPengajuanAbsen)
+		for _, myKrywn := range karyawan {
+			arrCompany = append(arrCompany, myKrywn.Company)
+		}
+		companys, _ := c.PihcMasterCompanyRepo.FindPihcMsterCompanyArray(arrCompany)
 
-			result := convertSourceTargetMyPengajuanAbsen(myCuti, tipeAbsen)
-			list_pengajuan := Authentication.ListApprovalCuti{
-				IdPengajuanAbsen: result.IdPengajuanAbsen,
-				Nik:              result.Nik,
-				TipeAbsen:        tipeAbsen,
-				MulaiAbsen:       result.MulaiAbsen,
-				AkhirAbsen:       result.AkhirAbsen,
-				TglPengajuan:     result.TglPengajuan,
-				FileAbsen:        files,
+		for _, myCuti := range dataDB {
+			myFiles := []cuti.FileAbsen{}
+			list_pengajuan := Authentication.ListApprovalCuti{}
+			// Karyawan
+			for _, myKaryawan := range karyawan {
+				if myCuti.Nik == myKaryawan.EmpNo {
+					for _, myCompany := range companys {
+						if myKaryawan.Company == myCompany.Code {
+							list_pengajuan.PihcMasterKary = convertSourceTargetDataKaryawan(myKaryawan)
+							list_pengajuan.PihcMasterCompany = myCompany
+							foto := "https://storage.googleapis.com/lumen-oauth-storage/DataKaryawan/Foto/" + myCompany.Code + "/" + myKaryawan.EmpNo + ".jpg"
+							respons, err := http.Get(foto)
+							if err != nil || respons.StatusCode != http.StatusOK {
+								foto = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
+							}
+							list_pengajuan.Foto = foto
+							list_pengajuan.FotoDefault = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
+						}
+					}
+				}
 			}
-			if karyawan.Nama != nil && *karyawan.Nama != "" {
-				list_pengajuan.Nama = *karyawan.Nama
+			// Tipe Absen
+			for _, myTipeAbsen := range tipeAbsen {
+				if *myCuti.TipeAbsenId == myTipeAbsen.IdTipeAbsen {
+					list_pengajuan.TipeAbsen = myTipeAbsen
+					result := convertSourceTargetMyPengajuanAbsen(myCuti, myTipeAbsen)
+					list_pengajuan.IdPengajuanAbsen = result.IdPengajuanAbsen
+					list_pengajuan.MulaiAbsen = result.MulaiAbsen
+					list_pengajuan.AkhirAbsen = result.AkhirAbsen
+					list_pengajuan.TglPengajuan = result.TglPengajuan
+					list_pengajuan.Periode = result.Periode
+					if result.Status != nil && *result.Status != "" {
+						list_pengajuan.Status = *result.Status
+					}
+					if result.Deskripsi != nil && *result.Deskripsi != "" {
+						list_pengajuan.Deskripsi = *result.Deskripsi
+					}
+				}
 			}
-			if result.Status != nil && *result.Status != "" {
-				list_pengajuan.Status = *result.Status
+			for _, list_file := range files {
+				if myCuti.IdPengajuanAbsen == list_file.PengajuanAbsenId {
+					myFiles = append(myFiles, list_file)
+				}
 			}
-			if result.Deskripsi != nil && *result.Deskripsi != "" {
-				list_pengajuan.Deskripsi = *result.Deskripsi
-			}
+			list_pengajuan.FileAbsen = myFiles
 			list_aprvl = append(list_aprvl, list_pengajuan)
 		}
+
+		// for _, myCuti := range dataDB {
+		// 	tipeAbsen, _ := c.TipeAbsenRepo.FindTipeAbsenByID(*myCuti.TipeAbsenId)
+		// 	karyawan, _ := c.PihcMasterKaryDbRepo.FindUserByNIK(myCuti.Nik)
+		// companys, _ := c.PihcMasterCompanyRepo.FindPihcMsterCompany(karyawan.Company)
+		// files, _ := c.FileAbsenRepo.FindFileAbsenByIDPengajuan(myCuti.IdPengajuanAbsen)
+		// 	if files == nil {
+		// 		files = []cuti.FileAbsen{}
+		// 	}
+
+		// 	data_karyawan_convert := convertSourceTargetDataKaryawan(karyawan)
+
+		// 	result := convertSourceTargetMyPengajuanAbsen(myCuti, tipeAbsen)
+		// 	foto := "https://storage.googleapis.com/lumen-oauth-storage/DataKaryawan/Foto/" + companys.Code + "/" + result.Nik + ".jpg"
+		// 	respons, err := http.Get(foto)
+		// 	if err != nil || respons.StatusCode != http.StatusOK {
+		// 		foto = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
+		// 	}
+		// 	list_pengajuan := Authentication.ListApprovalCuti{
+		// 		IdPengajuanAbsen:  result.IdPengajuanAbsen,
+		// 		PihcMasterKary:    data_karyawan_convert,
+		// 		PihcMasterCompany: companys,
+		// 		TipeAbsen:         tipeAbsen,
+		// 		MulaiAbsen:        result.MulaiAbsen,
+		// 		AkhirAbsen:        result.AkhirAbsen,
+		// 		TglPengajuan:      result.TglPengajuan,
+		// 		FileAbsen:         files,
+		// 		Periode:           result.Periode,
+		// 		Foto:              foto,
+		// 		FotoDefault:       "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg",
+		// 	}
+		// 	if result.Status != nil && *result.Status != "" {
+		// 		list_pengajuan.Status = *result.Status
+		// 	}
+		// 	if result.Deskripsi != nil && *result.Deskripsi != "" {
+		// 		list_pengajuan.Deskripsi = *result.Deskripsi
+		// 	}
+		// 	list_aprvl = append(list_aprvl, list_pengajuan)
+
+		// }
+		fmt.Println("Success")
 		ctx.JSON(http.StatusOK, gin.H{
 			"status": http.StatusOK,
 			"info":   "Success",
@@ -1085,24 +1267,32 @@ func (c *CutiKrywnController) ShowDetailApprovalPengajuanCuti(ctx *gin.Context) 
 	if err == nil {
 		tipeAbsen, _ := c.TipeAbsenRepo.FindTipeAbsenByID(*dataDB.TipeAbsenId)
 		karyawan, _ := c.PihcMasterKaryDbRepo.FindUserByNIK(dataDB.Nik)
+		companys, _ := c.PihcMasterCompanyRepo.FindPihcMsterCompany(karyawan.Company)
 		files, _ := c.FileAbsenRepo.FindFileAbsenByIDPengajuan(dataDB.IdPengajuanAbsen)
 		if files == nil {
 			files = []cuti.FileAbsen{}
 		}
 
+		data_karyawan_convert := convertSourceTargetDataKaryawan(karyawan)
 		result := convertSourceTargetMyPengajuanAbsen(dataDB, tipeAbsen)
 
 		list_aprvl.IdPengajuanAbsen = result.IdPengajuanAbsen
-		list_aprvl.Nik = result.Nik
+		list_aprvl.PihcMasterKary = data_karyawan_convert
+		list_aprvl.PihcMasterCompany = companys
 		list_aprvl.TipeAbsen = tipeAbsen
 		list_aprvl.MulaiAbsen = result.MulaiAbsen
 		list_aprvl.AkhirAbsen = result.AkhirAbsen
 		list_aprvl.TglPengajuan = result.TglPengajuan
 		list_aprvl.FileAbsen = files
-
-		if karyawan.Nama != nil && *karyawan.Nama != "" {
-			list_aprvl.Nama = *karyawan.Nama
+		list_aprvl.Periode = result.Periode
+		foto := "https://storage.googleapis.com/lumen-oauth-storage/DataKaryawan/Foto/" + companys.Code + "/" + result.Nik + ".jpg"
+		respons, err := http.Get(foto)
+		if err != nil || respons.StatusCode != http.StatusOK {
+			foto = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
 		}
+		list_aprvl.Foto = foto
+		list_aprvl.FotoDefault = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
+
 		if result.Status != nil && *result.Status != "" {
 			list_aprvl.Status = *result.Status
 		}
@@ -1161,7 +1351,7 @@ func (c *CutiKrywnController) StoreApprovePengajuanAbsen(ctx *gin.Context) {
 				fmt.Println("Transaksi")
 				// tipe_absen, _ := c.TipeAbsenRepo.FindTipeAbsenByID(*pengajuan_absen.TipeAbsenId)
 				// if tipe_absen.MaxAbsen != nil {
-				saldo_cuti, err_saldo := c.SaldoCutiRepo.FindSaldoCutiTipeAbsenPeriode(pengajuan_absen.Nik, *pengajuan_absen.TipeAbsenId, data_transaksi.Periode)
+				saldo_cuti, err_saldo := c.SaldoCutiRepo.GetSaldoCutiPerTipe(pengajuan_absen.Nik, *pengajuan_absen.TipeAbsenId, data_transaksi.Periode)
 				if err_saldo == nil {
 					saldo_cuti.Saldo = saldo_cuti.Saldo + data_transaksi.JumlahCuti
 					c.SaldoCutiRepo.Update(saldo_cuti)
@@ -1214,7 +1404,7 @@ func (c *CutiKrywnController) GetTipeAbsenSaldoPengajuan(ctx *gin.Context) {
 		TipeAbsen, _ := c.TipeAbsenRepo.FindTipeAbsenPengajuan(pihc_mstr_krywn.Company)
 
 		for _, dataCuti := range TipeAbsen {
-			saldoCutiPerTipe, err := c.SaldoCutiRepo.GetSaldoCutiPerTipe(dataCuti.IdTipeAbsen, pihc_mstr_krywn.EmpNo, req.Tahun)
+			saldoCutiPerTipe, err := c.SaldoCutiRepo.GetSaldoCutiPerTipe(pihc_mstr_krywn.EmpNo, dataCuti.IdTipeAbsen, req.Tahun)
 			if err == nil {
 				if dataCuti.NamaTipeAbsen == "Cuti Tahunan" {
 					max_absen := &Authentication.MaxAbsenIndiv{

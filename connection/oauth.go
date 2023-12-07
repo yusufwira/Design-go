@@ -2,12 +2,11 @@ package connection
 
 import (
 	"context"
-	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	ginserver "github.com/go-oauth2/gin-server"
-	"github.com/go-oauth2/oauth2/v4"
 	"github.com/go-oauth2/oauth2/v4/generates"
 	"github.com/go-oauth2/oauth2/v4/manage"
 	"github.com/go-oauth2/oauth2/v4/models"
@@ -64,17 +63,6 @@ func resetOAuth2Manager(idvar, secretvar, domainvar string) *manage.Manager {
 	clientStore.Set(idvar, clientInfo)
 	manager.MapClientStorage(clientStore)
 
-	// Define a custom grant type handler
-	// manager.SetAuthorizeCodeTokenCfg(&manage.Config{AccessTokenExp: 0})
-
-	// SetClientTokenCfg set the client grant token config
-	// manager.SetClientTokenCfg(&manage.Config{
-	// 	AccessTokenExp:    time.Hour * 24 * 365 * 10, // 10 years
-	// 	RefreshTokenExp:   time.Hour * 24 * 365 * 10, // 10 years
-	// 	IsGenerateRefresh: true,
-	// })
-
-	// SetPasswordTokenCfg the access token and refresh token configuration
 	manager.SetPasswordTokenCfg(&manage.Config{
 		AccessTokenExp:    time.Hour * 24 * 365 * 10, // 10 years
 		RefreshTokenExp:   time.Hour * 24 * 365 * 10, // 10 years
@@ -84,109 +72,129 @@ func resetOAuth2Manager(idvar, secretvar, domainvar string) *manage.Manager {
 	return manager
 }
 
-func Middleware(ctx *gin.Context) {
-	idvar := ctx.Query("client_id")
-	secretvar := ctx.Query("client_secret")
-	userNamevar := ctx.Query("username")
-	userPassvar := ctx.Query("password")
-	dumpvar := true
-	domainvar := "http://localhost:9094"
+var srv *server.Server
 
-	// manager := manage.NewManager()
-	manager := resetOAuth2Manager(idvar, secretvar, domainvar)
+// func Middleware(ctx *gin.Context) *server.Server {
+// 	idvar := ctx.Query("client_id")
+// 	secretvar := ctx.Query("client_secret")
+// 	userNamevar := ctx.Query("username")
+// 	userPassvar := ctx.Query("password")
+// 	// dumpvar := true
+// 	domainvar := "http://localhost:9096"
 
-	// Initialize the oauth2 service
-	server.NewServer(server.NewConfig(), manager)
-	ginserver.InitServer(manager)
-	ginserver.SetAllowGetAccessRequest(dumpvar)
-	ginserver.SetClientInfoHandler(server.ClientFormHandler)
-	grantType := oauth2.GrantType(oauth2.PasswordCredentials.String())
-	ginserver.SetAllowedGrantType(grantType)
-	// SetPasswordAuthorizationHandlers(userNamevar, userPassvar, idvar)
-	ginserver.SetPasswordAuthorizationHandler(func(ctx context.Context, ClientID, username, password string) (userID string, err error) {
-		// Implement your authentication logic here and return the userID if valid
-		if username == userNamevar && password == userPassvar {
-			fmt.Println("XXXX")
-			userID = ClientID
-		}
-		return
-	})
+// 	// manager := manage.NewManager()
+// 	manager := resetOAuth2Manager(idvar, secretvar, domainvar)
 
-	// Handle the token request
-	ginserver.HandleTokenRequest(ctx)
+// 	// Initialize the oauth2 service
+// 	server.NewServer(server.NewConfig(), manager)
+// 	srv := server.NewDefaultServer(manager)
+// 	// ginserver.InitServer(manager)
+// 	srv.SetAllowGetAccessRequest(true)
+// 	srv.SetClientInfoHandler(server.ClientFormHandler)
+// 	srv.SetAllowedGrantType("password")
+// 	srv.SetPasswordAuthorizationHandler(func(ctx context.Context, clientID, username, password string) (userID string, err error) {
+// 		// Implement your authentication logic here and return the userID if valid
+// 		fmt.Println("C")
+// 		if username == userNamevar && password == userPassvar {
+// 			userID = clientID
+// 			fmt.Println("D")
+// 		}
+// 		fmt.Println("E")
+// 		return
+// 	})
+// 	srv.HandleTokenRequest(ctx.Writer, ctx.Request)
+// 	return srv
+// 	// srv.ValidationBearerToken(ctx.Request)
+// ginserver.InitServer(manager)
+// ginserver.SetAllowGetAccessRequest(dumpvar)
+// ginserver.SetClientInfoHandler(server.ClientFormHandler)
+// grantType := oauth2.GrantType(oauth2.PasswordCredentials.String())
+// ginserver.SetAllowedGrantType(grantType)
+// SetPasswordAuthorizationHandlers(userNamevar, userPassvar, idvar)
+// ginserver.SetPasswordAuthorizationHandler(func(ctx context.Context, ClientID, username, password string) (userID string, err error) {
+// 	// Implement your authentication logic here and return the userID if valid
+// 	if username == userNamevar && password == userPassvar {
+// 		fmt.Println("XXXX")
+// 		userID = ClientID
+// 	}
+// 	return
+// })
 
-	// manager := manage.NewDefaultManager()
-	// manager.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)
+// Handle the token request
+// ginserver.HandleTokenRequest(ctx)
 
-	// // token store
-	// manager.MustTokenStorage(store.NewMemoryTokenStore())
+// manager := manage.NewDefaultManager()
+// manager.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)
 
-	// // generate jwt access token
-	// // manager.MapAccessGenerate(generates.NewJWTAccessGenerate("", []byte("00000000"), jwt.SigningMethodHS512))
-	// manager.MapAccessGenerate(generates.NewAccessGenerate())
+// // token store
+// manager.MustTokenStorage(store.NewMemoryTokenStore())
 
-	// // client store
-	// clientStore := store.NewClientStore()
-	// clientInfo := &models.Client{
-	// 	ID:     idvar,
-	// 	Secret: secretvar,
-	// 	Domain: domainvar,
-	// }
-	// clientStore.Set(idvar, clientInfo)
+// // generate jwt access token
+// // manager.MapAccessGenerate(generates.NewJWTAccessGenerate("", []byte("00000000"), jwt.SigningMethodHS512))
+// manager.MapAccessGenerate(generates.NewAccessGenerate())
 
-	// manager.MapClientStorage(clientStore)
+// // client store
+// clientStore := store.NewClientStore()
+// clientInfo := &models.Client{
+// 	ID:     idvar,
+// 	Secret: secretvar,
+// 	Domain: domainvar,
+// }
+// clientStore.Set(idvar, clientInfo)
 
-	// // manager.SetPasswordTokenCfg({
-	// // 	AccessTokenExp:    time.Hour,
-	// // 	RefreshTokenExp:   30 * 24 * time.Hour,
-	// // 	IsGenerateRefresh: true,
-	// // })
+// manager.MapClientStorage(clientStore)
 
-	// manager.SetPasswordTokenCfg(&manage.Config{
-	// 	AccessTokenExp:    time.Hour,
-	// 	RefreshTokenExp:   30 * 24 * time.Hour,
-	// 	IsGenerateRefresh: true,
-	// })
+// // manager.SetPasswordTokenCfg({
+// // 	AccessTokenExp:    time.Hour,
+// // 	RefreshTokenExp:   30 * 24 * time.Hour,
+// // 	IsGenerateRefresh: true,
+// // })
 
-	// srv.SetUserAuthorizationHandler(userAuthorizeHandler)
+// manager.SetPasswordTokenCfg(&manage.Config{
+// 	AccessTokenExp:    time.Hour,
+// 	RefreshTokenExp:   30 * 24 * time.Hour,
+// 	IsGenerateRefresh: true,
+// })
 
-	// srv.SetInternalErrorHandler(func(err error) (re *errors.Response) {
-	// 	log.Println("Internal Error:", err.Error())
-	// 	return
-	// })
+// srv.SetUserAuthorizationHandler(userAuthorizeHandler)
 
-	// srv.SetResponseErrorHandler(func(re *errors.Response) {
-	// 	log.Println("Response Error:", re.Error.Error())
-	// })
+// srv.SetInternalErrorHandler(func(err error) (re *errors.Response) {
+// 	log.Println("Internal Error:", err.Error())
+// 	return
+// })
 
-	// // Initialize the oauth2 service
-	// ginserver.InitServer(manager)
-	// ginserver.SetAllowGetAccessRequest(true)
-	// ginserver.SetClientInfoHandler(server.ClientFormHandler)
+// srv.SetResponseErrorHandler(func(re *errors.Response) {
+// 	log.Println("Response Error:", re.Error.Error())
+// })
 
-	// // // SetClientTokenCfg set the client grant token config
-	// // manager.SetClientTokenCfg(&manage.Config{
-	// // 	AccessTokenExp:    time.Duration(2000),
-	// // 	RefreshTokenExp:   time.Duration(2000),
-	// // 	IsGenerateRefresh: true,
-	// // })
+// // Initialize the oauth2 service
+// ginserver.InitServer(manager)
+// ginserver.SetAllowGetAccessRequest(true)
+// ginserver.SetClientInfoHandler(server.ClientFormHandler)
 
-	// // // SetAuthorizeCodeExp set the authorization code expiration time
-	// // manager.SetAuthorizeCodeExp(time.Duration(2000))
+// // // SetClientTokenCfg set the client grant token config
+// // manager.SetClientTokenCfg(&manage.Config{
+// // 	AccessTokenExp:    time.Duration(2000),
+// // 	RefreshTokenExp:   time.Duration(2000),
+// // 	IsGenerateRefresh: true,
+// // })
 
-	// // // SetRefreshTokenCfg set the refreshing token config
-	// // manager.SetRefreshTokenCfg(&manage.RefreshingConfig{
-	// // 	AccessTokenExp:     time.Duration(2000),
-	// // 	RefreshTokenExp:    time.Duration(2000),
-	// // 	IsGenerateRefresh:  true,
-	// // 	IsResetRefreshTime: true,
-	// // })
+// // // SetAuthorizeCodeExp set the authorization code expiration time
+// // manager.SetAuthorizeCodeExp(time.Duration(2000))
 
-	// // // Initialize the oauth2 service
-	// // ginserver.InitServer(manager)
-	// // ginserver.SetAllowGetAccessRequest(true)
-	// // ginserver.SetClientInfoHandler(server.ClientFormHandler)
-}
+// // // SetRefreshTokenCfg set the refreshing token config
+// // manager.SetRefreshTokenCfg(&manage.RefreshingConfig{
+// // 	AccessTokenExp:     time.Duration(2000),
+// // 	RefreshTokenExp:    time.Duration(2000),
+// // 	IsGenerateRefresh:  true,
+// // 	IsResetRefreshTime: true,
+// // })
+
+// // // Initialize the oauth2 service
+// // ginserver.InitServer(manager)
+// // ginserver.SetAllowGetAccessRequest(true)
+// // ginserver.SetClientInfoHandler(server.ClientFormHandler)
+// }
 
 // func userAuthorizeHandler(w http.ResponseWriter, r *http.Request) (userID string, err error) {
 // 	if dumpvar {
@@ -246,3 +254,59 @@ func Middleware(ctx *gin.Context) {
 // 		return
 // 	})
 // }
+
+func Middleware(ctx *gin.Context) {
+	idvar := ctx.Query("client_id")
+	secretvar := ctx.Query("client_secret")
+	userNamevar := ctx.Query("username")
+	userPassvar := ctx.Query("password")
+	domainvar := "http://localhost:9096"
+
+	// Reset the OAuth2 manager
+	manager := resetOAuth2Manager(idvar, secretvar, domainvar)
+
+	// Initialize the OAuth2 service
+	srv = server.NewDefaultServer(manager)
+	ctx.Get(ginserver.DefaultConfig.TokenKey)
+	srv.SetAllowGetAccessRequest(true)
+	srv.SetClientInfoHandler(server.ClientFormHandler)
+	srv.SetAllowedGrantType("password")
+
+	// Set the password authorization handler
+	srv.SetPasswordAuthorizationHandler(func(ctx context.Context, clientID, username, password string) (userID string, err error) {
+		if username == userNamevar && password == userPassvar {
+			userID = clientID
+		}
+		return
+	})
+
+	// Handle the token request
+	err := srv.HandleTokenRequest(ctx.Writer, ctx.Request)
+	if err != nil {
+		// Handle error, e.g., return an error response
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		return
+	}
+
+	// // Get the token from the response
+	// tokenInfo, exists := ctx.Get("access_token")
+	// if !exists {
+	// 	// Handle error, e.g., return an error response
+	// 	ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Token not found"})
+	// 	return
+	// }
+
+	// // Do something with the token, e.g., return it in the response
+	// ctx.JSON(http.StatusOK, gin.H{"token": tokenInfo})
+}
+
+func Validation(ctx *gin.Context) {
+	_, err := srv.ValidationBearerToken(ctx.Request)
+	if err == nil {
+		return
+	} else {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"ERROR": "INVALID_TOKEN",
+		})
+	}
+}

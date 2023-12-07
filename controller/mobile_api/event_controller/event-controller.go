@@ -613,7 +613,11 @@ func (c *EventController) KonfirmasiKehadiran(ctx *gin.Context) {
 			}
 
 			list_nik := []*string{&main_event.CreatedBy, main_event.ApprovalPerson}
-			result, _ := c.PihcMasterKaryDbRepo.FindUserByNIKArray(list_nik)
+			var list_nik_strings []string
+			for _, nik := range list_nik {
+				list_nik_strings = append(list_nik_strings, *nik)
+			}
+			result, _ := c.PihcMasterKaryDbRepo.FindUserByNIKArray(list_nik_strings)
 			ev.EventCreatedByNik = &main_event.CreatedBy
 			ev.EventApprovalPerson = main_event.ApprovalPerson
 
@@ -1010,7 +1014,11 @@ func (c *EventController) ShowEvent(ctx *gin.Context) {
 		}
 
 		list_nik := []*string{&mainEvent.CreatedBy, mainEvent.ApprovalPerson}
-		result, _ := c.PihcMasterKaryDbRepo.FindUserByNIKArray(list_nik)
+		var list_nik_strings []string
+		for _, nik := range list_nik {
+			list_nik_strings = append(list_nik_strings, *nik)
+		}
+		result, _ := c.PihcMasterKaryDbRepo.FindUserByNIKArray(list_nik_strings)
 		ev.EventCreatedByNik = &mainEvent.CreatedBy
 		ev.EventApprovalPerson = mainEvent.ApprovalPerson
 

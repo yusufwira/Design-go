@@ -183,8 +183,16 @@ func (t PihcMasterKaryDbRepo) FindUserByNIK(nik string) (PihcMasterKaryDb, error
 	}
 	return pihc_mk, nil
 }
+func (t PihcMasterKaryDbRepo) FindUserAtasanBySupPosID(sup_pos_id string) (PihcMasterKaryDb, error) {
+	var pihc_mk PihcMasterKaryDb
+	err := t.DB.Where("pos_id=?", sup_pos_id).Take(&pihc_mk).Error
+	if err != nil {
+		return pihc_mk, err
+	}
+	return pihc_mk, nil
+}
 
-func (t PihcMasterKaryDbRepo) FindUserByNIKArray(nik []*string) ([]PihcMasterKaryDb, error) {
+func (t PihcMasterKaryDbRepo) FindUserByNIKArray(nik []string) ([]PihcMasterKaryDb, error) {
 	var pihc_mk []PihcMasterKaryDb
 	err := t.DB.Where("emp_no in(?)", nik).Find(&pihc_mk).Error
 	if err != nil {

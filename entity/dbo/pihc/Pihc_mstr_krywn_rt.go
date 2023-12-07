@@ -31,7 +31,7 @@ type PihcMasterKaryRtDb struct {
 	TglLahir       time.Time `json:"tgl_lahir"`
 	PosID          string    `json:"pos_id"`
 	PosTitle       string    `json:"pos_title"`
-	SubPosID       string    `json:"sup_pos_id"`
+	SupPosID       string    `json:"sup_pos_id"`
 	PosGrade       string    `json:"pos_grade"`
 	PosKategori    string    `json:"pos_kategori"`
 	OrgID          string    `json:"org_id"`
@@ -154,6 +154,12 @@ func (t PihcMasterKaryRtDbRepo) FindUserByNIK(nik string) (PihcMasterKaryRtDb, e
 		return pihc_mkrt, err
 	}
 	return pihc_mkrt, nil
+}
+
+func (t PihcMasterKaryRtDbRepo) IsSuperior(pos_id string) bool {
+	var count int64
+	t.DB.Table("dbo.pihc_master_kary_rt").Where("sup_pos_id=?", pos_id).Count(&count)
+	return count != 0
 }
 
 func (t PihcMasterKaryRtDbRepo) FindUserByNameArr(name string, nik string) ([]PihcMasterKaryRtDb, error) {

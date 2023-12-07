@@ -30,6 +30,7 @@ func NewMstrKgtController(Db *gorm.DB, StorageClient *storage.Client) *MstrKgtCo
 }
 
 func (c *MstrKgtController) ListMasterKegiatan(ctx *gin.Context) {
+	
 	var req Authentication.ValidationLMK
 
 	if err := ctx.ShouldBind(&req); err != nil {

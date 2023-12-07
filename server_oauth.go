@@ -29,6 +29,7 @@ func main() {
 	userProfileController := profile_controller.NewUsersProfileController(db.Db, db.StorageClient)
 	UserController := controller.NewUserController(db.Db, db.StorageClient)
 	cutiKrywnController := cuti_karyawan_controller.NewCutiKrywnController(db.Db)
+	tesssController := cuti_karyawan_controller.NewTesssController(db.Db)
 
 	r := gin.Default()
 
@@ -41,16 +42,20 @@ func main() {
 	// connection.Middleware()
 	r.Use(gin.Recovery())
 
-	auth := r.Group("/oauth2")
+	auth := r.Group("/api")
 	{
 		auth.GET("/token", connection.Middleware)
+		auth.GET("/testToken", connection.Validation)
 	}
+
+	r.POST("/login", UserController.Login)
 
 	api := auth.Group("/api")
 	{
 		fmt.Println("masuk")
 		api.Use(ginserver.HandleTokenVerify())
 		fmt.Println("masuk2")
+		// api.GET("/test",connection.Middleware, connection.Validation)
 		api.GET("/test", func(c *gin.Context) {
 			ti, exists := c.Get(ginserver.DefaultConfig.TokenKey)
 			if exists {
@@ -60,11 +65,11 @@ func main() {
 			c.String(http.StatusOK, "not found")
 		})
 
-		api.GET("/getUserOuath", func(c *gin.Context) {
+		auth.GET("/getUserOuath", connection.Validation, func(c *gin.Context) {
 			c.JSON(http.StatusOK, UserController.Index())
 		})
 
-		r.GET("/getUserID/:id", func(c *gin.Context) {
+		api.GET("/getUserID/:id", func(c *gin.Context) {
 			c.JSON(http.StatusOK, UserController.GetData(c))
 		})
 
@@ -83,7 +88,6 @@ func main() {
 			c.JSON(http.StatusOK, UserController.UpData(c))
 		})
 
-		r.POST("/login", UserController.Login)
 		r.POST("/register", UserController.Register)
 	}
 
@@ -92,120 +96,121 @@ func main() {
 		log.Fatalf("err loading: %v", err)
 	}
 
-	tjsl := r.Group(os.Getenv("TJSL_API_URL"))
+	tjsl := auth.Group(os.Getenv("TJSL_API_URL"))
 	{
 		// Master Kegiatan
-		tjsl.POST("/listKegiatan", mstrKgtController.ListMasterKegiatan)
-		tjsl.POST("/storeMasterKegiatan", mstrKgtController.StoreMasterKegiatan)
-		tjsl.GET("/getMasterKegiatan/:slug", mstrKgtController.GetMasterKegiatan)
-		tjsl.DELETE("/deleteMasterKegiatan/:slug", mstrKgtController.DeleteMasterKegiatan)
+		tjsl.POST("/listKegiatan", connection.Validation, mstrKgtController.ListMasterKegiatan)
+		tjsl.POST("/storeMasterKegiatan", connection.Validation, mstrKgtController.StoreMasterKegiatan)
+		tjsl.GET("/getMasterKegiatan/:slug", connection.Validation, mstrKgtController.GetMasterKegiatan)
+		tjsl.DELETE("/deleteMasterKegiatan/:slug", connection.Validation, mstrKgtController.DeleteMasterKegiatan)
 
 		// Pengajuan Kegiatan
-		tjsl.POST("/storePengajuan", kgtKrywnController.StorePengajuanKegiatan)
-		tjsl.GET("/showPengajuan/:slug", kgtKrywnController.ShowDetailPengajuanKegiatan)
-		tjsl.GET("/myTjsl", kgtKrywnController.ShowPengajuanKegiatan)
-		tjsl.DELETE("/deletePengajuan/:slug", kgtKrywnController.DeletePengajuanKegiatan)
+		tjsl.POST("/storePengajuan", connection.Validation, kgtKrywnController.StorePengajuanKegiatan)
+		tjsl.GET("/showPengajuan/:slug", connection.Validation, kgtKrywnController.ShowDetailPengajuanKegiatan)
+		tjsl.GET("/myTjsl", connection.Validation, kgtKrywnController.ShowPengajuanKegiatan)
+		tjsl.DELETE("/deletePengajuan/:slug", connection.Validation, kgtKrywnController.DeletePengajuanKegiatan)
 
-		tjsl.POST("/approve", kgtKrywnController.StoreApprovePengajuanKegiatan)
-		tjsl.POST("/listApprovalTjsl", kgtKrywnController.ListApprvlKgtKrywn)
-		tjsl.GET("/getChartSummary", kgtKrywnController.GetChartSummary)
-		tjsl.POST("/getLeaderBoard", kgtKrywnController.GetLeaderBoardKgtKrywn)
+		tjsl.POST("/approve", connection.Validation, kgtKrywnController.StoreApprovePengajuanKegiatan)
+		tjsl.POST("/listApprovalTjsl", connection.Validation, kgtKrywnController.ListApprvlKgtKrywn)
+		tjsl.GET("/getChartSummary", connection.Validation, kgtKrywnController.GetChartSummary)
+		tjsl.POST("/getLeaderBoard", connection.Validation, kgtKrywnController.GetLeaderBoardKgtKrywn)
 
 		// Koordinator
-		tjsl.POST("/storeKoordinator", koorkgtController.StoreKoordinator)
-		tjsl.GET("/showKoordinator/:slug", koorkgtController.ShowDetailKoordinator)
-		tjsl.DELETE("/deleteKoordinator/:slug", koorkgtController.DeleteKoordinator)
-		tjsl.GET("/listKoordinator", koorkgtController.ListKoordinator)
+		tjsl.POST("/storeKoordinator", connection.Validation, koorkgtController.StoreKoordinator)
+		tjsl.GET("/showKoordinator/:slug", connection.Validation, koorkgtController.ShowDetailKoordinator)
+		tjsl.DELETE("/deleteKoordinator/:slug", connection.Validation, koorkgtController.DeleteKoordinator)
+		tjsl.GET("/listKoordinator", connection.Validation, koorkgtController.ListKoordinator)
 	}
 
-	event := r.Group(os.Getenv("EVENT_API_URL"))
+	event := auth.Group(os.Getenv("EVENT_API_URL"))
 	{
-		event.POST("/store_new", eventController.StoreEvent)
-		event.POST("/updateStatusEvent", eventController.UpdateStatusEvent)
-		event.GET("/getDataApproval/:nik", eventController.GetDataApproval)
-		event.POST("/konfirmasiKehadiran", eventController.KonfirmasiKehadiran)
-		event.POST("/getDataInFeed/:nik", eventController.GetDataInFeed)
+		event.POST("/store_new", connection.Validation, eventController.StoreEvent)
+		event.POST("/updateStatusEvent", connection.Validation, eventController.UpdateStatusEvent)
+		event.GET("/getDataApproval/:nik", connection.Validation, eventController.GetDataApproval)
+		event.POST("/konfirmasiKehadiran", connection.Validation, eventController.KonfirmasiKehadiran)
+		event.POST("/getDataInFeed/:nik", connection.Validation, eventController.GetDataInFeed)
 
 		// DISPOSE
-		event.POST("/storeDispose", eventController.StoreDispose)
-		event.POST("/getDataDispose", eventController.GetDataDispose)
+		event.POST("/storeDispose", connection.Validation, eventController.StoreDispose)
+		event.POST("/getDataDispose", connection.Validation, eventController.GetDataDispose)
 
-		event.GET("/getDataEvent/:nik", eventController.GetDataEvent)
-		event.POST("/getDataByNik", eventController.GetDataByNik)
-		event.POST("/deleteEvent", eventController.DeleteEvent)
-		event.GET("/showEvent/:id/:nik", eventController.ShowEvent)
-		event.DELETE("/deleteEventBooking/:id_booking", eventController.DeleteEventBooking)
+		event.GET("/getDataEvent/:nik", connection.Validation, eventController.GetDataEvent)
+		event.POST("/getDataByNik", connection.Validation, eventController.GetDataByNik)
+		event.POST("/deleteEvent", connection.Validation, eventController.DeleteEvent)
+		event.GET("/showEvent/:id/:nik", connection.Validation, eventController.ShowEvent)
+		event.DELETE("/deleteEventBooking/:id_booking", connection.Validation, eventController.DeleteEventBooking)
 
 		// GCS
-		event.POST("/storeFileGCS", eventController.StoreFileGCS)
-		event.POST("/renameFileGCS", eventController.RenameFileGCS)
-		event.POST("/deleteFileGCS", eventController.DeleteFileGCS)
+		event.POST("/storeFileGCS", connection.Validation, eventController.StoreFileGCS)
+		event.POST("/renameFileGCS", connection.Validation, eventController.RenameFileGCS)
+		event.POST("/deleteFileGCS", connection.Validation, eventController.DeleteFileGCS)
 
 		// NOTULEN
-		event.POST("/storeNotulen", eventController.StoreNotulen)
-		event.GET("/getDataNotulen/:id", eventController.GetDataNotulen)
-		event.DELETE("/deleteFileNotulen/:id", eventController.DeleteFileNotulen)
+		event.POST("/storeNotulen", connection.Validation, eventController.StoreNotulen)
+		event.GET("/getDataNotulen/:id", connection.Validation, eventController.GetDataNotulen)
+		event.DELETE("/deleteFileNotulen/:id", connection.Validation, eventController.DeleteFileNotulen)
 
 		// ROOM MASTER
-		event.GET("/getCategoryRoom", eventController.GetCategoryRoom)
-		event.POST("/getDataRoom", eventController.GetRoomEvent)
-		event.POST("/getBookingRoom", eventController.GetBookingRoom)
+		event.GET("/getCategoryRoom", connection.Validation, eventController.GetCategoryRoom)
+		event.POST("/getDataRoom", connection.Validation, eventController.GetRoomEvent)
+		event.POST("/getBookingRoom", connection.Validation, eventController.GetBookingRoom)
 
-		event.POST("/storeBookingRoom", eventController.StoreBookingRoomEvent)
+		event.POST("/storeBookingRoom", connection.Validation, eventController.StoreBookingRoomEvent)
 
 		// PRESENCE
-		event.POST("/storeEventPresence", eventController.StoreEventPresence)
-		event.GET("/printDaftarHadir/:id", eventController.PrintDaftarHadir)
+		event.POST("/storeEventPresence", connection.Validation, eventController.StoreEventPresence)
+		event.GET("/printDaftarHadir/:id", connection.Validation, eventController.PrintDaftarHadir)
 
 	}
 
-	personalInformation := r.Group(os.Getenv("PERSONALINFORMATION_API_URL"))
+	personalInformation := auth.Group(os.Getenv("PERSONALINFORMATION_API_URL"))
 	{
-		personalInformation.POST("/storeData", userProfileController.StoreData)
-		personalInformation.POST("/getData", userProfileController.GetData)
-		personalInformation.GET("/getCategory", userProfileController.GetCategory)
+		personalInformation.POST("/storeData", connection.Validation, userProfileController.StoreData)
+		personalInformation.POST("/getData", connection.Validation, userProfileController.GetData)
+		personalInformation.GET("/getCategory", connection.Validation, userProfileController.GetCategory)
 	}
 
-	profile := r.Group(os.Getenv("MOBILE_API_URL"))
+	profile := auth.Group(os.Getenv("MOBILE_API_URL"))
 	{
-		profile.POST("/storeProfile", userProfileController.StoreProfile)
-		profile.POST("/storeAboutUs", userProfileController.StoreAboutUs)
-		profile.GET("/showAboutUs/:nik", userProfileController.GetShowAboutUs)
-		profile.GET("/getSosialMediaInformation/:nik", userProfileController.GetSocialMediaInformation)
+		profile.POST("/storeProfile", connection.Validation, userProfileController.StoreProfile)
+		profile.POST("/storeAboutUs", connection.Validation, userProfileController.StoreAboutUs)
+		profile.GET("/showAboutUs/:nik", connection.Validation, userProfileController.GetShowAboutUs)
+		profile.GET("/getSosialMediaInformation/:nik", connection.Validation, userProfileController.GetSocialMediaInformation)
 
-		profile.POST("/storeInformationContact", userProfileController.StoreInformationContact)
-		profile.POST("/storeSkill", userProfileController.StoreSkill)
-		profile.POST("/updateSkill", userProfileController.UpdateSkill)
-		profile.POST("/deleteSkill", userProfileController.DeleteSkill)
-		profile.POST("/updatePhotoProfile", userProfileController.UpdatePhotoProfile)
-		profile.GET("/getSkill/:nik", userProfileController.GetSkill)
-		profile.GET("/getPengalamanKerja/:nik", userProfileController.GetPengalamanKerja)
-		profile.GET("/getContactInformation/:nik", userProfileController.GetContactInformation)
-		profile.GET("/showProfile/:nik", userProfileController.ShowProfile)
+		profile.POST("/storeInformationContact", connection.Validation, userProfileController.StoreInformationContact)
+		profile.POST("/storeSkill", connection.Validation, userProfileController.StoreSkill)
+		profile.POST("/updateSkill", connection.Validation, userProfileController.UpdateSkill)
+		profile.POST("/deleteSkill", connection.Validation, userProfileController.DeleteSkill)
+		profile.POST("/updatePhotoProfile", connection.Validation, userProfileController.UpdatePhotoProfile)
+		profile.GET("/getSkill/:nik", connection.Validation, userProfileController.GetSkill)
+		profile.GET("/getPengalamanKerja/:nik", connection.Validation, userProfileController.GetPengalamanKerja)
+		profile.GET("/getContactInformation/:nik", connection.Validation, userProfileController.GetContactInformation)
+		profile.GET("/showProfile/:nik", connection.Validation, userProfileController.ShowProfile)
 
-		profile.GET("/dataPegawai", userProfileController.DataPegawai)
+		profile.GET("/dataPegawai", connection.Validation, userProfileController.DataPegawai)
 	}
 
-	cuti := r.Group(os.Getenv("CUTI_URL"))
+	cuti := auth.Group(os.Getenv("CUTI_URL"))
 	{
 		// PENGAJUAN CUTI
-		cuti.POST("/storeCuti", cutiKrywnController.StoreCutiKaryawan)
-		cuti.GET("/getTipeAbsenSaldoPengajuan", cutiKrywnController.GetTipeAbsenSaldoPengajuan)
-		cuti.GET("/myCuti", cutiKrywnController.GetMyPengajuanCuti)
-		cuti.GET("/showPengajuanCuti/:id_pengajuan_absen", cutiKrywnController.ShowDetailPengajuanCuti)
-		cuti.DELETE("/deletePengajuanCuti/:id_pengajuan_absen", cutiKrywnController.DeletePengajuanCuti)
+		cuti.POST("/storeCuti", connection.Validation, cutiKrywnController.StoreCutiKaryawan)
+		cuti.POST("/storeCutixx", connection.Validation, tesssController.StoreCutiKaryawan)
+		cuti.GET("/getTipeAbsenSaldoPengajuan", connection.Validation, cutiKrywnController.GetTipeAbsenSaldoPengajuan)
+		cuti.GET("/myCuti", connection.Validation, cutiKrywnController.GetMyPengajuanCuti)
+		cuti.GET("/showPengajuanCuti/:id_pengajuan_absen", connection.Validation, cutiKrywnController.ShowDetailPengajuanCuti)
+		cuti.DELETE("/deletePengajuanCuti/:id_pengajuan_absen", connection.Validation, cutiKrywnController.DeletePengajuanCuti)
 
 		// Approval
-		cuti.POST("/listApprovalCuti", cutiKrywnController.ListApprvlCuti)
-		cuti.GET("/showApprovalPengajuanCuti/:id_pengajuan_absen", cutiKrywnController.ShowDetailApprovalPengajuanCuti)
-		cuti.POST("/approve", cutiKrywnController.StoreApprovePengajuanAbsen)
+		cuti.POST("/listApprovalCuti", connection.Validation, cutiKrywnController.ListApprvlCuti)
+		cuti.GET("/showApprovalPengajuanCuti/:id_pengajuan_absen", connection.Validation, cutiKrywnController.ShowDetailApprovalPengajuanCuti)
+		cuti.POST("/approve", connection.Validation, cutiKrywnController.StoreApprovePengajuanAbsen)
 
 		// SALDO CUTI
-		cuti.POST("/storeAdminSaldo", cutiKrywnController.StoreAdminSaldoCutiKaryawan)
-		cuti.POST("/listAdminSaldo", cutiKrywnController.ListAdminSaldoCutiKaryawan)
-		cuti.GET("/getAdminSaldoCuti/:id_saldo_cuti", cutiKrywnController.GetAdminSaldoCuti)
-		cuti.GET("/getAdminTipeAbsen", cutiKrywnController.GetAdminTipeAbsen)
-		cuti.DELETE("/deleteAdminSaldoCuti/:id_saldo_cuti", cutiKrywnController.DeleteAdminSaldoCuti)
+		cuti.POST("/storeAdminSaldo", connection.Validation, cutiKrywnController.StoreAdminSaldoCutiKaryawan)
+		cuti.POST("/listAdminSaldo", connection.Validation, cutiKrywnController.ListAdminSaldoCutiKaryawan)
+		cuti.GET("/getAdminSaldoCuti/:id_saldo_cuti", connection.Validation, cutiKrywnController.GetAdminSaldoCuti)
+		cuti.GET("/getAdminTipeAbsen", connection.Validation, cutiKrywnController.GetAdminTipeAbsen)
+		cuti.DELETE("/deleteAdminSaldoCuti/:id_saldo_cuti", connection.Validation, cutiKrywnController.DeleteAdminSaldoCuti)
 	}
 
 	// r.Run("10.0.99.247:9096") // Home
