@@ -201,8 +201,14 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 		sck.Periode = &periode
 		sck.CreatedBy = &req.CreatedBy
 		dataKaryawan, _ := c.PihcMasterKaryDbRepo.FindUserByNIK(sck.Nik)
-		for dataKaryawan.PosTitle != "Wakil Direktur Utama" {
-			dataKaryawan, _ = c.PihcMasterKaryDbRepo.FindUserAtasanBySupPosID(dataKaryawan.SupPosID)
+		if dataKaryawan.PosTitle != "Wakil Direktur Utama" {
+			for dataKaryawan.PosTitle != "Wakil Direktur Utama" {
+				dataKaryawan, _ = c.PihcMasterKaryDbRepo.FindUserAtasanBySupPosID(dataKaryawan.SupPosID)
+			}
+		} else {
+			for dataKaryawan.PosTitle != "Direktur Utama" {
+				dataKaryawan, _ = c.PihcMasterKaryDbRepo.FindUserAtasanBySupPosID(dataKaryawan.SupPosID)
+			}
 		}
 		approvedBy := dataKaryawan.EmpNo
 		sck.ApprovedBy = &approvedBy
@@ -1129,11 +1135,11 @@ func (c *CutiKrywnController) ListApprvlCuti(ctx *gin.Context) {
 	var err error
 
 	if req.Status == "WaitApproved" {
-		dB, errs := c.PengajuanAbsenRepo.FindDataNIKPeriodeApprovalWaiting(req.NIK, req.Tahun, req.Status)
+		dB, errs := c.PengajuanAbsenRepo.FindDataNIKPeriodeApprovalWaiting(req.NIK, req.Tahun, req.Status, req.IsManager)
 		err = errs
 		dataDB = dB
 	} else {
-		dB, errs := c.PengajuanAbsenRepo.FindDataNIKPeriodeApproval(req.NIK, req.Tahun)
+		dB, errs := c.PengajuanAbsenRepo.FindDataNIKPeriodeApproval(req.NIK, req.Tahun, req.IsManager)
 		err = errs
 		dataDB = dB
 	}
@@ -1404,62 +1410,14 @@ func (c *CutiKrywnController) GetTipeAbsenSaldoPengajuan(ctx *gin.Context) {
 		TipeAbsen, _ := c.TipeAbsenRepo.FindTipeAbsenPengajuan(pihc_mstr_krywn.Company)
 
 		for _, dataCuti := range TipeAbsen {
-			saldoCutiPerTipe, err := c.SaldoCutiRepo.GetSaldoCutiPerTipe(pihc_mstr_krywn.EmpNo, dataCuti.IdTipeAbsen, req.Tahun)
-			if err == nil {
-				if dataCuti.NamaTipeAbsen == "Cuti Tahunan" {
-					max_absen := &Authentication.MaxAbsenIndiv{
-						TipeMaxAbsen: dataCuti.TipeMaxAbsen,
-					}
-					saldo := &Authentication.SaldoIndiv{
-						Saldo:           saldoCutiPerTipe.Saldo,
-						ValidFrom:       saldoCutiPerTipe.ValidFrom.Format(time.DateOnly),
-						ValidTo:         saldoCutiPerTipe.ValidTo.Format(time.DateOnly),
-						Periode:         saldoCutiPerTipe.Periode,
-						MaxHutang:       saldoCutiPerTipe.MaxHutang,
-						ValidFromHutang: saldoCutiPerTipe.ValidFromHutang.Format(time.DateOnly),
-					}
-					tipeSaldoCuti := Authentication.GetTipeAbsenSaldoIndiv{
-						IdTipeAbsen:   dataCuti.IdTipeAbsen,
-						NamaTipeAbsen: dataCuti.NamaTipeAbsen,
-					}
-					if dataCuti.MaxAbsen != nil && *dataCuti.MaxAbsen != 0 {
-						max_absen.MaxAbsen = *dataCuti.MaxAbsen
-						tipeSaldoCuti.MaxAbsenIndiv = max_absen
-					}
-					if saldo.Periode != "" {
-						tipeSaldoCuti.SaldoIndiv = saldo
-					}
+			tipeSaldoCuti := Authentication.GetTipeAbsenSaldoIndiv{
+				IdTipeAbsen:   dataCuti.IdTipeAbsen,
+				NamaTipeAbsen: dataCuti.NamaTipeAbsen,
+				TipeMaxAbsen:  *dataCuti.TipeMaxAbsen,
+			}
+			if dataCuti.MaxAbsen == nil {
+				saldoCutiPerTipe, _ := c.SaldoCutiRepo.GetSaldoCutiPerTipe(pihc_mstr_krywn.EmpNo, dataCuti.IdTipeAbsen, req.Tahun)
 
-					data = append(data, tipeSaldoCuti)
-				} else {
-					max_absen := &Authentication.MaxAbsenIndiv{
-						TipeMaxAbsen: dataCuti.TipeMaxAbsen,
-					}
-					saldo := &Authentication.SaldoIndiv{
-						Saldo:           saldoCutiPerTipe.Saldo,
-						ValidFrom:       saldoCutiPerTipe.ValidFrom.Format(time.DateOnly),
-						ValidTo:         saldoCutiPerTipe.ValidTo.Format(time.DateOnly),
-						Periode:         saldoCutiPerTipe.Periode,
-						MaxHutang:       saldoCutiPerTipe.MaxHutang,
-						ValidFromHutang: saldoCutiPerTipe.ValidFromHutang.Format(time.DateOnly),
-					}
-					tipeSaldoCuti := Authentication.GetTipeAbsenSaldoIndiv{
-						IdTipeAbsen:   dataCuti.IdTipeAbsen,
-						NamaTipeAbsen: dataCuti.NamaTipeAbsen,
-					}
-					if saldo.Periode != "" {
-						tipeSaldoCuti.SaldoIndiv = saldo
-					}
-					if dataCuti.MaxAbsen != nil && *dataCuti.MaxAbsen != 0 {
-						max_absen.MaxAbsen = *dataCuti.MaxAbsen
-						tipeSaldoCuti.MaxAbsenIndiv = max_absen
-					}
-					data2 = append(data2, tipeSaldoCuti)
-				}
-			} else {
-				max_absen := &Authentication.MaxAbsenIndiv{
-					TipeMaxAbsen: dataCuti.TipeMaxAbsen,
-				}
 				saldo := &Authentication.SaldoIndiv{
 					Saldo:           saldoCutiPerTipe.Saldo,
 					ValidFrom:       saldoCutiPerTipe.ValidFrom.Format(time.DateOnly),
@@ -1468,20 +1426,87 @@ func (c *CutiKrywnController) GetTipeAbsenSaldoPengajuan(ctx *gin.Context) {
 					MaxHutang:       saldoCutiPerTipe.MaxHutang,
 					ValidFromHutang: saldoCutiPerTipe.ValidFromHutang.Format(time.DateOnly),
 				}
-				tipeSaldoCuti := Authentication.GetTipeAbsenSaldoIndiv{
-					IdTipeAbsen:   dataCuti.IdTipeAbsen,
-					NamaTipeAbsen: dataCuti.NamaTipeAbsen,
+				tipeSaldoCuti.SaldoIndiv = saldo
+				if dataCuti.NamaTipeAbsen == "Cuti Tahunan" {
+					data = append(data, tipeSaldoCuti)
+				} else {
+					data2 = append(data2, tipeSaldoCuti)
 				}
-				if saldo.Periode != "" {
-					tipeSaldoCuti.SaldoIndiv = saldo
-				}
-				if dataCuti.MaxAbsen != nil && *dataCuti.MaxAbsen != 0 {
-					max_absen.MaxAbsen = *dataCuti.MaxAbsen
-					tipeSaldoCuti.MaxAbsenIndiv = max_absen
-				}
-
+			} else {
+				tipeSaldoCuti.MaxAbsen = dataCuti.MaxAbsen
 				data2 = append(data2, tipeSaldoCuti)
 			}
+			// if err == nil {
+			// 	if dataCuti.NamaTipeAbsen == "Cuti Tahunan" {
+			// 		saldo := &Authentication.SaldoIndiv{
+			// 			Saldo:           saldoCutiPerTipe.Saldo,
+			// 			ValidFrom:       saldoCutiPerTipe.ValidFrom.Format(time.DateOnly),
+			// 			ValidTo:         saldoCutiPerTipe.ValidTo.Format(time.DateOnly),
+			// 			Periode:         saldoCutiPerTipe.Periode,
+			// 			MaxHutang:       saldoCutiPerTipe.MaxHutang,
+			// 			ValidFromHutang: saldoCutiPerTipe.ValidFromHutang.Format(time.DateOnly),
+			// 		}
+
+			// 		// if dataCuti.MaxAbsen != nil && *dataCuti.MaxAbsen != 0 {
+			// 		// 	max_absen.MaxAbsen = *dataCuti.MaxAbsen
+			// 		// 	tipeSaldoCuti.MaxAbsenIndiv = max_absen
+			// 		// }
+			// 		if saldo.Periode != "" {
+			// 			tipeSaldoCuti.SaldoIndiv = saldo
+			// 		}
+
+			// 		data = append(data, tipeSaldoCuti)
+			// 	} else {
+			// 		max_absen := &Authentication.MaxAbsenIndiv{
+			// 			TipeMaxAbsen: dataCuti.TipeMaxAbsen,
+			// 		}
+			// 		saldo := &Authentication.SaldoIndiv{
+			// 			Saldo:           saldoCutiPerTipe.Saldo,
+			// 			ValidFrom:       saldoCutiPerTipe.ValidFrom.Format(time.DateOnly),
+			// 			ValidTo:         saldoCutiPerTipe.ValidTo.Format(time.DateOnly),
+			// 			Periode:         saldoCutiPerTipe.Periode,
+			// 			MaxHutang:       saldoCutiPerTipe.MaxHutang,
+			// 			ValidFromHutang: saldoCutiPerTipe.ValidFromHutang.Format(time.DateOnly),
+			// 		}
+			// 		tipeSaldoCuti := Authentication.GetTipeAbsenSaldoIndiv{
+			// 			IdTipeAbsen:   dataCuti.IdTipeAbsen,
+			// 			NamaTipeAbsen: dataCuti.NamaTipeAbsen,
+			// 		}
+			// 		if saldo.Periode != "" {
+			// 			tipeSaldoCuti.SaldoIndiv = saldo
+			// 		}
+			// 		if dataCuti.MaxAbsen != nil && *dataCuti.MaxAbsen != 0 {
+			// 			max_absen.MaxAbsen = *dataCuti.MaxAbsen
+			// 			tipeSaldoCuti.MaxAbsenIndiv = max_absen
+			// 		}
+			// 		data2 = append(data2, tipeSaldoCuti)
+			// 	}
+			// } else {
+			// 	max_absen := &Authentication.MaxAbsenIndiv{
+			// 		TipeMaxAbsen: dataCuti.TipeMaxAbsen,
+			// 	}
+			// 	saldo := &Authentication.SaldoIndiv{
+			// 		Saldo:           saldoCutiPerTipe.Saldo,
+			// 		ValidFrom:       saldoCutiPerTipe.ValidFrom.Format(time.DateOnly),
+			// 		ValidTo:         saldoCutiPerTipe.ValidTo.Format(time.DateOnly),
+			// 		Periode:         saldoCutiPerTipe.Periode,
+			// 		MaxHutang:       saldoCutiPerTipe.MaxHutang,
+			// 		ValidFromHutang: saldoCutiPerTipe.ValidFromHutang.Format(time.DateOnly),
+			// 	}
+			// 	tipeSaldoCuti := Authentication.GetTipeAbsenSaldoIndiv{
+			// 		IdTipeAbsen:   dataCuti.IdTipeAbsen,
+			// 		NamaTipeAbsen: dataCuti.NamaTipeAbsen,
+			// 	}
+			// 	if saldo.Periode != "" {
+			// 		tipeSaldoCuti.SaldoIndiv = saldo
+			// 	}
+			// 	if dataCuti.MaxAbsen != nil && *dataCuti.MaxAbsen != 0 {
+			// 		max_absen.MaxAbsen = *dataCuti.MaxAbsen
+			// 		tipeSaldoCuti.MaxAbsenIndiv = max_absen
+			// 	}
+
+			// 	data2 = append(data2, tipeSaldoCuti)
+			// }
 		}
 
 		data = append(data, data2...)

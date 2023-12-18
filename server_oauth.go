@@ -1,14 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	ginserver "github.com/go-oauth2/gin-server"
 	"github.com/joho/godotenv"
 
 	"github.com/yusufwira/lern-golang-gin/connection"
@@ -35,60 +33,40 @@ func main() {
 
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{"http://127.0.0.1:8000"},
-		AllowMethods: []string{"GET", "POST", "PUT", "DELETE"},
-		AllowHeaders: []string{"Origin", "Content-Type", "x-csrf-token"},
+		AllowMethods: []string{"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"},
+		AllowHeaders: []string{"Origin", "Content-Type", "x-csrf-token", "Authorization"},
 	}))
 
-	// connection.Middleware()
 	r.Use(gin.Recovery())
+	r.POST("/login", UserController.Login)
+	r.POST("/register", UserController.Register)
+	r.GET("/tess", UserController.TestRole)
 
 	auth := r.Group("/api")
 	{
 		auth.GET("/token", connection.Middleware)
 		auth.GET("/testToken", connection.Validation)
-	}
-
-	r.POST("/login", UserController.Login)
-
-	api := auth.Group("/api")
-	{
-		fmt.Println("masuk")
-		api.Use(ginserver.HandleTokenVerify())
-		fmt.Println("masuk2")
-		// api.GET("/test",connection.Middleware, connection.Validation)
-		api.GET("/test", func(c *gin.Context) {
-			ti, exists := c.Get(ginserver.DefaultConfig.TokenKey)
-			if exists {
-				c.JSON(http.StatusOK, ti)
-				return
-			}
-			c.String(http.StatusOK, "not found")
-		})
 
 		auth.GET("/getUserOuath", connection.Validation, func(c *gin.Context) {
 			c.JSON(http.StatusOK, UserController.Index())
 		})
 
-		api.GET("/getUserID/:id", func(c *gin.Context) {
-			c.JSON(http.StatusOK, UserController.GetData(c))
-		})
+		auth.POST("/getKaryawanNameAll", connection.Validation, UserController.GetDataKaryawanNameAll)
+		auth.GET("/getKaryawanAll", connection.Validation, UserController.GetDataKaryawanAll)
+		auth.POST("/getKaryawanNameIndiv", connection.Validation, UserController.GetDataKaryawanNameIndiv)
 
-		r.POST("/getKaryawanNameAll", UserController.GetDataKaryawanNameAll)
-		r.GET("/getKaryawanAll", UserController.GetDataKaryawanAll)
-		r.POST("/getKaryawanNameIndiv", UserController.GetDataKaryawanNameIndiv)
-
-		r.POST("/postUser", func(c *gin.Context) {
+		auth.POST("/postUser", connection.Validation, func(c *gin.Context) {
 			c.JSON(http.StatusOK, UserController.Store(c))
 		})
-
-		r.DELETE("/delUserID/:id", func(c *gin.Context) {
+		auth.DELETE("/delUserID/:id", connection.Validation, func(c *gin.Context) {
 			c.JSON(http.StatusOK, UserController.DelData(c))
 		})
-		r.PUT("/upUserID/:id", func(c *gin.Context) {
+		auth.GET("/getUserID/:id", connection.Validation, func(c *gin.Context) {
+			c.JSON(http.StatusOK, UserController.GetData(c))
+		})
+		auth.PUT("/upUserID/:id", connection.Validation, func(c *gin.Context) {
 			c.JSON(http.StatusOK, UserController.UpData(c))
 		})
-
-		r.POST("/register", UserController.Register)
 	}
 
 	err := godotenv.Load()

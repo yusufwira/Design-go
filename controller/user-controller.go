@@ -213,112 +213,13 @@ func (c *UsersController) Login(ctx *gin.Context) {
 		clients, _ := c.OauthClientRepo.FindOauthClient(user.Id)
 		client_id := strconv.FormatUint(uint64(clients.Id), 10)
 
-		// // CREATE MANAGER
-		// manager := manage.NewDefaultManager()
-		// // fmt.Println("X1")
-		// manager.SetPasswordTokenCfg(manage.DefaultPasswordTokenCfg)
-		// // fmt.Println("X2")
-
-		// // // token store
-		// manager.MustTokenStorage(store.NewMemoryTokenStore())
-		// // fmt.Println("X3")
-
-		// // // generate jwt access token
-		// manager.MapAccessGenerate(generates.NewAccessGenerate())
-		// // fmt.Println("X4")
-		// manager.MapClientStorage(store.NewClientStore())
-
-		// // client store
-		// clientStore := store.NewClientStore()
-		// // fmt.Println("X5")
-
-		// clientInfo.ID = client_id
-		// clientInfo.Secret = clients.Secret
-		// clientInfo.Domain = "http://localhost:9096"
-		// a := models.NewToken().ClientID
-		// b := models.NewToken().UserID
-		// fmt.Println(a, b)
-		// clientInfo := &models.Client{
-		// 	ID:     client_id,
-		// 	Secret: clients.Secret,
-		// 	Domain: "http://localhost:9096",
-		// }
-		// fmt.Println("X6")
-		// clientStore.Set(client_id, clientInfo)
-		// fmt.Println("X7")
-		// manager.MapClientStorage(clientStore)
-		// fmt.Println("X8")
-
-		// // Define a custom grant type handler
-		// manager.SetAuthorizeCodeTokenCfg(&manage.Config{AccessTokenExp: 0})
-		// fmt.Println("X9")
-
-		// // SetClientTokenCfg set the client grant token config
-		// manager.SetClientTokenCfg(&manage.Config{
-		// 	AccessTokenExp:    time.Hour * 24 * 365 * 10, // 10 years
-		// 	RefreshTokenExp:   time.Hour * 24 * 365 * 10, // 10 years
-		// 	IsGenerateRefresh: true,
-		// })
-		// fmt.Println("X10")
-
-		// // Set the access token and refresh token configuration
-		// manager.SetPasswordTokenCfg(&manage.Config{
-		// 	AccessTokenExp:    time.Hour * 24 * 365 * 10, // 10 years
-		// 	RefreshTokenExp:   time.Hour * 24 * 365 * 10, // 10 years
-		// 	IsGenerateRefresh: true,
-		// })
-
-		// // Initialize the oauth2 service
-		// ginserver.InitServerWithManager(newGinServer, manager)
-		// fmt.Println("A")
-		// srv := server.NewDefaultServer(manager)
-		// ginserver.InitServer(manager)
-		// srv.SetAllowGetAccessRequest(true)
-		// srv.SetClientInfoHandler(server.ClientFormHandler)
-		// srv.SetAllowedGrantType("password")
-		// fmt.Println("B")
-		// srv.SetPasswordAuthorizationHandler(func(ctx context.Context, clientID, username, password string) (userID string, err error) {
-		// 	// Implement your authentication logic here and return the userID if valid
-		// 	fmt.Println("C")
-		// 	if username == user.Username && password == user.Password {
-		// 		userID = client_id
-		// 		fmt.Println("D")
-		// 	}
-		// 	fmt.Println("E")
-		// 	return
-		// })
-		// userID, _ := srv.PasswordAuthorizationHandler(ctx, client_id, user.Username, user.Password)
-		// fmt.Println(userID)
-		// fmt.Println(clientInfo.Secret)
-		// fmt.Println(clientInfo.ID)
-		// err := srv.HandleTokenRequest(ctx.Writer, ctx.Request)
-		// if err != nil {
-		// 	if err, ok := err.(*erroroauth.Response.Error()); ok {
-		// 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
-		// 	} else {
-		// 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-		// 	}
-		// }
-
-		// TIDAK MASUK ke function
-		// ginserver.SetPasswordAuthorizationHandler(func(ctx context.Context, clientID, username, password string) (userID string, err error) {
-		// 	// Implement your authentication logic here and return the userID if valid
-		// 	fmt.Println("C")
-		// 	if username == user.Username && password == user.Password {
-		// 		userID = client_id
-		// 		fmt.Println("D")
-		// 	}
-		// 	fmt.Println("E")
-		// 	return
-		// })
-		fmt.Println("D")
-
 		values := url.Values{}
 		values.Set("grant_type", "password")
 		values.Set("client_id", client_id)
 		values.Set("client_secret", clients.Secret)
 		values.Set("username", user.Username)
 		values.Set("password", user.Password)
+		values.Set("key", input.Password)
 
 		resp, err1 := http.Get("http://localhost:9096/api/token?" + values.Encode())
 		if err1 != nil {
@@ -350,9 +251,19 @@ func (c *UsersController) Login(ctx *gin.Context) {
 		if roles == nil {
 			roles = append(roles, defaultRole)
 		}
+
+		var foto *string
+		url := "https://storage.googleapis.com/lumen-oauth-storage/DataKaryawan/Foto/" + karyawan.Company + "/" + karyawan.EmpNo + ".jpg"
+		foto = &url
+		respons, err := http.Get(*foto)
+		if err != nil || respons.StatusCode != http.StatusOK {
+			foto = nil
+		}
+
 		ctx.JSON(http.StatusOK, gin.H{
 			"status":         http.StatusOK,
 			"success":        "Login Success",
+			"user_key":       clients.Secret,
 			"user_id":        user.Id,
 			"user_name":      user.Name,
 			"comp_code":      karyawan.Company,
@@ -366,6 +277,7 @@ func (c *UsersController) Login(ctx *gin.Context) {
 			"roles":          roles,
 			"is_superior":    is_superior,
 			"token":          data,
+			"photo_karyawan": foto,
 		})
 	} else {
 		if len(input.Password) < 8 {
@@ -384,6 +296,21 @@ func (c *UsersController) Login(ctx *gin.Context) {
 				"message": "Data karyawan belum terdapat pada database PISMART"},
 			)
 		}
+	}
+}
+
+func (c *UsersController) TestRole(ctx *gin.Context) {
+	data, err := c.ModelHasRoleRepo.FindRoleByUser("7222622")
+
+	if err == nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"data": data,
+		})
+	} else {
+		ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+			"status": http.StatusNotFound,
+			"data":   "Data Tidak Ditemukan!!",
+		})
 	}
 }
 

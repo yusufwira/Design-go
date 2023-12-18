@@ -24,9 +24,9 @@ type SaldoCutiTransaksiPengajuan struct {
 }
 
 type FileAbsenStoreCutiKaryawan struct {
-	Filename  *string `json:"filename"`
-	URL       *string `json:"url"`
-	Extension *string `json:"extension"`
+	Filename  *string `form:"filename" json:"filename"`
+	URL       *string `form:"url" json:"url"`
+	Extension *string `form:"extension" json:"extension"`
 }
 
 type ValidasiStoreSaldoCuti struct {
@@ -51,7 +51,8 @@ type ValidationNIKTahun struct {
 }
 type ValidationNIKTahunStatus struct {
 	ValidationLMK
-	Status string `form:"status" json:"status"`
+	Status    string `form:"status" json:"status"`
+	IsManager bool   `form:"is_manager" json:"is_manager"`
 }
 
 type ValidationApprovalAtasanPengajuanAbsen struct {
@@ -111,15 +112,11 @@ type HistorySaldoCutiKaryawan struct {
 }
 
 type GetTipeAbsenSaldoIndiv struct {
-	IdTipeAbsen    string `json:"id_tipe_absen"`
-	NamaTipeAbsen  string `json:"nama_tipe_absen"`
-	*MaxAbsenIndiv `json:"my_max_absen"`
-	*SaldoIndiv    `json:"my_saldo"`
-}
-
-type MaxAbsenIndiv struct {
-	MaxAbsen     int     `json:"max_absen"`
-	TipeMaxAbsen *string `json:"tipe_max_absen"`
+	IdTipeAbsen   string `json:"id_tipe_absen"`
+	NamaTipeAbsen string `json:"nama_tipe_absen"`
+	MaxAbsen      *int   `json:"max_absen"`
+	TipeMaxAbsen  string `json:"tipe_max_absen"`
+	*SaldoIndiv   `json:"my_saldo"`
 }
 
 type SaldoIndiv struct {

@@ -267,8 +267,16 @@ func (t SaldoCutiRepo) GetSaldoCutiPerTipe(nik string, tipe string, tahun string
 	if err != nil {
 		return sc, err
 	}
-
 	return sc, nil
+}
+
+func (t HistorySaldoCutiRepo) GetSaldoCutiPerTipe(nik string, tipe string, tahun string) (HistorySaldoCuti, error) {
+	var hsc HistorySaldoCuti
+	err := t.DB.Where("tipe_absen_id=? AND nik=? AND periode=?", tipe, nik, tahun).Take(&hsc).Error
+	if err != nil {
+		return hsc, err
+	}
+	return hsc, nil
 }
 
 func (t SaldoCutiRepo) FindExistSaldo2Periode(tipe_absen_id string, nik string, dateStart string, dateEnd string) (bool, []SaldoCuti, error) {
@@ -472,17 +480,27 @@ func (t PengajuanAbsenRepo) FindDataIdPengajuan(id int) (PengajuanAbsen, error) 
 	return pengajuan_absen, nil
 }
 
-func (t PengajuanAbsenRepo) FindDataNIKPeriodeApproval(nik string, tahun string) ([]PengajuanAbsen, error) {
+func (t PengajuanAbsenRepo) FindDataNIKPeriodeApproval(nik string, tahun string, manager bool) ([]PengajuanAbsen, error) {
 	var pengajuan_absen []PengajuanAbsen
-	err := t.DB.Where("approved_by=? AND periode=?", nik, tahun).Find(&pengajuan_absen).Error
+	var err error
+	if manager {
+		err = t.DB.Where("approved_by=? AND periode=?", nik, tahun).Find(&pengajuan_absen).Error
+	} else {
+		err = t.DB.Where("periode=?", tahun).Find(&pengajuan_absen).Error
+	}
 	if err != nil {
 		return pengajuan_absen, err
 	}
 	return pengajuan_absen, nil
 }
-func (t PengajuanAbsenRepo) FindDataNIKPeriodeApprovalWaiting(nik string, tahun string, status string) ([]PengajuanAbsen, error) {
+func (t PengajuanAbsenRepo) FindDataNIKPeriodeApprovalWaiting(nik string, tahun string, status string, manager bool) ([]PengajuanAbsen, error) {
 	var pengajuan_absen []PengajuanAbsen
-	err := t.DB.Where("approved_by=? AND periode=? AND status=?", nik, tahun, status).Find(&pengajuan_absen).Error
+	var err error
+	if manager {
+		err = t.DB.Where("approved_by=? AND periode=? AND status=?", nik, tahun, status).Find(&pengajuan_absen).Error
+	} else {
+		err = t.DB.Where("periode=? AND status=?", tahun, status).Find(&pengajuan_absen).Error
+	}
 	if err != nil {
 		return pengajuan_absen, err
 	}
