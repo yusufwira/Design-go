@@ -190,10 +190,6 @@ func (c *UsersController) Store(ctx *gin.Context) users.User {
 func (c *UsersController) Login(ctx *gin.Context) {
 	var input Authentication.ValidationLogin
 
-	// if err := ctx.ShouldBindJSON(&input); err != nil {
-	// 	ctx.JSON(http.StatusNotFound, gin.H{"error": "Username / Password Tidak Boleh Kosong"})
-	// 	return
-	// }
 	if err := ctx.ShouldBind(&input); err != nil {
 		var ve validator.ValidationErrors
 		if errors.As(err, &ve) {
@@ -257,7 +253,8 @@ func (c *UsersController) Login(ctx *gin.Context) {
 		foto = &url
 		respons, err := http.Get(*foto)
 		if err != nil || respons.StatusCode != http.StatusOK {
-			foto = nil
+			default_foto := "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
+			foto = &default_foto
 		}
 
 		ctx.JSON(http.StatusOK, gin.H{
@@ -271,6 +268,7 @@ func (c *UsersController) Login(ctx *gin.Context) {
 			"hp":             karyawan.HP,
 			"user_org_name":  karyawan.OrgTitle,
 			"user_dept_name": karyawan.DeptTitle,
+			"user_komp_name": karyawan.KompTitle,
 			"model_type":     user.UserType,
 			"nik":            user.Nik,
 			"position":       karyawan.PosID,
