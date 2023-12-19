@@ -200,6 +200,6 @@ func main() {
 
 	// r.Run("10.0.99.247:9096") // Hom
 	// r.Run("10.9.12.150:9096") // Kresna
-	r.Run(":8001") // local
+	r.Run(os.Getenv("PORT_RUN")) // local
 	// r.Run("10.21.121.194:9096") // Kemanggisan
 }
