@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  web:
+    build: .
+    container_name: pismart_golang
+    ports:
+      - "9096:9096"
+    depends_on:
+      - redis
+    environment:
+      REDIS_URL: "redis:6379"
+
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+
