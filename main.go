@@ -12,6 +12,7 @@ import (
 	"github.com/yusufwira/lern-golang-gin/connection"
 	"github.com/yusufwira/lern-golang-gin/controller"
 	"github.com/yusufwira/lern-golang-gin/controller/cuti_karyawan_controller"
+	"github.com/yusufwira/lern-golang-gin/controller/jobtender"
 	"github.com/yusufwira/lern-golang-gin/controller/mobile_api/event_controller"
 	"github.com/yusufwira/lern-golang-gin/controller/mobile_api/profile_controller"
 	"github.com/yusufwira/lern-golang-gin/controller/tjsl_controller"
@@ -27,6 +28,7 @@ func main() {
 	userProfileController := profile_controller.NewUsersProfileController(db.Db, db.StorageClient)
 	UserController := controller.NewUserController(db.Db, db.StorageClient)
 	cutiKrywnController := cuti_karyawan_controller.NewCutiKrywnController(db.Db)
+	jobTenderController := jobtender.GetJobVacancyController(db.Db)
 
 	r := gin.Default()
 
