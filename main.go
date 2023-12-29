@@ -12,7 +12,6 @@ import (
 	"github.com/yusufwira/lern-golang-gin/connection"
 	"github.com/yusufwira/lern-golang-gin/controller"
 	"github.com/yusufwira/lern-golang-gin/controller/cuti_karyawan_controller"
-	"github.com/yusufwira/lern-golang-gin/controller/jobtender"
 	"github.com/yusufwira/lern-golang-gin/controller/mobile_api/event_controller"
 	"github.com/yusufwira/lern-golang-gin/controller/mobile_api/profile_controller"
 	"github.com/yusufwira/lern-golang-gin/controller/tjsl_controller"
@@ -28,7 +27,6 @@ func main() {
 	userProfileController := profile_controller.NewUsersProfileController(db.Db, db.StorageClient)
 	UserController := controller.NewUserController(db.Db, db.StorageClient)
 	cutiKrywnController := cuti_karyawan_controller.NewCutiKrywnController(db.Db)
-	tesssController := cuti_karyawan_controller.NewTesssController(db.Db)
 
 	r := gin.Default()
 
@@ -195,8 +193,5 @@ func main() {
 		cuti.DELETE("/deleteAdminSaldoCuti/:id_saldo_cuti", connection.Validation, cutiKrywnController.DeleteAdminSaldoCuti)
 	}
 
-	// r.Run("10.0.99.247:9096") // Home
-	// r.Run("10.9.12.150:9096") // Kresna
 	r.Run(":9096") // local
-	// r.Run("10.21.121.194:9096") // Kemanggisan
 }
