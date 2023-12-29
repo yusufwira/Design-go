@@ -28,7 +28,8 @@ type CutiKrywnController struct {
 }
 
 func NewCutiKrywnController(Db *gorm.DB) *CutiKrywnController {
-	return &CutiKrywnController{PengajuanAbsenRepo: cuti.NewPengajuanAbsenRepo(Db),
+	return &CutiKrywnController{
+		PengajuanAbsenRepo:        cuti.NewPengajuanAbsenRepo(Db),
 		HistoryPengajuanAbsenRepo: cuti.NewHistoryPengajuanAbsenRepo(Db),
 		SaldoCutiRepo:             cuti.NewSaldoCutiRepo(Db),
 		HistorySaldoCutiRepo:      cuti.NewHistorySaldoCutiRepo(Db),
