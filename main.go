@@ -27,7 +27,7 @@ func main() {
 	userProfileController := profile_controller.NewUsersProfileController(db.Db, db.StorageClient)
 	UserController := controller.NewUserController(db.Db, db.StorageClient)
 	cutiKrywnController := cuti_karyawan_controller.NewCutiKrywnController(db.Db)
-	tesssController := cuti_karyawan_controller.NewTesssController(db.Db)
+	// tesssController := cuti_karyawan_controller.NewTesssController(db.Db)
 
 	r := gin.Default()
 
@@ -40,7 +40,6 @@ func main() {
 	r.Use(gin.Recovery())
 	r.POST("/login", UserController.Login)
 	r.POST("/register", UserController.Register)
-	r.GET("/tess", UserController.TestRole)
 
 	auth := r.Group("/api")
 	{
@@ -172,7 +171,6 @@ func main() {
 	{
 		// PENGAJUAN CUTI
 		cuti.POST("/storeCuti", connection.Validation, cutiKrywnController.StoreCutiKaryawan)
-		cuti.POST("/storeCutixx", connection.Validation, tesssController.StoreCutiKaryawan)
 		cuti.GET("/getTipeAbsenSaldoPengajuan", connection.Validation, cutiKrywnController.GetTipeAbsenSaldoPengajuan)
 		cuti.GET("/myCuti", connection.Validation, cutiKrywnController.GetMyPengajuanCuti)
 		cuti.GET("/showPengajuanCuti/:id_pengajuan_absen", connection.Validation, cutiKrywnController.ShowDetailPengajuanCuti)
@@ -190,9 +188,5 @@ func main() {
 		cuti.GET("/getAdminTipeAbsen", connection.Validation, cutiKrywnController.GetAdminTipeAbsen)
 		cuti.DELETE("/deleteAdminSaldoCuti/:id_saldo_cuti", connection.Validation, cutiKrywnController.DeleteAdminSaldoCuti)
 	}
-
-	// r.Run("10.0.99.247:9096") // Home
-	// r.Run("10.9.12.150:9096") // Kresna
 	r.Run(":9096") // local
-	// r.Run("10.21.121.194:9096") // Kemanggisan
 }

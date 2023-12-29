@@ -127,17 +127,9 @@ func (c *UsersController) GetDataKaryawanNameIndiv(ctx *gin.Context) {
 		return
 	}
 
-	// name := ctx.PostForm("name")
-	// nik := ctx.PostForm("nik")
 	data, err := c.PihcMasterKaryRtDbRepo.FindUserByNameIndiv(req.Name, req.Nik)
 
 	if err == nil {
-		// photos, err1 := c.KegiatanKaryawanRepo.FindPhotosKaryawan(data.EmpNo, data.Company)
-		// if err1 != nil {
-		// 	photos = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
-		// } else {
-		// 	photos = "https://storage.googleapis.com/" + photos
-		// }
 		foto := "https://storage.googleapis.com/lumen-oauth-storage/DataKaryawan/Foto/" + data.Company + "/" + data.EmpNo + ".jpg"
 		respons, err := http.Get(foto)
 		if err != nil || respons.StatusCode != http.StatusOK {
@@ -176,16 +168,10 @@ func (c *UsersController) Store(ctx *gin.Context) users.User {
 	var user users.User
 	user.Username = ctx.PostForm("Username")
 	user.Password = ctx.PostForm("Password")
-	// user.Name = ctx.PostForm("Name")
-	// user.Email = ctx.PostForm("Email")
 	ctx.BindJSON(&user)
 	c.UserRepo.Create(user)
 	return user
 }
-
-// var (
-// 	clientInfo = &models.Client{}
-// )
 
 func (c *UsersController) Login(ctx *gin.Context) {
 	var input Authentication.ValidationLogin
@@ -226,13 +212,13 @@ func (c *UsersController) Login(ctx *gin.Context) {
 			fmt.Println("ERRORRR2")
 		}
 
-		fmt.Println("Response Body:", string(body))
-		fmt.Println("Content-Type:", resp.Header.Get("Content-Type"))
+		// fmt.Println("Response Body:", string(body))
+		// fmt.Println("Content-Type:", resp.Header.Get("Content-Type"))
 
 		trimmedBody := bytes.TrimSpace(body)
 		var data Authentication.Token
 		if err := json.Unmarshal(trimmedBody, &data); err != nil {
-			fmt.Println("Error unmarshaling JSON:", err)
+			// fmt.Println("Error unmarshaling JSON:", err)
 			return
 		}
 
@@ -294,21 +280,6 @@ func (c *UsersController) Login(ctx *gin.Context) {
 				"message": "Data karyawan belum terdapat pada database PISMART"},
 			)
 		}
-	}
-}
-
-func (c *UsersController) TestRole(ctx *gin.Context) {
-	data, err := c.ModelHasRoleRepo.FindRoleByUser("7222622")
-
-	if err == nil {
-		ctx.JSON(http.StatusOK, gin.H{
-			"data": data,
-		})
-	} else {
-		ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{
-			"status": http.StatusNotFound,
-			"data":   "Data Tidak Ditemukan!!",
-		})
 	}
 }
 

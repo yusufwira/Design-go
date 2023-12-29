@@ -67,15 +67,16 @@ func (t RolesRepo) FindRoleByUser(nik string) ([]MyRole, error) {
 	}
 	return role, nil
 }
-func (t ModelHasRoleRepo) FindRoleByUser(nik string) ([]ModelHasRole, error) {
-	var test []ModelHasRole
 
-	err := t.DB.
-		Preload("ModelHasRole").
-		Find(&test).Error
+// func (t ModelHasRoleRepo) FindRoleByUser(nik string) ([]ModelHasRole, error) {
+// 	var test []ModelHasRole
 
-	if err != nil {
-		return test, err
-	}
-	return test, nil
-}
+// 	err := t.DB.
+// 		Preload("ModelHasRole").
+// 		Find(&test).Error
+
+// 	if err != nil {
+// 		return test, err
+// 	}
+// 	return test, nil
+// }

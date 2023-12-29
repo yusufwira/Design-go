@@ -1,7 +1,7 @@
 package cuti
 
 import (
-	"strconv"
+	"fmt"
 	"time"
 
 	"gorm.io/gorm"
@@ -210,15 +210,6 @@ func (t SaldoCutiRepo) Update(sc SaldoCuti) (SaldoCuti, error) {
 	}
 	return sc, nil
 }
-func (t SaldoCutiRepo) UpdateArr(sc []SaldoCuti) ([]SaldoCuti, error) {
-	for _, data := range sc {
-		err := t.DB.Where("id_saldo_cuti=?", data.IdSaldoCuti).Save(&data).Error
-		if err != nil {
-			return sc, err
-		}
-	}
-	return sc, nil
-}
 
 func (t SaldoCutiRepo) DelAdminSaldoCuti(idSaldo int) (SaldoCuti, error) {
 	var sc SaldoCuti
@@ -230,7 +221,7 @@ func (t SaldoCutiRepo) DelAdminSaldoCuti(idSaldo int) (SaldoCuti, error) {
 	return sc, err
 }
 
-func (t SaldoCutiRepo) GetSaldoCutiByID(idSaldo int) (SaldoCuti, error) {
+func (t SaldoCutiRepo) GetSaldoCutiByID(idSaldo interface{}) (SaldoCuti, error) {
 	var sc SaldoCuti
 	err := t.DB.Where("id_saldo_cuti=?", idSaldo).Take(&sc).Error
 	if err != nil {
@@ -248,76 +239,28 @@ func (t SaldoCutiRepo) FindSaldoCutiKaryawanAdmin(nik string, tahun string) ([]S
 	return sc, nil
 }
 
-// func (t SaldoCutiRepo) GetSaldoCutiPerTipe(id string, nik string, tahun string) ([]SaldoCuti, error) {
-// 	var sc []SaldoCuti
-// 	beforeTahunInt, _ := strconv.Atoi(tahun)
-// 	beforeTahunInt--
-// 	beforeTahunStr := strconv.Itoa(beforeTahunInt)
-// 	err := t.DB.Where("tipe_absen_id=? AND nik=? AND periode IN (?,?)", id, nik, tahun, beforeTahunStr).Find(&sc).Error
-// 	if err != nil {
-// 		return sc, err
-// 	}
+func (t SaldoCutiRepo) GetSaldoCutiPerTipeArr(nik string, tipe string, tahun string) ([]SaldoCuti, error) {
+	var sc []SaldoCuti
 
-// 	return sc, nil
-// }
+	time_periode_start, _ := time.Parse(time.DateOnly, tahun+"-01-01")
+	time_periode_end, _ := time.Parse(time.DateOnly, tahun+"-12-31")
+	fmt.Println(time_periode_start, time_periode_end)
+	err := t.DB.Where("tipe_absen_id=? AND nik=? AND (tsrange(valid_from, valid_to) && tsrange(?::date, ?::date))",
+		tipe, nik, time_periode_start, time_periode_end).Order("periode asc").
+		Find(&sc).Error
+
+	fmt.Println(sc)
+	if err != nil {
+		return nil, err
+	}
+	return sc, nil
+}
 
 func (t SaldoCutiRepo) GetSaldoCutiPerTipe(nik string, tipe string, tahun string) (SaldoCuti, error) {
 	var sc SaldoCuti
 	err := t.DB.Where("tipe_absen_id=? AND nik=? AND periode=?", tipe, nik, tahun).Take(&sc).Error
 	if err != nil {
 		return sc, err
-	}
-	return sc, nil
-}
-
-func (t HistorySaldoCutiRepo) GetSaldoCutiPerTipe(nik string, tipe string, tahun string) (HistorySaldoCuti, error) {
-	var hsc HistorySaldoCuti
-	err := t.DB.Where("tipe_absen_id=? AND nik=? AND periode=?", tipe, nik, tahun).Take(&hsc).Error
-	if err != nil {
-		return hsc, err
-	}
-	return hsc, nil
-}
-
-func (t SaldoCutiRepo) FindExistSaldo2Periode(tipe_absen_id string, nik string, dateStart string, dateEnd string) (bool, []SaldoCuti, error) {
-	var sc_count int64
-	var sc []SaldoCuti
-	err := t.DB.Table("cuti_karyawan.saldo_cuti").Where("tipe_absen_id=? AND nik=? AND (tsrange(?::date, ?::date, '[]') && tsrange(valid_from, valid_to, '[]'))", tipe_absen_id, nik, dateStart, dateEnd).
-		Count(&sc_count).Order("periode ASC").Find(&sc).Error
-	if err != nil {
-		return false, sc, err
-	}
-	return sc_count != 0, sc, nil
-}
-
-func (t SaldoCutiRepo) FindExistSaldo1Periode(tipe_absen_id string, nik string, dateStart string, dateEnd string) (bool, []SaldoCuti, error) {
-	var sc_count int64
-	var sc []SaldoCuti
-	err := t.DB.Table("cuti_karyawan.saldo_cuti").Where("tipe_absen_id=? AND nik=? AND (tsrange(?::date, ?::date, '[]') && tsrange(valid_from, valid_to, '[]'))", tipe_absen_id, nik, dateStart, dateEnd).
-		Count(&sc_count).Order("periode ASC").Find(&sc).Error
-	if err != nil {
-		return false, sc, err
-	}
-	return sc_count != 0, sc, nil
-}
-
-func (t SaldoCutiRepo) SaldoPeriode(tipe_absen_id string, company string, nik string, periode string) ([]SaldoCuti, error) {
-	var sc []SaldoCuti
-	var err error
-
-	if company == "A000" {
-		err = t.DB.Table("cuti_karyawan.saldo_cuti").Where("tipe_absen_id=? AND nik=? AND periode=?", tipe_absen_id, nik, periode).
-			Find(&sc).Error
-	} else {
-		afterTahunInt, _ := strconv.Atoi(periode)
-		afterTahunInt++
-		afterTahunStr := strconv.Itoa(afterTahunInt)
-		err = t.DB.Table("cuti_karyawan.saldo_cuti").Where("tipe_absen_id=? AND nik=? AND periode IN (?,?))", tipe_absen_id, nik, periode, afterTahunStr).
-			Find(&sc).Error
-	}
-
-	if err != nil {
-		return nil, err
 	}
 	return sc, nil
 }
@@ -397,14 +340,6 @@ func (t TipeAbsenRepo) FindTipeAbsenByIDArray(id []string) ([]TipeAbsen, error) 
 }
 
 // FILE CUTI
-func (t FileAbsenRepo) Create(fc FileAbsen) (FileAbsen, error) {
-	err := t.DB.Create(&fc).Error
-	if err != nil {
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (t FileAbsenRepo) CreateArr(fc []FileAbsen) ([]FileAbsen, error) {
 	err := t.DB.Create(&fc).Error
 	if err != nil {
@@ -412,15 +347,6 @@ func (t FileAbsenRepo) CreateArr(fc []FileAbsen) ([]FileAbsen, error) {
 	}
 	return fc, nil
 }
-
-func (t FileAbsenRepo) Update(fc FileAbsen) (FileAbsen, error) {
-	err := t.DB.Where("pengajuan_absen_id=?", fc.PengajuanAbsenId).Save(&fc).Error
-	if err != nil {
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (t FileAbsenRepo) Delete(fc FileAbsen) (FileAbsen, error) {
 	err := t.DB.Delete(&fc).Error
 	if err != nil {
@@ -471,7 +397,7 @@ func (t PengajuanAbsenRepo) FindDataNIKPeriode(nik string, tahun string) ([]Peng
 	}
 	return pengajuan_absen, nil
 }
-func (t PengajuanAbsenRepo) FindDataIdPengajuan(id int) (PengajuanAbsen, error) {
+func (t PengajuanAbsenRepo) FindDataIdPengajuan(id interface{}) (PengajuanAbsen, error) {
 	var pengajuan_absen PengajuanAbsen
 	err := t.DB.Where("id_pengajuan_absen=?", id).Take(&pengajuan_absen).Error
 	if err != nil {

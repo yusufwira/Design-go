@@ -8,7 +8,7 @@ import (
 )
 
 type ValidasiStoreCutiKaryawan struct {
-	IdPengajuanAbsen int                          `form:"id_pengajuan_absen" json:"id_pengajuan_absen"`
+	IdPengajuanAbsen interface{}                  `form:"id_pengajuan_absen" json:"id_pengajuan_absen"`
 	Nik              string                       `form:"nik" json:"nik" binding:"required"`
 	TipeAbsenId      string                       `form:"tipe_absen_id" json:"tipe_absen_id" binding:"required"`
 	Deskripsi        string                       `form:"deskripsi" json:"deskripsi"`
@@ -30,8 +30,8 @@ type FileAbsenStoreCutiKaryawan struct {
 }
 
 type ValidasiStoreSaldoCuti struct {
-	IDSaldo     int    `form:"id_saldo" json:"id_saldo"`
-	TipeAbsenId string `form:"tipe_absen_id" json:"tipe_absen_id" binding:"required"`
+	IDSaldo     interface{} `form:"id_saldo" json:"id_saldo"`
+	TipeAbsenId string      `form:"tipe_absen_id" json:"tipe_absen_id" binding:"required"`
 	ValidasiKonfirmasiNik
 	Saldo           int    `form:"saldo" json:"saldo" binding:"required"`
 	ValidFrom       string `form:"valid_from" json:"valid_from" binding:"required"`
@@ -56,9 +56,9 @@ type ValidationNIKTahunStatus struct {
 }
 
 type ValidationApprovalAtasanPengajuanAbsen struct {
-	IdPengajuanAbsen int    `form:"id_pengajuan_absen" binding:"required"`
-	Status           string `form:"status" binding:"required"`
-	Keterangan       string `form:"keterangan"`
+	IdPengajuanAbsen int    `form:"id_pengajuan_absen" json:"id_pengajuan_absen" binding:"required"`
+	Status           string `form:"status" json:"status" binding:"required"`
+	Keterangan       string `form:"keterangan" json:"keterangan"`
 }
 
 type SaldoCutiKaryawan struct {
@@ -98,25 +98,12 @@ type CompanyKaryawan struct {
 	Name string `json:"name"`
 }
 
-type HistorySaldoCutiKaryawan struct {
-	IdHistorySaldoCuti int       `json:"id_history_saldo_cuti"`
-	TipeAbsenId        string    `json:"tipe_absen_id"`
-	Nik                string    `json:"nik"`
-	Saldo              int       `json:"saldo"`
-	ValidFrom          string    `json:"valid_from"`
-	ValidTo            string    `json:"valid_to"`
-	CreatedBy          string    `json:"created_by"`
-	CreatedAt          time.Time `json:"created_at"`
-	UpdatedAt          time.Time `json:"updated_at"`
-	Periode            string    `json:"periode"`
-}
-
 type GetTipeAbsenSaldoIndiv struct {
-	IdTipeAbsen   string `json:"id_tipe_absen"`
-	NamaTipeAbsen string `json:"nama_tipe_absen"`
-	MaxAbsen      *int   `json:"max_absen"`
-	TipeMaxAbsen  string `json:"tipe_max_absen"`
-	*SaldoIndiv   `json:"my_saldo"`
+	IdTipeAbsen   string       `json:"id_tipe_absen"`
+	NamaTipeAbsen string       `json:"nama_tipe_absen"`
+	MaxAbsen      *int         `json:"max_absen"`
+	TipeMaxAbsen  string       `json:"tipe_max_absen"`
+	MySaldo       []SaldoIndiv `json:"my_saldo"`
 }
 
 type SaldoIndiv struct {
@@ -128,45 +115,6 @@ type SaldoIndiv struct {
 	ValidFromHutang string `json:"valid_from_hutang"`
 }
 
-type GetMyPengajuanAbsen struct {
-	IdPengajuanAbsen int       `json:"id_pengajuan_absen"`
-	Nik              string    `json:"nik"`
-	CompCode         string    `json:"comp_code"`
-	TipeAbsenId      *string   `json:"tipe_absen_id"`
-	Deskripsi        *string   `json:"deskripsi"`
-	MulaiAbsen       time.Time `json:"mulai_absen"`
-	AkhirAbsen       time.Time `json:"akhir_absen"`
-	TglPengajuan     time.Time `json:"tgl_pengajuan"`
-	Status           *string   `json:"status"`
-	CreatedBy        *string   `json:"created_by"`
-	CreatedAt        time.Time `json:"created_at"`
-	UpdatedAt        time.Time `json:"updated_at"`
-	Keterangan       *string   `json:"keterangan"`
-	Periode          *string   `json:"periode"`
-	JmlHariKalendar  *int      `json:"jml_hari_kalendar"`
-	JmlHariKerja     int       `json:"jml_hari_kerja"`
-}
-
-// type ShowDetailPengajuanAbsen struct {
-// 	IdPengajuanAbsen int              `json:"id_pengajuan_absen"`
-// 	Nik              string           `json:"nik"`
-// 	CompCode         string           `json:"comp_code"`
-// 	TipeAbsen        *cuti.TipeAbsen  `json:"tipe_absen"`
-// 	File             []cuti.FileAbsen `json:"files"`
-// 	Deskripsi        *string          `json:"deskripsi"`
-// 	MulaiAbsen       string           `json:"mulai_absen"`
-// 	AkhirAbsen       string           `json:"akhir_absen"`
-// 	TglPengajuan     string           `json:"tgl_pengajuan"`
-// 	Status           *string          `json:"status"`
-// 	CreatedBy        *string          `json:"created_by"`
-// 	CreatedAt        time.Time        `json:"created_at"`
-// 	UpdatedAt        time.Time        `json:"updated_at"`
-// 	Keterangan       *string          `json:"keterangan"`
-// 	Periode          *string          `json:"periode"`
-// 	JmlHariKalendar  *int             `json:"jml_hari_kalendar"`
-// 	JmlHariKerja     int              `json:"jml_hari_kerja"`
-// }
-
 type PengajuanAbsens struct {
 	cuti.MyPengajuanAbsen
 	File []cuti.FileAbsen `json:"files"`
@@ -175,10 +123,10 @@ type PengajuanAbsens struct {
 type GetTipeAbsenKaryawanSaldo struct {
 	IdTipeAbsen   string    `json:"id_tipe_absen"`
 	NamaTipeAbsen string    `json:"nama_tipe_absen" gorm:"default:null"`
-	CompCode      string    `json:"comp_code" gorm:"default:null"`
+	CompCode      *string   `json:"comp_code" gorm:"default:null"`
 	CreatedAt     time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt     time.Time `json:"updated_at" gorm:"autoUpdateTime"`
-	MaxAbsen      int       `json:"max_absen" gorm:"default:null"`
+	MaxAbsen      *int      `json:"max_absen" gorm:"default:null"`
 	TipeMaxAbsen  *string   `json:"tipe_max_absen" gorm:"default:null"`
 }
 
