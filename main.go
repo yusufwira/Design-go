@@ -195,5 +195,5 @@ func main() {
 		cuti.DELETE("/deleteAdminSaldoCuti/:id_saldo_cuti", connection.Validation, cutiKrywnController.DeleteAdminSaldoCuti)
 	}
 
-	r.Run("9096") // local
+	r.Run(":9096") // local
 }
