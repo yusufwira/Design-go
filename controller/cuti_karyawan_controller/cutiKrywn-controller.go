@@ -1069,7 +1069,7 @@ func (c *CutiKrywnController) GetTipeAbsenSaldoPengajuan(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"status":  http.StatusOK,
-		"success": "Success",
+		"success": "Success12",
 		"data":    data,
 	})
 }
