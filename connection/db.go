@@ -44,7 +44,8 @@ func Database() *dB {
 
 	config := loadConfig()
 
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s", config.PGHost, config.PGPort, config.PGUser, config.PGPassword, config.PGDB)
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s",
+		config.PGHost, config.PGPort, config.PGUser, config.PGPassword, config.PGDB)
 	db, errs := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	// dsn := "postgres://postgres:V3ry5tr0n94dm1nP@$$w0rd@192.168.188.232:5432/pi-smart"
