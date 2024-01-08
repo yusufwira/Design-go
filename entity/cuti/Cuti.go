@@ -91,14 +91,14 @@ type SaldoCuti struct {
 	IdSaldoCuti     int       `json:"id_saldo_cuti" gorm:"primary_key"`
 	TipeAbsenId     string    `json:"tipe_absen_id" gorm:"default:null"`
 	Nik             string    `json:"nik" gorm:"default:null"`
-	Saldo           int       `json:"saldo" gorm:"default:null"`
+	Saldo           int       `json:"saldo" gorm:"default:0"`
 	ValidFrom       time.Time `json:"valid_from" gorm:"default:null"`
 	ValidTo         time.Time `json:"valid_to" gorm:"default:null"`
 	CreatedBy       string    `json:"created_by" gorm:"default:null"`
 	CreatedAt       time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt       time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 	Periode         string    `json:"periode" gorm:"default:null"`
-	MaxHutang       int       `json:"max_hutang" gorm:"default:null"`
+	MaxHutang       int       `json:"max_hutang" gorm:"default:0"`
 	ValidFromHutang time.Time `json:"valid_from_hutang" gorm:"default:null"`
 }
 
@@ -106,14 +106,14 @@ type HistorySaldoCuti struct {
 	IdHistorySaldoCuti int       `json:"id_history_saldo_cuti"`
 	TipeAbsenId        string    `json:"tipe_absen_id" gorm:"default:null"`
 	Nik                string    `json:"nik" gorm:"default:null"`
-	Saldo              int       `json:"saldo" gorm:"default:null"`
+	Saldo              int       `json:"saldo" gorm:"default:0"`
 	ValidFrom          time.Time `json:"valid_from" gorm:"default:null"`
 	ValidTo            time.Time `json:"valid_to" gorm:"default:null"`
 	CreatedBy          string    `json:"created_by" gorm:"default:null"`
 	CreatedAt          time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt          time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 	Periode            string    `json:"periode" gorm:"default:null"`
-	MaxHutang          int       `json:"max_hutang" gorm:"default:null"`
+	MaxHutang          int       `json:"max_hutang" gorm:"default:0"`
 	ValidFromHutang    time.Time `json:"valid_from_hutang" gorm:"default:null"`
 }
 
@@ -401,6 +401,7 @@ func (t PengajuanAbsenRepo) FindDataIdPengajuan(id interface{}) (PengajuanAbsen,
 	var pengajuan_absen PengajuanAbsen
 	err := t.DB.Where("id_pengajuan_absen=?", id).Take(&pengajuan_absen).Error
 	if err != nil {
+		fmt.Println("ERR")
 		return pengajuan_absen, err
 	}
 	return pengajuan_absen, nil

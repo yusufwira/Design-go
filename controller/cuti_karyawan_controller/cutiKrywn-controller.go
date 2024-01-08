@@ -116,7 +116,6 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 	create := false
 	update := false
 	isSaldo := false
-	fmt.Println(req.IdPengajuanAbsen)
 
 	if req.IdPengajuanAbsen == nil {
 		if tipeAbsen.MaxAbsen != nil {
@@ -615,13 +614,11 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 		}
 	} else {
 		if keterangan_x != "" {
-			fmt.Println("A")
 			ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{
 				"status":     http.StatusServiceUnavailable,
 				"keterangan": keterangan_x,
 			})
 		} else {
-			fmt.Println("B")
 			ctx.AbortWithStatus(http.StatusInternalServerError)
 		}
 	}
@@ -711,9 +708,13 @@ func (c *CutiKrywnController) DeletePengajuanCuti(ctx *gin.Context) {
 		if *pengajuanAbsen.Status == "WaitApproved" || *pengajuanAbsen.Status == "Rejected" {
 			c.PengajuanAbsenRepo.DelPengajuanCuti(pengajuanAbsen.IdPengajuanAbsen)
 			transaksi_cuti, _ := c.TransaksiCutiRepo.FindDataTransaksiIDPengajuan(pengajuanAbsen.IdPengajuanAbsen)
+			file_cuti, _ := c.FileAbsenRepo.FindFileAbsenByIDPengajuan(pengajuanAbsen.IdPengajuanAbsen)
 
 			for _, tr := range transaksi_cuti {
 				c.TransaksiCutiRepo.Delete(tr)
+			}
+			for _, fc := range file_cuti {
+				c.FileAbsenRepo.Delete(fc)
 			}
 			ctx.JSON(http.StatusOK, gin.H{
 				"status": http.StatusOK,
@@ -746,11 +747,11 @@ func (c *CutiKrywnController) StoreApprovePengajuanAbsen(ctx *gin.Context) {
 	pengajuan_absen, err := c.PengajuanAbsenRepo.FindDataIdPengajuan(req.IdPengajuanAbsen)
 	if err == nil {
 		if *pengajuan_absen.Status == "WaitApproved" {
+			pengajuan_absen.Status = &req.Status
+			if req.Keterangan != "" {
+				pengajuan_absen.Keterangan = &req.Keterangan
+			}
 			if req.Status == "Rejected" {
-				pengajuan_absen.Status = &req.Status
-				if req.Keterangan != "" {
-					pengajuan_absen.Keterangan = &req.Keterangan
-				}
 				updated_pengajuan, _ := c.PengajuanAbsenRepo.Update(pengajuan_absen)
 				history_pengajuan := HistoryPengajuanCutiSet(updated_pengajuan)
 				c.HistoryPengajuanAbsenRepo.Create(history_pengajuan)
@@ -760,11 +761,6 @@ func (c *CutiKrywnController) StoreApprovePengajuanAbsen(ctx *gin.Context) {
 					"keterangan": "Success",
 				})
 			} else if req.Status == "Approved" {
-				pengajuan_absen.Status = &req.Status
-				if req.Keterangan != "" {
-					pengajuan_absen.Keterangan = &req.Keterangan
-				}
-
 				tipeAbsen, _ := c.TipeAbsenRepo.FindTipeAbsenByID(*pengajuan_absen.TipeAbsenId)
 
 				approve := false
@@ -821,13 +817,17 @@ func (c *CutiKrywnController) StoreApprovePengajuanAbsen(ctx *gin.Context) {
 					for _, saldo := range eksekusi_saldo {
 						updated_saldo, _ := c.SaldoCutiRepo.Update(saldo)
 						history_saldo := HistorySaldoCutiSet(updated_saldo)
-						c.HistorySaldoCutiRepo.Create(history_saldo)
+						hsc, errr := c.HistorySaldoCutiRepo.Create(history_saldo)
+						if errr == nil {
+							fmt.Println(hsc)
+						}
 					}
 					ctx.JSON(http.StatusOK, gin.H{
 						"status":     http.StatusOK,
 						"keterangan": "Success",
 					})
 				} else {
+					pengajuan_absen.Keterangan = new(string)
 					*pengajuan_absen.Keterangan = "Di Tolak, Saldo Anda Tidak Cukup"
 					*pengajuan_absen.Status = "Rejected"
 					updated_pengajuan, _ := c.PengajuanAbsenRepo.Update(pengajuan_absen)
