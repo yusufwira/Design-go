@@ -838,7 +838,7 @@ func (c *CutiKrywnController) StoreApprovePengajuanAbsen(ctx *gin.Context) {
 
 					ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{
 						"status":     http.StatusServiceUnavailable,
-						"keterangan": "2.Maaf Pengajuan tidak dapat di Approve, Saldo Tidak Cukup, Silahkan Mengajukan kembali",
+						"keterangan": "Maaf Pengajuan tidak dapat di Approve, Saldo Tidak Cukup, Silahkan Mengajukan kembali",
 					})
 				}
 			}
