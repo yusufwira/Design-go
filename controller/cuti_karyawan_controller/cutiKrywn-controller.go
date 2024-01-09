@@ -810,6 +810,8 @@ func (c *CutiKrywnController) StoreApprovePengajuanAbsen(ctx *gin.Context) {
 				}
 
 				if approve {
+					pengajuan_absen.Keterangan = new(string)
+					pengajuan_absen.Keterangan = nil
 					updated_pengajuan, _ := c.PengajuanAbsenRepo.Update(pengajuan_absen)
 					history_pengajuan := HistoryPengajuanCutiSet(updated_pengajuan)
 					c.HistoryPengajuanAbsenRepo.Create(history_pengajuan)
@@ -828,8 +830,8 @@ func (c *CutiKrywnController) StoreApprovePengajuanAbsen(ctx *gin.Context) {
 					})
 				} else {
 					pengajuan_absen.Keterangan = new(string)
-					*pengajuan_absen.Keterangan = "Di Tolak, Saldo Anda Tidak Cukup"
-					*pengajuan_absen.Status = "Rejected"
+					*pengajuan_absen.Keterangan = "Saldo Anda Tidak Cukup"
+					*pengajuan_absen.Status = "WaitApproved"
 					updated_pengajuan, _ := c.PengajuanAbsenRepo.Update(pengajuan_absen)
 					history_pengajuan := HistoryPengajuanCutiSet(updated_pengajuan)
 					c.HistoryPengajuanAbsenRepo.Create(history_pengajuan)

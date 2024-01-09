@@ -143,7 +143,6 @@ func main() {
 		// PRESENCE
 		event.POST("/storeEventPresence", connection.Validation, eventController.StoreEventPresence)
 		event.GET("/printDaftarHadir/:id", connection.Validation, eventController.PrintDaftarHadir)
-
 	}
 
 	personalInformation := auth.Group(os.Getenv("PERSONALINFORMATION_API_URL"))

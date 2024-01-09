@@ -82,8 +82,6 @@ func (c *UsersController) GetDataKaryawanNameAll(ctx *gin.Context) {
 		return
 	}
 
-	// name := ctx.PostForm("name")
-	// nik := ctx.PostForm("nik")
 	data, err := c.PihcMasterKaryRtDbRepo.FindUserByNameArr(req.Name, req.Nik)
 
 	if err == nil {

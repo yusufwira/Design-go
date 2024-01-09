@@ -406,7 +406,6 @@ func (c *UsersProfileController) DataPegawai(ctx *gin.Context) {
 
 func (c *UsersProfileController) StoreAboutUs(ctx *gin.Context) {
 	var req Authentication.ValidationStoreAboutUs
-	// var data Authentication.GetStoreProfile
 
 	if err := ctx.ShouldBind(&req); err != nil {
 		var ve validator.ValidationErrors
@@ -437,18 +436,6 @@ func (c *UsersProfileController) StoreAboutUs(ctx *gin.Context) {
 
 	if err != nil {
 		result, _ := c.AboutUsRepo.Create(personalInformation)
-
-		// data.ID = result.ID
-		// data.NIK = result.Nik
-		// data.Bio = result.Bio
-		// data.LinkFacebook = result.LinkFacebook
-		// data.LinkInstagram = result.LinkInstagram
-		// data.LinkTiktok = result.LinkTiktok
-		// data.LinkTwitter = result.LinkTwitter
-		// data.LinkWebsite = result.LinkWebsite
-		// data.CreatedAt = result.CreatedAt
-		// data.UpdatedAt = result.UpdatedAt
-
 		ctx.JSON(http.StatusOK, gin.H{
 			"ResponseCode":   0,
 			"ResponseString": "OK",
@@ -708,126 +695,6 @@ func (c *UsersProfileController) UpdateSkill(ctx *gin.Context) {
 		"data":    data,
 	})
 }
-
-// func (c *UsersProfileController) StoreSkill(ctx *gin.Context) {
-// 	var req Authentication.ValidationStoreSkill
-
-// 	if err := ctx.ShouldBind(&req); err != nil {
-// 		var ve validator.ValidationErrors
-// 		if errors.As(err, &ve) {
-// 			out := make([]Authentication.ErrorMsg, len(ve))
-// 			for i, fe := range ve {
-// 				out[i] = Authentication.ErrorMsg{Field: fe.Field(), Message: getErrorMsg(fe)}
-// 			}
-// 			ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"errorcode_": http.StatusServiceUnavailable, "errormsg_": out})
-// 		}
-// 		return
-// 	}
-
-// 	for i, cat := range req.Category {
-// 		fmt.Println("MASUK CATEGORY: ", i)
-
-// 		var subskillProfil []profile.ProfileSkill
-// 		keahlian, err := c.ProfileSkillRepo.FindProfileCategorySkill(cat.ID)
-// 		if err != nil {
-// 			profilSkillCategory := profile.ProfileSkill{
-// 				Nik:  req.NIK,
-// 				Name: cat.Name,
-// 				Type: "category_skill",
-// 			}
-// 			itemsCategory, _ := c.ProfileSkillRepo.Create(profilSkillCategory)
-
-// 			for j, skil := range cat.Skill {
-// 				fmt.Println("MASUK SKILL: ", j, "-", i)
-// 				profilSkillMain := profile.ProfileSkill{
-// 					Nik:           req.NIK,
-// 					IdParentSkill: &itemsCategory.ID,
-// 					Name:          skil.Name,
-// 					Type:          "main_skill",
-// 				}
-// 				itemsSkill, _ := c.ProfileSkillRepo.Create(profilSkillMain)
-
-// 				for k, subskil := range skil.SubSkill {
-// 					fmt.Println("MASUK SUBSKILL: ", k, "-", j, "-", i)
-// 					profilSubSkill := profile.ProfileSkill{
-// 						Nik:           req.NIK,
-// 						IdParentSkill: &itemsSkill.ID,
-// 						Name:          subskil.Name,
-// 						Type:          "sub_skill",
-// 					}
-// 					subskillProfil = append(subskillProfil, profilSubSkill)
-// 				}
-// 				c.ProfileSkillRepo.CreateC(subskillProfil)
-// 			}
-// 		} else {
-// 			keahlian.Name = cat.Name
-
-// 			itemsCategory, _ := c.ProfileSkillRepo.Update(keahlian)
-
-// 			for _, skil := range cat.Skill {
-// 				mainSkill, _ := c.ProfileSkillRepo.FindProfileSkill(skil.ID, itemsCategory.ID)
-
-// 				mainSkill.Name = skil.Name
-
-// 				itemsSkill, _ := c.ProfileSkillRepo.Update(mainSkill)
-
-// 				for _, subskil := range skil.SubSkill {
-// 					subSkill, _ := c.ProfileSkillRepo.FindProfileSkill(subskil.ID, itemsSkill.ID)
-
-// 					subSkill.Name = subskil.Name
-// 					subskillProfil = append(subskillProfil, subSkill)
-// 				}
-// 				c.ProfileSkillRepo.UpdateC(subskillProfil)
-// 			}
-// 		}
-// 	}
-// }
-
-// func (c *UsersProfileController) GetSkill(ctx *gin.Context) {
-// 	Nik := ctx.Param("nik")
-// 	var data []Authentication.ShowSkills
-
-// 	personalCategory, err := c.ProfileSkillRepo.FindProfileCategorySkillArr(Nik)
-// 	for _, cat := range personalCategory {
-// 		var mainskill []Authentication.ProfileMainSkill
-
-// 		personalMainSkill, _ := c.ProfileSkillRepo.FindProfileSkillArr(cat.Nik, cat.ID)
-// 		for _, mainSkill := range personalMainSkill {
-// 			var subskill []Authentication.ProfileSubSkill
-
-// 			personalSubSkill, _ := c.ProfileSkillRepo.FindProfileSkillArr(mainSkill.Nik, mainSkill.ID)
-
-// 			for _, dataSubSkill := range personalSubSkill {
-// 				subskill = append(subskill, struct{ profile.ProfileSkill }{dataSubSkill})
-// 			}
-
-// 			mainSkills := Authentication.ProfileMainSkill{
-// 				ProfileSkill: mainSkill,
-// 				SubSkill:     subskill,
-// 			}
-// 			mainskill = append(mainskill, mainSkills)
-// 		}
-// 		catSkills := Authentication.ShowSkills{
-// 			ProfileSkill: cat,
-// 			Skill:        mainskill,
-// 		}
-// 		data = append(data, catSkills)
-// 	}
-
-//		if err == nil {
-//			ctx.JSON(http.StatusOK, gin.H{
-//				"status":  http.StatusOK,
-//				"success": "Success",
-//				"data":    data,
-//			})
-//		} else {
-//			ctx.JSON(http.StatusOK, gin.H{
-//				"status":  http.StatusOK,
-//				"success": "Data Tidak Ditemukan!!",
-//				"data":    nil,
-//			})
-//		}
-//	}
 
 func (c *UsersProfileController) GetSkill(ctx *gin.Context) {
 	Nik := ctx.Param("nik")
