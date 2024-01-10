@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 	Authentication "github.com/yusufwira/lern-golang-gin/entity/authentication"
 	"github.com/yusufwira/lern-golang-gin/entity/cuti"
@@ -830,7 +831,7 @@ func (c *CutiKrywnController) StoreApprovePengajuanAbsen(ctx *gin.Context) {
 					})
 				} else {
 					pengajuan_absen.Keterangan = new(string)
-					*pengajuan_absen.Keterangan = "Saldo Anda Tidak Cukup"
+					pengajuan_absen.Keterangan = nil
 					*pengajuan_absen.Status = "WaitApproved"
 					updated_pengajuan, _ := c.PengajuanAbsenRepo.Update(pengajuan_absen)
 					history_pengajuan := HistoryPengajuanCutiSet(updated_pengajuan)
@@ -1120,11 +1121,12 @@ func (c *CutiKrywnController) GetAdminTipeAbsen(ctx *gin.Context) {
 
 // Saldo Cuti (DONE)
 func (c *CutiKrywnController) StoreAdminSaldoCutiKaryawan(ctx *gin.Context) {
-	var req Authentication.ValidasiStoreSaldoCuti
-	var data Authentication.SaldoCutiKaryawan
+	var req1 Authentication.ValidasiStoreSaldoCuti
+	var req2 []Authentication.ValidasiStoreSaldoCuti
+	var data []Authentication.SaldoCutiKaryawan
 	var sc cuti.SaldoCuti
 
-	if err := ctx.ShouldBind(&req); err != nil {
+	if err := ctx.ShouldBindBodyWith(&req1, binding.JSON); err != nil {
 		var ve validator.ValidationErrors
 		if errors.As(err, &ve) {
 			out := make([]Authentication.ErrorMsg, len(ve))
@@ -1133,78 +1135,102 @@ func (c *CutiKrywnController) StoreAdminSaldoCutiKaryawan(ctx *gin.Context) {
 			}
 			ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"errorcode_": http.StatusServiceUnavailable, "errormsg_": out})
 		}
-		return
+		if err := ctx.ShouldBindBodyWith(&req2, binding.JSON); err != nil {
+			var ve validator.ValidationErrors
+			if errors.As(err, &ve) {
+				out := make([]Authentication.ErrorMsg, len(ve))
+				for i, fe := range ve {
+					out[i] = Authentication.ErrorMsg{Field: fe.Field(), Message: getErrorMsg(fe)}
+				}
+				ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"errorcode_": http.StatusServiceUnavailable, "errormsg_": out})
+			}
+			ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"errorcode_": http.StatusServiceUnavailable, "errormsg_": "Pastikan field tidak kosong"})
+			return
+		}
 	}
 
-	if req.IDSaldo != nil {
-		req.IDSaldo = ConvertInterfaceTypeDataToInt(req.IDSaldo)
+	if len(req2) == 0 {
+		req2 = append(req2, req1)
 	}
 
 	kebenaran := false
 	var keterangan string
-	if req.IDSaldo == nil {
-		sc.TipeAbsenId = req.TipeAbsenId
-		sc.Nik = req.Nik
-		sc.Saldo = req.Saldo
-		sc.ValidFrom, _ = time.Parse(time.DateOnly, req.ValidFrom)
-		sc.ValidTo, _ = time.Parse(time.DateOnly, req.ValidTo)
-		sc.CreatedBy = req.CreatedBy
-
-		// periode := strconv.Itoa(time.Now().Year())
-		periode := strconv.Itoa(sc.ValidFrom.Year())
-		sc.Periode = periode
-		sc.MaxHutang = req.MaxHutang
-		sc.ValidFromHutang, _ = time.Parse(time.DateOnly, req.ValidFromHutang)
-
-		saldoCuti, err := c.SaldoCutiRepo.Create(sc)
-		if err == nil {
-			data = SaldoCutiKaryawanSet(saldoCuti)
-			dataHistorySaldoCuti := HistorySaldoCutiSet(saldoCuti)
-			c.HistorySaldoCutiRepo.Create(dataHistorySaldoCuti)
-
-			kebenaran = true
-			keterangan = "Success"
-		} else {
-			data = Authentication.SaldoCutiKaryawan{}
-
-			kebenaran = false
-			keterangan = "Gagal Store Saldo Cuti"
+	for _, temp := range req2 {
+		if temp.IDSaldo != nil {
+			temp.IDSaldo = ConvertInterfaceTypeDataToInt(temp.IDSaldo)
 		}
-	} else {
-		sc, _ := c.SaldoCutiRepo.GetSaldoCutiByID(req.IDSaldo)
-		sc.Saldo = req.Saldo
-		sc.ValidFrom, _ = time.Parse(time.DateOnly, req.ValidFrom)
-		sc.ValidTo, _ = time.Parse(time.DateOnly, req.ValidTo)
-		sc.MaxHutang = req.MaxHutang
-		sc.ValidFromHutang, _ = time.Parse(time.DateOnly, req.ValidFrom)
 
-		saldoCuti, err := c.SaldoCutiRepo.Update(sc)
-		if err == nil {
-			data = SaldoCutiKaryawanSet(saldoCuti)
-			dataHistorySaldoCuti := HistorySaldoCutiSet(saldoCuti)
-			c.HistorySaldoCutiRepo.Create(dataHistorySaldoCuti)
+		if temp.IDSaldo == nil {
+			sc.TipeAbsenId = temp.TipeAbsenId
+			sc.Nik = temp.Nik
+			sc.Saldo = temp.Saldo
+			sc.ValidFrom, _ = time.Parse(time.DateOnly, temp.ValidFrom)
+			sc.ValidTo, _ = time.Parse(time.DateOnly, temp.ValidTo)
+			sc.CreatedBy = temp.CreatedBy
 
-			kebenaran = true
-			keterangan = "Success"
+			sc.Periode = strconv.Itoa(sc.ValidTo.Year())
+			sc.MaxHutang = temp.MaxHutang
+			sc.ValidFromHutang, _ = time.Parse(time.DateOnly, temp.ValidFromHutang)
+
+			saldoCuti, err := c.SaldoCutiRepo.Create(sc)
+			if err == nil {
+				data = append(data, SaldoCutiKaryawanSet(saldoCuti))
+				dataHistorySaldoCuti := HistorySaldoCutiSet(saldoCuti)
+				c.HistorySaldoCutiRepo.Create(dataHistorySaldoCuti)
+
+				kebenaran = true
+				keterangan = "Success"
+			} else {
+				data = []Authentication.SaldoCutiKaryawan{}
+
+				kebenaran = false
+				keterangan = "Gagal Store Saldo Cuti"
+			}
 		} else {
-			data = Authentication.SaldoCutiKaryawan{}
+			sc, _ := c.SaldoCutiRepo.GetSaldoCutiByID(temp.IDSaldo)
+			sc.Saldo = temp.Saldo
+			sc.ValidFrom, _ = time.Parse(time.DateOnly, temp.ValidFrom)
+			sc.ValidTo, _ = time.Parse(time.DateOnly, temp.ValidTo)
+			sc.CreatedBy = temp.CreatedBy
 
-			kebenaran = false
-			keterangan = "Gagal Update Saldo Cuti"
+			sc.Periode = strconv.Itoa(sc.ValidTo.Year())
+			sc.MaxHutang = temp.MaxHutang
+			sc.ValidFromHutang, _ = time.Parse(time.DateOnly, temp.ValidFromHutang)
+
+			saldoCuti, err := c.SaldoCutiRepo.Update(sc)
+			if err == nil {
+				data = append(data, SaldoCutiKaryawanSet(saldoCuti))
+				dataHistorySaldoCuti := HistorySaldoCutiSet(saldoCuti)
+				c.HistorySaldoCutiRepo.Create(dataHistorySaldoCuti)
+
+				kebenaran = true
+				keterangan = "Success"
+			} else {
+				data = []Authentication.SaldoCutiKaryawan{}
+
+				kebenaran = false
+				keterangan = "Gagal Update Saldo Cuti"
+			}
 		}
 	}
 
+	var output interface{}
+	if len(data) == 1 {
+		output = data[0]
+	} else {
+		output = data
+	}
 	if kebenaran {
 		ctx.JSON(http.StatusOK, gin.H{
 			"status":  http.StatusOK,
 			"Success": keterangan,
-			"data":    data,
+			"data":    output,
 		})
 	} else {
 		ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{
 			"status":  http.StatusServiceUnavailable,
 			"Success": keterangan,
-			"data":    data,
+			"data":    output,
 		})
 	}
 }
