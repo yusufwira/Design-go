@@ -24,7 +24,7 @@ type CutiKrywnController struct {
 	TipeAbsenRepo             *cuti.TipeAbsenRepo
 	FileAbsenRepo             *cuti.FileAbsenRepo
 	TransaksiCutiRepo         *cuti.TransaksiCutiRepo
-	PihcMasterKaryDbRepo      *pihc.PihcMasterKaryDbRepo
+	PihcMasterKaryRtDbRepo    *pihc.PihcMasterKaryRtDbRepo
 	PihcMasterCompanyRepo     *pihc.PihcMasterCompanyRepo
 }
 
@@ -37,7 +37,7 @@ func NewCutiKrywnController(Db *gorm.DB) *CutiKrywnController {
 		TipeAbsenRepo:             cuti.NewTipeAbsenRepo(Db),
 		FileAbsenRepo:             cuti.NewFileAbsenRepo(Db),
 		TransaksiCutiRepo:         cuti.NewTransaksiCutiRepo(Db),
-		PihcMasterKaryDbRepo:      pihc.NewPihcMasterKaryDbRepo(Db),
+		PihcMasterKaryRtDbRepo:    pihc.NewPihcMasterKaryRtDbRepo(Db),
 		PihcMasterCompanyRepo:     pihc.NewPihcMasterCompanyRepo(Db)}
 }
 
@@ -64,7 +64,7 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 		req.IdPengajuanAbsen = ConvertInterfaceTypeDataToInt(req.IdPengajuanAbsen)
 	}
 
-	PIHC_MSTR_KRY, _ := c.PihcMasterKaryDbRepo.FindUserByNIK(req.Nik)
+	PIHC_MSTR_KRY, _ := c.PihcMasterKaryRtDbRepo.FindUserByNIK(req.Nik)
 	comp_code := PIHC_MSTR_KRY.Company
 
 	sck.Nik = req.Nik
@@ -81,14 +81,14 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 	sck.CreatedBy = &req.CreatedBy
 
 	// Mencari Atasan
-	dataKaryawan, _ := c.PihcMasterKaryDbRepo.FindUserByNIK(sck.Nik)
+	dataKaryawan, _ := c.PihcMasterKaryRtDbRepo.FindUserByNIK(sck.Nik)
 	if dataKaryawan.PosTitle != "Wakil Direktur Utama" {
 		for dataKaryawan.PosTitle != "Wakil Direktur Utama" {
-			dataKaryawan, _ = c.PihcMasterKaryDbRepo.FindUserAtasanBySupPosID(dataKaryawan.SupPosID)
+			dataKaryawan, _ = c.PihcMasterKaryRtDbRepo.FindUserAtasanBySupPosID(dataKaryawan.SupPosID)
 		}
 	} else {
 		for dataKaryawan.PosTitle != "Direktur Utama" {
-			dataKaryawan, _ = c.PihcMasterKaryDbRepo.FindUserAtasanBySupPosID(dataKaryawan.SupPosID)
+			dataKaryawan, _ = c.PihcMasterKaryRtDbRepo.FindUserAtasanBySupPosID(dataKaryawan.SupPosID)
 		}
 	}
 	approvedBy := dataKaryawan.EmpNo
@@ -890,7 +890,7 @@ func (c *CutiKrywnController) ListApprvlCuti(ctx *gin.Context) {
 			arrNIK = append(arrNIK, myCuti.Nik)
 			arrTipeAbsenID = append(arrTipeAbsenID, *myCuti.TipeAbsenId)
 		}
-		karyawan, _ := c.PihcMasterKaryDbRepo.FindUserByNIKArray(arrNIK)
+		karyawan, _ := c.PihcMasterKaryRtDbRepo.FindUserByNIKArray(arrNIK)
 		tipeAbsen, _ := c.TipeAbsenRepo.FindTipeAbsenByIDArray(arrTipeAbsenID)
 		files, _ := c.FileAbsenRepo.FindFileAbsenByIDPengajuanArray(arrIdPengajuanAbsen)
 		for _, myKrywn := range karyawan {
@@ -906,7 +906,7 @@ func (c *CutiKrywnController) ListApprvlCuti(ctx *gin.Context) {
 				if myCuti.Nik == myKaryawan.EmpNo {
 					for _, myCompany := range companys {
 						if myKaryawan.Company == myCompany.Code {
-							list_pengajuan.PihcMasterKary = convertSourceTargetDataKaryawan(myKaryawan)
+							list_pengajuan.PihcMasterKaryRt = convertSourceTargetDataKaryawan(myKaryawan)
 							list_pengajuan.PihcMasterCompany = myCompany
 							foto := "https://storage.googleapis.com/lumen-oauth-storage/DataKaryawan/Foto/" + myCompany.Code + "/" + myKaryawan.EmpNo + ".jpg"
 							respons, err := http.Get(foto)
@@ -965,7 +965,7 @@ func (c *CutiKrywnController) ShowDetailApprovalPengajuanCuti(ctx *gin.Context) 
 
 	if err == nil {
 		tipeAbsen, _ := c.TipeAbsenRepo.FindTipeAbsenByID(*dataDB.TipeAbsenId)
-		karyawan, _ := c.PihcMasterKaryDbRepo.FindUserByNIK(dataDB.Nik)
+		karyawan, _ := c.PihcMasterKaryRtDbRepo.FindUserByNIK(dataDB.Nik)
 		companys, _ := c.PihcMasterCompanyRepo.FindPihcMsterCompany(karyawan.Company)
 		files, _ := c.FileAbsenRepo.FindFileAbsenByIDPengajuan(dataDB.IdPengajuanAbsen)
 		if files == nil {
@@ -976,7 +976,7 @@ func (c *CutiKrywnController) ShowDetailApprovalPengajuanCuti(ctx *gin.Context) 
 		result := convertSourceTargetMyPengajuanAbsen(dataDB, tipeAbsen)
 
 		list_aprvl.IdPengajuanAbsen = result.IdPengajuanAbsen
-		list_aprvl.PihcMasterKary = data_karyawan_convert
+		list_aprvl.PihcMasterKaryRt = data_karyawan_convert
 		list_aprvl.PihcMasterCompany = companys
 		list_aprvl.TipeAbsen = tipeAbsen
 		list_aprvl.MulaiAbsen = result.MulaiAbsen
@@ -1027,7 +1027,7 @@ func (c *CutiKrywnController) GetTipeAbsenSaldoPengajuan(ctx *gin.Context) {
 	data := []Authentication.GetTipeAbsenSaldoIndiv{}
 	data2 := []Authentication.GetTipeAbsenSaldoIndiv{}
 
-	pihc_mstr_krywn, err_pihc_mstr_krywn := c.PihcMasterKaryDbRepo.FindUserByNIK(req.NIK)
+	pihc_mstr_krywn, err_pihc_mstr_krywn := c.PihcMasterKaryRtDbRepo.FindUserByNIK(req.NIK)
 
 	if err_pihc_mstr_krywn == nil {
 		fmt.Println(pihc_mstr_krywn.Company)
@@ -1087,7 +1087,7 @@ func (c *CutiKrywnController) GetAdminTipeAbsen(ctx *gin.Context) {
 		return
 	}
 
-	pihc_mstr_krywn, err_pihc_mstr_krywn := c.PihcMasterKaryDbRepo.FindUserByNIK(nik)
+	pihc_mstr_krywn, err_pihc_mstr_krywn := c.PihcMasterKaryRtDbRepo.FindUserByNIK(nik)
 
 	if err_pihc_mstr_krywn == nil {
 		TipeAbsen, _ := c.TipeAbsenRepo.FindTipeAbsenSaldo(pihc_mstr_krywn.Company)
@@ -1254,13 +1254,13 @@ func (c *CutiKrywnController) ListAdminSaldoCutiKaryawan(ctx *gin.Context) {
 
 	if err == nil {
 		for _, dataSaldoo := range saldoCuti {
-			karyawan, _ := c.PihcMasterKaryDbRepo.FindUserByNIK(dataSaldoo.Nik)
+			karyawan, _ := c.PihcMasterKaryRtDbRepo.FindUserByNIK(dataSaldoo.Nik)
 			company, _ := c.PihcMasterCompanyRepo.FindPihcMsterCompany(karyawan.Company)
 			TipeAbsen, _ := c.TipeAbsenRepo.FindTipeAbsenByID(dataSaldoo.TipeAbsenId)
 			dataSaldoCuti := ListSaldoCutiKaryawanSet(dataSaldoo, company, TipeAbsen)
 
-			if karyawan.Nama != nil && *karyawan.Nama != "" {
-				dataSaldoCuti.Nama = *karyawan.Nama
+			if karyawan.Nama != "" {
+				dataSaldoCuti.Nama = karyawan.Nama
 			}
 			data = append(data, dataSaldoCuti)
 		}
@@ -1278,12 +1278,12 @@ func (c *CutiKrywnController) GetAdminSaldoCuti(ctx *gin.Context) {
 	id_saldo, _ := strconv.Atoi(id)
 	saldoCuti, err := c.SaldoCutiRepo.GetSaldoCutiByID(id_saldo)
 	if err == nil {
-		karyawan, _ := c.PihcMasterKaryDbRepo.FindUserByNIK(saldoCuti.Nik)
+		karyawan, _ := c.PihcMasterKaryRtDbRepo.FindUserByNIK(saldoCuti.Nik)
 		company, _ := c.PihcMasterCompanyRepo.FindPihcMsterCompany(karyawan.Company)
 		TipeAbsen, _ := c.TipeAbsenRepo.FindTipeAbsenByID(saldoCuti.TipeAbsenId)
 		data = ListSaldoCutiKaryawanSet(saldoCuti, company, TipeAbsen)
-		if karyawan.Nama != nil && *karyawan.Nama != "" {
-			data.Nama = *karyawan.Nama
+		if karyawan.Nama != "" {
+			data.Nama = karyawan.Nama
 		}
 
 		ctx.JSON(http.StatusOK, gin.H{

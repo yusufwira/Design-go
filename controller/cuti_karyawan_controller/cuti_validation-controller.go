@@ -34,44 +34,8 @@ func perhitungan(mulai time.Time, akhir time.Time) [2]int {
 }
 
 // Convert Db to struct
-func convertSourceTargetDataKaryawan(source pihc.PihcMasterKaryDb) pihc.PihcMasterKary {
-	var location *string
-	var seksiID *string
-	var seksiTitle *string
-	var preName *string
-	var postName *string
-	var NoNPWP *string
-	var bankAccount *string
-	var bankName *string
-	var payScale *string
-	if source.Lokasi != "" {
-		location = &source.Lokasi
-	}
-	if source.SeksiID != "" {
-		seksiID = &source.SeksiID
-	}
-	if source.SeksiTitle != "" {
-		seksiTitle = &source.SeksiTitle
-	}
-	if source.PreNameTitle != "" {
-		preName = &source.PreNameTitle
-	}
-	if source.PostNameTitle != "" {
-		postName = &source.PostNameTitle
-	}
-	if source.NoNPWP != "" {
-		NoNPWP = &source.NoNPWP
-	}
-	if source.BankAccount != "" {
-		bankAccount = &source.BankAccount
-	}
-	if source.BankName != "" {
-		bankName = &source.BankName
-	}
-	if source.PayScale != "" {
-		payScale = &source.PayScale
-	}
-	return pihc.PihcMasterKary{
+func convertSourceTargetDataKaryawan(source pihc.PihcMasterKaryRtDb) pihc.PihcMasterKaryRt {
+	return pihc.PihcMasterKaryRt{
 		EmpNo:          source.EmpNo,
 		Nama:           source.Nama,
 		Gender:         source.Gender,
@@ -88,7 +52,7 @@ func convertSourceTargetDataKaryawan(source pihc.PihcMasterKaryDb) pihc.PihcMast
 		Contract:       source.Contract,
 		Pendidikan:     source.Pendidikan,
 		Company:        source.Company,
-		Lokasi:         location,
+		Lokasi:         source.Lokasi,
 		EmployeeStatus: source.EmployeeStatus,
 		Email:          source.Email,
 		HP:             source.HP,
@@ -110,15 +74,15 @@ func convertSourceTargetDataKaryawan(source pihc.PihcMasterKaryDb) pihc.PihcMast
 		SupEmpNo:       source.SupEmpNo,
 		BagID:          source.BagID,
 		BagTitle:       source.BagTitle,
-		SeksiID:        seksiID,
-		SeksiTitle:     seksiTitle,
-		PreNameTitle:   preName,
-		PostNameTitle:  postName,
-		NoNPWP:         NoNPWP,
-		BankAccount:    bankAccount,
-		BankName:       bankName,
+		SeksiID:        source.SeksiID,
+		SeksiTitle:     source.SeksiTitle,
+		PreNameTitle:   source.PreNameTitle,
+		PostNameTitle:  source.PostNameTitle,
+		NoNPWP:         source.NoNPWP,
+		BankAccount:    source.BankAccount,
+		BankName:       source.BankName,
 		MdgDate:        source.MdgDate,
-		PayScale:       payScale,
+		PayScale:       source.PayScale,
 		CCCode:         source.CCCode,
 		Nickname:       source.Nickname,
 	}

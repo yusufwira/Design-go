@@ -20,7 +20,7 @@ type PihcMasterKaryRtDb struct {
 	Area           string    `json:"area"`
 	AreaTitle      string    `json:"area_title"`
 	SubArea        string    `json:"sub_area"`
-	SubAreaTtitle  string    `json:"sub_area_title"`
+	SubAreaTitle   string    `json:"sub_area_title"`
 	Contract       string    `json:"contract"`
 	Pendidikan     string    `json:"pendidikan"`
 	Company        string    `json:"company"`
@@ -73,7 +73,7 @@ type PihcMasterKaryRt struct {
 	Area           string  `json:"area"`
 	AreaTitle      string  `json:"area_title"`
 	SubArea        string  `json:"sub_area"`
-	SubAreaTtitle  string  `json:"sub_area_title"`
+	SubAreaTitle   string  `json:"sub_area_title"`
 	Contract       string  `json:"contract"`
 	Pendidikan     string  `json:"pendidikan"`
 	Company        string  `json:"company"`
@@ -84,7 +84,7 @@ type PihcMasterKaryRt struct {
 	TglLahir       string  `json:"tgl_lahir"`
 	PosID          string  `json:"pos_id"`
 	PosTitle       string  `json:"pos_title"`
-	SubPosID       string  `json:"sup_pos_id"`
+	SupPosID       string  `json:"sup_pos_id"`
 	PosGrade       string  `json:"pos_grade"`
 	PosKategori    string  `json:"pos_kategori"`
 	OrgID          string  `json:"org_id"`
@@ -237,4 +237,22 @@ func (t PihcMasterKaryRtDbRepo) FindUserByNIKTahunCompCodePeriode(nik string, ta
 		return pihc_mkrt, err
 	}
 	return pihc_mkrt, nil
+}
+
+func (t PihcMasterKaryRtDbRepo) FindUserAtasanBySupPosID(sup_pos_id string) (PihcMasterKaryRtDb, error) {
+	var pihc_mk PihcMasterKaryRtDb
+	err := t.DB.Where("pos_id=?", sup_pos_id).Take(&pihc_mk).Error
+	if err != nil {
+		return pihc_mk, err
+	}
+	return pihc_mk, nil
+}
+
+func (t PihcMasterKaryRtDbRepo) FindUserByNIKArray(nik []string) ([]PihcMasterKaryRtDb, error) {
+	var pihc_mk []PihcMasterKaryRtDb
+	err := t.DB.Where("emp_no in(?)", nik).Find(&pihc_mk).Error
+	if err != nil {
+		return pihc_mk, err
+	}
+	return pihc_mk, nil
 }

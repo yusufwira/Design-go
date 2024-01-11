@@ -132,7 +132,7 @@ type GetTipeAbsenKaryawanSaldo struct {
 
 type ListApprovalCuti struct {
 	IdPengajuanAbsen       int `json:"id_pengajuan_absen"`
-	pihc.PihcMasterKary    `json:"karyawan"`
+	pihc.PihcMasterKaryRt  `json:"karyawan"`
 	pihc.PihcMasterCompany `json:"companys"`
 	cuti.TipeAbsen         `json:"tipe_absen"`
 	Deskripsi              string           `json:"deskripsi"`
