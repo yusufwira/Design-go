@@ -47,6 +47,7 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 	var sck cuti.PengajuanAbsen
 	var fsc []cuti.FileAbsen
 	var trsc []Authentication.SaldoCutiTransaksiPengajuan
+	transaksi_cuti := cuti.TransaksiCuti{}
 
 	if err := ctx.ShouldBind(&req); err != nil {
 		var ve validator.ValidationErrors
@@ -85,14 +86,22 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 	if dataKaryawan.PosTitle != "Wakil Direktur Utama" {
 		for dataKaryawan.PosTitle != "Wakil Direktur Utama" {
 			dataKaryawan, _ = c.PihcMasterKaryRtDbRepo.FindUserAtasanBySupPosID(dataKaryawan.SupPosID)
+			if dataKaryawan.SupPosID == "" {
+				break
+			}
 		}
 	} else {
 		for dataKaryawan.PosTitle != "Direktur Utama" {
 			dataKaryawan, _ = c.PihcMasterKaryRtDbRepo.FindUserAtasanBySupPosID(dataKaryawan.SupPosID)
+			if dataKaryawan.SupPosID == "" {
+				break
+			}
 		}
 	}
 	approvedBy := dataKaryawan.EmpNo
-	sck.ApprovedBy = &approvedBy
+	if approvedBy != "" {
+		sck.ApprovedBy = &approvedBy
+	}
 
 	tipeAbsen, _ := c.TipeAbsenRepo.FindTipeAbsenByID(*sck.TipeAbsenId)
 
@@ -117,13 +126,13 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 	create := false
 	update := false
 	isSaldo := false
+	checkMaxAbsen := false
 
 	if req.IdPengajuanAbsen == nil {
 		if tipeAbsen.MaxAbsen != nil {
 			JmlHariKerja := 0
 			jmlhHariKalender := 0
 
-			transaksi_cuti := cuti.TransaksiCuti{}
 			if *tipeAbsen.TipeMaxAbsen == "hari_kalender" {
 				for currentDate := sck.MulaiAbsen; jmlhHariKalender != *tipeAbsen.MaxAbsen; currentDate = currentDate.AddDate(0, 0, 1) {
 					jmlhHariKalender++
@@ -150,46 +159,8 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 			sck.JmlHariKalendar = &jmlhHariKalender
 			sck.JmlHariKerja = &JmlHariKerja
 
-			sckData, _ := c.PengajuanAbsenRepo.Create(sck)
-			// CREATE HistoryPengajuanAbsen
-			history_pengajuan_absen := HistoryPengajuanCutiSet(sckData)
-			c.HistoryPengajuanAbsenRepo.Create(history_pengajuan_absen)
-
-			convert := convertSourceTargetMyPengajuanAbsen(sckData, tipeAbsen)
-			for _, fa := range req.FileAbsen {
-				files := cuti.FileAbsen{
-					PengajuanAbsenId: sckData.IdPengajuanAbsen,
-					Filename:         fa.Filename,
-					Url:              fa.URL,
-					Extension:        fa.Extension,
-				}
-				fsc = append(fsc, files)
-			}
-			// CREATE FileAbsen
-			files, _ := c.FileAbsenRepo.CreateArr(fsc)
-
-			// Transaksi Cuti
-			transaksi_cuti.PengajuanAbsenId = sckData.IdPengajuanAbsen
-			transaksi_cuti.Nik = sckData.Nik
-			if sckData.Periode != nil {
-				transaksi_cuti.Periode = *sckData.Periode
-			}
-
-			// CREATE Transaksi Cuti
-			c.TransaksiCutiRepo.Create(transaksi_cuti)
-
-			if files == nil {
-				files = []cuti.FileAbsen{}
-			}
-			data := Authentication.PengajuanAbsens{
-				MyPengajuanAbsen: convert,
-				File:             files,
-			}
-
-			ctx.JSON(http.StatusOK, gin.H{
-				"status": http.StatusOK,
-				"data":   data,
-			})
+			create = true
+			checkMaxAbsen = true
 		} else {
 			isHutang := false
 			saldoHutang := 0
@@ -364,38 +335,8 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 				sck.JmlHariKalendar = &jmlhHariKalender
 				sck.JmlHariKerja = &JmlHariKerja
 
-				sckData, _ := c.PengajuanAbsenRepo.Update(sck)
-				// CREATE HistoryPengajuanAbsen
-				history_pengajuan_absen := HistoryPengajuanCutiSet(sckData)
-				c.HistoryPengajuanAbsenRepo.Create(history_pengajuan_absen)
-
-				convert := convertSourceTargetMyPengajuanAbsen(sckData, tipeAbsen)
-
-				// CREATE FileAbsen
-				files, _ := c.FileAbsenRepo.CreateArr(fsc)
-
-				// Transaksi Cuti
-				transaksi_cuti.PengajuanAbsenId = sckData.IdPengajuanAbsen
-				transaksi_cuti.Nik = sckData.Nik
-				if sckData.Periode != nil {
-					transaksi_cuti.Periode = *sckData.Periode
-				}
-
-				// CREATE Transaksi Cuti
-				c.TransaksiCutiRepo.Create(transaksi_cuti)
-
-				if files == nil {
-					files = []cuti.FileAbsen{}
-				}
-				data := Authentication.PengajuanAbsens{
-					MyPengajuanAbsen: convert,
-					File:             files,
-				}
-
-				ctx.JSON(http.StatusOK, gin.H{
-					"status": http.StatusOK,
-					"data":   data,
-				})
+				checkMaxAbsen = true
+				update = true
 			} else {
 				isHutang := false
 				saldoHutang := 0
@@ -515,7 +456,7 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 		}
 	}
 
-	if checkSaldo {
+	if checkSaldo || checkMaxAbsen {
 		if create {
 			sckData, _ := c.PengajuanAbsenRepo.Create(sck)
 			history_pengajuan_absen := HistoryPengajuanCutiSet(sckData)
@@ -530,24 +471,30 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 					Extension:        fa.Extension,
 				}
 				fsc = append(fsc, files)
-
 			}
 			// CREATE FileAbsen
 			files, _ := c.FileAbsenRepo.CreateArr(fsc)
 
-			// // Transaksi Cuti
-			transaksi_cuti := cuti.TransaksiCuti{}
-
-			if sckData.Periode != nil {
-				transaksi_cuti.Periode = *sckData.Periode
-			}
-			for _, transaction := range trsc {
-				transaksi_cuti := cuti.TransaksiCuti{}
+			// Transaksi Cuti
+			if len(trsc) != 0 {
+				for _, transaction := range trsc {
+					transaksi_cuti := cuti.TransaksiCuti{}
+					transaksi_cuti.PengajuanAbsenId = sckData.IdPengajuanAbsen
+					transaksi_cuti.Nik = sckData.Nik
+					transaksi_cuti.Periode = transaction.Periode
+					transaksi_cuti.JumlahCuti = transaction.JmlhCuti
+					transaksi_cuti.TipeHari = tipe_hari
+					c.TransaksiCutiRepo.Create(transaksi_cuti)
+				}
+			} else {
+				if sckData.Periode != nil {
+					transaksi_cuti.Periode = *sckData.Periode
+				}
 				transaksi_cuti.PengajuanAbsenId = sckData.IdPengajuanAbsen
 				transaksi_cuti.Nik = sckData.Nik
-				transaksi_cuti.Periode = transaction.Periode
-				transaksi_cuti.JumlahCuti = transaction.JmlhCuti
-				transaksi_cuti.TipeHari = tipe_hari
+				if sckData.Periode != nil {
+					transaksi_cuti.Periode = *sckData.Periode
+				}
 				c.TransaksiCutiRepo.Create(transaksi_cuti)
 			}
 
@@ -558,6 +505,7 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 				MyPengajuanAbsen: convert,
 				File:             files,
 			}
+
 			ctx.JSON(http.StatusOK, gin.H{
 				"status": http.StatusOK,
 				"data":   data,
@@ -573,19 +521,24 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 				// CREATE FileAbsen
 				files, _ := c.FileAbsenRepo.CreateArr(fsc)
 
-				// // Transaksi Cuti
-				transaksi_cuti := cuti.TransaksiCuti{}
-
-				if sckData.Periode != nil {
-					transaksi_cuti.Periode = *sckData.Periode
-				}
-				for _, transaction := range trsc {
-					transaksi_cuti := cuti.TransaksiCuti{}
+				// Transaksi Cuti
+				if len(trsc) != 0 {
+					for _, transaction := range trsc {
+						transaksi_cuti := cuti.TransaksiCuti{}
+						transaksi_cuti.PengajuanAbsenId = sckData.IdPengajuanAbsen
+						transaksi_cuti.Nik = sckData.Nik
+						transaksi_cuti.Periode = transaction.Periode
+						transaksi_cuti.JumlahCuti = transaction.JmlhCuti
+						transaksi_cuti.TipeHari = tipe_hari
+						c.TransaksiCutiRepo.Create(transaksi_cuti)
+					}
+				} else {
 					transaksi_cuti.PengajuanAbsenId = sckData.IdPengajuanAbsen
 					transaksi_cuti.Nik = sckData.Nik
-					transaksi_cuti.Periode = transaction.Periode
-					transaksi_cuti.JumlahCuti = transaction.JmlhCuti
-					transaksi_cuti.TipeHari = tipe_hari
+					if sckData.Periode != nil {
+						transaksi_cuti.Periode = *sckData.Periode
+					}
+
 					c.TransaksiCutiRepo.Create(transaksi_cuti)
 				}
 
@@ -596,6 +549,7 @@ func (c *CutiKrywnController) StoreCutiKaryawan(ctx *gin.Context) {
 					MyPengajuanAbsen: convert,
 					File:             files,
 				}
+
 				ctx.JSON(http.StatusOK, gin.H{
 					"status": http.StatusOK,
 					"data":   data,
