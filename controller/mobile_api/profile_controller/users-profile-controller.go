@@ -1157,12 +1157,12 @@ func (c *UsersProfileController) ShowProfile(ctx *gin.Context) {
 		}
 		data.PhotoProfileDefault = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
 
-		organization, _ := c.PihcMasterPositionRepo.FindViewOrganization(data_karyawan.PihcMasterKaryRtDb.EmpNo)
+		// organization, _ := c.PihcMasterPositionRepo.FindViewOrganization(data_karyawan.PihcMasterKaryRtDb.EmpNo)
 
-		data.Organisasi = append(data.Organisasi, organization.Unit1)
-		data.Organisasi = append(data.Organisasi, organization.Unit2)
-		data.Organisasi = append(data.Organisasi, organization.Org3)
-		data.Organisasi = append(data.Organisasi, organization.Org4)
+		data.Organisasi = append(data.Organisasi, data_karyawan.ViewOrganisasi.Unit1)
+		data.Organisasi = append(data.Organisasi, data_karyawan.ViewOrganisasi.Unit2)
+		data.Organisasi = append(data.Organisasi, data_karyawan.ViewOrganisasi.Org3)
+		data.Organisasi = append(data.Organisasi, data_karyawan.ViewOrganisasi.Org4)
 
 		ctx.JSON(http.StatusOK, gin.H{
 			"status":  http.StatusOK,
@@ -1567,12 +1567,12 @@ func (c *UsersProfileController) UpdatePhotoProfile(ctx *gin.Context) {
 		}
 		data.PhotoProfileDefault = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
 
-		organization, _ := c.PihcMasterPositionRepo.FindViewOrganization(data_karyawan.PihcMasterKaryRtDb.EmpNo)
+		// organization, _ := c.PihcMasterPositionRepo.FindViewOrganization(data_karyawan.PihcMasterKaryRtDb.EmpNo)
 
-		data.Organisasi = append(data.Organisasi, organization.Unit1)
-		data.Organisasi = append(data.Organisasi, organization.Unit2)
-		data.Organisasi = append(data.Organisasi, organization.Org3)
-		data.Organisasi = append(data.Organisasi, organization.Org4)
+		data.Organisasi = append(data.Organisasi, data_karyawan.ViewOrganisasi.Unit1)
+		data.Organisasi = append(data.Organisasi, data_karyawan.ViewOrganisasi.Unit2)
+		data.Organisasi = append(data.Organisasi, data_karyawan.ViewOrganisasi.Org3)
+		data.Organisasi = append(data.Organisasi, data_karyawan.ViewOrganisasi.Org4)
 
 		ctx.JSON(http.StatusOK, gin.H{
 			"status":  http.StatusOK,

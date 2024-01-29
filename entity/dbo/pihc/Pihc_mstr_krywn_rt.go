@@ -231,17 +231,36 @@ type DataKaryawans struct {
 	profile.Profile
 	profile.AboutUs
 	profile.PhotoProfile
+	ViewOrganisasi
 }
 
 func (t PihcMasterKaryRtDbRepo) FindUserProfileKaryawan(nik string) (DataKaryawans, error) {
 	var pihc_mkrt DataKaryawans
 	err := t.DB.Table("dbo.pihc_master_kary_rt").
-		Select("dbo.pihc_master_kary_rt.*, pmc.*, up.*, p.*,pus.*,pp.*").
+		Select(`dbo.pihc_master_kary_rt.*, pmc.*, up.*, p.*,pus.*,pp.*,
+			CASE
+				WHEN LEFT(b.grade::text, 1) >= '3'::text THEN
+					COALESCE(b4.org_unit_desc, b3.org_unit_desc, b2.org_unit_desc, b.org_unit_desc)
+				ELSE
+					b.org_unit_desc
+			END AS unit1,
+			CASE
+				WHEN LEFT(b.grade::text, 1) >= '3'::text THEN
+					COALESCE(b4.org_unit_desc, b3.org_unit_desc, b2.org_unit_desc, b.org_unit_desc)
+				ELSE
+					b2.org_unit_desc
+			END AS unit2,
+			b3.org_unit_desc AS org3,
+			b4.org_unit_desc AS org4`).
 		Joins(`INNER JOIN dbo.pihc_master_company pmc ON pmc.code = dbo.pihc_master_kary_rt.company
 			   LEFT JOIN public.users_profil up on up.nik = dbo.pihc_master_kary_rt.emp_no
 			   LEFT JOIN mobile.profile p on p.nik = dbo.pihc_master_kary_rt.emp_no
 			   LEFT JOIN mobile.about_us pus on pus.nik = dbo.pihc_master_kary_rt.emp_no
-			   LEFT JOIN mobile.profile_photo pp on pp.emp_no = dbo.pihc_master_kary_rt.emp_no`).
+			   LEFT JOIN mobile.profile_photo pp on pp.emp_no = dbo.pihc_master_kary_rt.emp_no
+			   INNER JOIN dbo.pihc_master_position b on b."position" = dbo.pihc_master_kary_rt.pos_id
+			   LEFT JOIN dbo.pihc_master_position b2 ON b.manager_pos::text = b2."position"::text
+			   LEFT JOIN dbo.pihc_master_position b3 ON b2.manager_pos::text = b3."position"::text
+			   LEFT JOIN dbo.pihc_master_position b4 ON b3.manager_pos::text = b4."position"::text`).
 		Where("dbo.pihc_master_kary_rt.emp_no=?", nik).Take(&pihc_mkrt).Error
 	if err != nil {
 		return pihc_mkrt, err
