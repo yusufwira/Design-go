@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/yusufwira/lern-golang-gin/entity/mobile/profile"
+	"github.com/yusufwira/lern-golang-gin/entity/users"
 	"gorm.io/gorm"
 )
 
@@ -216,6 +218,31 @@ func NewPihcMasterKaryRtRepo(db *gorm.DB) *PihcMasterKaryRtRepo {
 func (t PihcMasterKaryRtDbRepo) FindUserByNIK(nik string) (PihcMasterKaryRtDb, error) {
 	var pihc_mkrt PihcMasterKaryRtDb
 	err := t.DB.Where("emp_no=?", nik).Take(&pihc_mkrt).Error
+	if err != nil {
+		return pihc_mkrt, err
+	}
+	return pihc_mkrt, nil
+}
+
+type DataKaryawans struct {
+	PihcMasterKaryRtDb
+	PihcMasterCompany
+	users.UserProfileDB
+	profile.Profile
+	profile.AboutUs
+	profile.PhotoProfile
+}
+
+func (t PihcMasterKaryRtDbRepo) FindUserProfileKaryawan(nik string) (DataKaryawans, error) {
+	var pihc_mkrt DataKaryawans
+	err := t.DB.Table("dbo.pihc_master_kary_rt").
+		Select("dbo.pihc_master_kary_rt.*, pmc.*, up.*, p.*,pus.*,pp.*").
+		Joins(`INNER JOIN dbo.pihc_master_company pmc ON pmc.code = dbo.pihc_master_kary_rt.company
+			   LEFT JOIN public.users_profil up on up.nik = dbo.pihc_master_kary_rt.emp_no
+			   LEFT JOIN mobile.profile p on p.nik = dbo.pihc_master_kary_rt.emp_no
+			   LEFT JOIN mobile.about_us pus on pus.nik = dbo.pihc_master_kary_rt.emp_no
+			   LEFT JOIN mobile.profile_photo pp on pp.emp_no = dbo.pihc_master_kary_rt.emp_no`).
+		Where("dbo.pihc_master_kary_rt.emp_no=?", nik).Take(&pihc_mkrt).Error
 	if err != nil {
 		return pihc_mkrt, err
 	}

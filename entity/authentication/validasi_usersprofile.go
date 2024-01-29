@@ -166,7 +166,7 @@ type PengalamanKerja struct {
 }
 
 type ProfilePribadi struct {
-	pihc.PihcMasterKary
+	pihc.PihcMasterKaryRt
 	Domisili            *users.UserProfile     `json:"domisili"`
 	ProfileMobile       *MobileProfile         `json:"profile_mobile"`
 	AboutUs             *profile.AboutUs       `json:"about_us"`

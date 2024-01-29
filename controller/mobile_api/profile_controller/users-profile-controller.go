@@ -1009,128 +1009,110 @@ func (c *UsersProfileController) ShowProfile(ctx *gin.Context) {
 	Nik := ctx.Param("nik")
 	var data Authentication.ProfilePribadi
 
-	data_karyawan, err := c.PihcMasterKaryDbRepo.FindUserByNIK(Nik)
+	data_karyawan, err := c.PihcMasterKaryRtDbRepo.FindUserProfileKaryawan(Nik)
 	if err == nil {
-		data.PihcMasterKary.EmpNo = data_karyawan.EmpNo
-		data.PihcMasterKary.Nama = data_karyawan.Nama
-		data.PihcMasterKary.Gender = data_karyawan.Gender
-		data.PihcMasterKary.Agama = data_karyawan.Agama
-		data.PihcMasterKary.StatusKawin = data_karyawan.StatusKawin
-		data.PihcMasterKary.Anak = data_karyawan.Anak
-		data.PihcMasterKary.Mdg = strconv.Itoa(data_karyawan.Mdg)
-		data.PihcMasterKary.EmpGrade = data_karyawan.EmpGrade
-		data.PihcMasterKary.EmpGradeTitle = data_karyawan.EmpGradeTitle
-		data.PihcMasterKary.Area = data_karyawan.Area
-		data.PihcMasterKary.AreaTitle = data_karyawan.AreaTitle
-		data.PihcMasterKary.SubArea = data_karyawan.SubArea
-		data.PihcMasterKary.SubAreaTitle = data_karyawan.SubAreaTitle
-		data.PihcMasterKary.Contract = data_karyawan.Contract
-		data.PihcMasterKary.Pendidikan = data_karyawan.Pendidikan
-		data.PihcMasterKary.Company = data_karyawan.Company
-		if data_karyawan.Lokasi != "" {
-			data.PihcMasterKary.Lokasi = &data_karyawan.Lokasi
-		}
-		data.PihcMasterKary.EmployeeStatus = data_karyawan.EmployeeStatus
-		data.PihcMasterKary.Email = data_karyawan.Email
-		data.PihcMasterKary.HP = data_karyawan.HP
-		data.PihcMasterKary.TglLahir = data_karyawan.TglLahir.Format(time.DateOnly)
-		data.PihcMasterKary.PosID = data_karyawan.PosID
-		data.PihcMasterKary.PosTitle = data_karyawan.PosTitle
-		data.PihcMasterKary.SupPosID = data_karyawan.SupPosID
-		data.PihcMasterKary.PosGrade = data_karyawan.PosGrade
-		data.PihcMasterKary.PosKategori = data_karyawan.PosKategori
-		data.PihcMasterKary.OrgID = data_karyawan.OrgID
-		data.PihcMasterKary.OrgTitle = data_karyawan.OrgTitle
-		data.PihcMasterKary.DeptID = data_karyawan.DeptID
-		data.PihcMasterKary.DeptTitle = data_karyawan.DeptTitle
-		data.PihcMasterKary.KompID = data_karyawan.KompID
-		data.PihcMasterKary.KompTitle = data_karyawan.KompTitle
-		data.PihcMasterKary.DirID = data_karyawan.DirID
-		data.PihcMasterKary.DirTitle = data_karyawan.DirTitle
-		data.PihcMasterKary.PosLevel = data_karyawan.PosLevel
-		data.PihcMasterKary.SupEmpNo = data_karyawan.SupEmpNo
-		data.PihcMasterKary.BagID = data_karyawan.BagID
-		data.PihcMasterKary.BagTitle = data_karyawan.BagTitle
-		if data_karyawan.SeksiID != "" {
-			data.PihcMasterKary.SeksiID = &data_karyawan.SeksiID
-		}
-		if data_karyawan.SeksiTitle != "" {
-			data.PihcMasterKary.SeksiTitle = &data_karyawan.SeksiTitle
-		}
-		if data_karyawan.PreNameTitle != "" {
-			data.PihcMasterKary.PreNameTitle = &data_karyawan.PreNameTitle
-		}
-		if data_karyawan.PostNameTitle != "" {
-			data.PihcMasterKary.PostNameTitle = &data_karyawan.PostNameTitle
-		}
-		if data_karyawan.NoNPWP != "" {
-			data.PihcMasterKary.NoNPWP = &data_karyawan.NoNPWP
-		}
-		if data_karyawan.BankAccount != "" {
-			data.PihcMasterKary.BankAccount = &data_karyawan.BankAccount
-		}
-		if data_karyawan.BankName != "" {
-			data.PihcMasterKary.BankName = &data_karyawan.BankName
-		}
-		data.PihcMasterKary.MdgDate = data_karyawan.MdgDate
-		if data_karyawan.PayScale != "" {
-			data.PihcMasterKary.PayScale = &data_karyawan.PayScale
-		}
-		data.PihcMasterKary.CCCode = data_karyawan.CCCode
-		data.PihcMasterKary.Nickname = data_karyawan.Nickname
+		data.PihcMasterKaryRt.EmpNo = data_karyawan.PihcMasterKaryRtDb.EmpNo
+		data.PihcMasterKaryRt.Nama = data_karyawan.PihcMasterKaryRtDb.Nama
+		data.PihcMasterKaryRt.Gender = data_karyawan.PihcMasterKaryRtDb.Gender
+		data.PihcMasterKaryRt.Agama = data_karyawan.PihcMasterKaryRtDb.Agama
+		data.PihcMasterKaryRt.StatusKawin = data_karyawan.PihcMasterKaryRtDb.StatusKawin
+		data.PihcMasterKaryRt.Anak = data_karyawan.PihcMasterKaryRtDb.Anak
+		data.PihcMasterKaryRt.Mdg = strconv.Itoa(data_karyawan.PihcMasterKaryRtDb.Mdg)
+		data.PihcMasterKaryRt.EmpGrade = data_karyawan.PihcMasterKaryRtDb.EmpGrade
+		data.PihcMasterKaryRt.EmpGradeTitle = data_karyawan.PihcMasterKaryRtDb.EmpGradeTitle
+		data.PihcMasterKaryRt.Area = data_karyawan.PihcMasterKaryRtDb.Area
+		data.PihcMasterKaryRt.AreaTitle = data_karyawan.PihcMasterKaryRtDb.AreaTitle
+		data.PihcMasterKaryRt.SubArea = data_karyawan.PihcMasterKaryRtDb.SubArea
+		data.PihcMasterKaryRt.SubAreaTitle = data_karyawan.PihcMasterKaryRtDb.SubAreaTitle
+		data.PihcMasterKaryRt.Contract = data_karyawan.PihcMasterKaryRtDb.Contract
+		data.PihcMasterKaryRt.Pendidikan = data_karyawan.PihcMasterKaryRtDb.Pendidikan
+		data.PihcMasterKaryRt.Company = data_karyawan.PihcMasterKaryRtDb.Company
+		data.PihcMasterKaryRt.Lokasi = data_karyawan.PihcMasterKaryRtDb.Lokasi
+		data.PihcMasterKaryRt.EmployeeStatus = data_karyawan.PihcMasterKaryRtDb.EmployeeStatus
+		data.PihcMasterKaryRt.Email = data_karyawan.PihcMasterKaryRtDb.Email
+		data.PihcMasterKaryRt.HP = data_karyawan.PihcMasterKaryRtDb.HP
+		data.PihcMasterKaryRt.TglLahir = data_karyawan.PihcMasterKaryRtDb.TglLahir.Format(time.DateOnly)
+		data.PihcMasterKaryRt.PosID = data_karyawan.PihcMasterKaryRtDb.PosID
+		data.PihcMasterKaryRt.PosTitle = data_karyawan.PihcMasterKaryRtDb.PosTitle
+		data.PihcMasterKaryRt.SupPosID = data_karyawan.PihcMasterKaryRtDb.SupPosID
+		data.PihcMasterKaryRt.PosGrade = data_karyawan.PihcMasterKaryRtDb.PosGrade
+		data.PihcMasterKaryRt.PosKategori = data_karyawan.PihcMasterKaryRtDb.PosKategori
+		data.PihcMasterKaryRt.OrgID = data_karyawan.PihcMasterKaryRtDb.OrgID
+		data.PihcMasterKaryRt.OrgTitle = data_karyawan.PihcMasterKaryRtDb.OrgTitle
+		data.PihcMasterKaryRt.DeptID = data_karyawan.PihcMasterKaryRtDb.DeptID
+		data.PihcMasterKaryRt.DeptTitle = data_karyawan.PihcMasterKaryRtDb.DeptTitle
+		data.PihcMasterKaryRt.KompID = data_karyawan.PihcMasterKaryRtDb.KompID
+		data.PihcMasterKaryRt.KompTitle = data_karyawan.PihcMasterKaryRtDb.KompTitle
+		data.PihcMasterKaryRt.DirID = data_karyawan.PihcMasterKaryRtDb.DirID
+		data.PihcMasterKaryRt.DirTitle = data_karyawan.PihcMasterKaryRtDb.DirTitle
+		data.PihcMasterKaryRt.PosLevel = data_karyawan.PihcMasterKaryRtDb.PosLevel
+		data.PihcMasterKaryRt.SupEmpNo = data_karyawan.PihcMasterKaryRtDb.SupEmpNo
+		data.PihcMasterKaryRt.BagID = data_karyawan.PihcMasterKaryRtDb.BagID
+		data.PihcMasterKaryRt.BagTitle = data_karyawan.PihcMasterKaryRtDb.BagTitle
+		data.PihcMasterKaryRt.SeksiID = data_karyawan.PihcMasterKaryRtDb.SeksiID
+		data.PihcMasterKaryRt.SeksiTitle = data_karyawan.PihcMasterKaryRtDb.SeksiTitle
+		data.PihcMasterKaryRt.PreNameTitle = data_karyawan.PihcMasterKaryRtDb.PreNameTitle
+		data.PihcMasterKaryRt.PostNameTitle = data_karyawan.PihcMasterKaryRtDb.PostNameTitle
+		data.PihcMasterKaryRt.NoNPWP = data_karyawan.PihcMasterKaryRtDb.NoNPWP
+		data.PihcMasterKaryRt.BankAccount = data_karyawan.PihcMasterKaryRtDb.BankAccount
+		data.PihcMasterKaryRt.BankName = data_karyawan.PihcMasterKaryRtDb.BankName
+		data.PihcMasterKaryRt.MdgDate = data_karyawan.PihcMasterKaryRtDb.MdgDate
+		data.PihcMasterKaryRt.PayScale = data_karyawan.PihcMasterKaryRtDb.PayScale
+		data.PihcMasterKaryRt.CCCode = data_karyawan.PihcMasterKaryRtDb.CCCode
+		data.PihcMasterKaryRt.Nickname = data_karyawan.PihcMasterKaryRtDb.Nickname
 
-		domisili, _ := c.UserProfileRepo.FindProfileUsers(data.EmpNo)
-		if domisili.Nik != "" {
+		// domisili, _ := c.UserProfileRepo.FindProfileUsers(data.EmpNo)
+		if data_karyawan.UserProfileDB.Nik != "" {
 			data_domisili := users.UserProfile{
-				Nik:         domisili.Nik,
-				Alamat:      domisili.Alamat,
-				Kelurahan:   domisili.Kelurahan,
-				Kecamatan:   domisili.Kecamatan,
-				Kabupaten:   domisili.Kabupaten,
-				Provinsi:    domisili.Provinsi,
-				Kodepos:     domisili.Kodepos,
-				Domisili:    domisili.Domisili,
-				PosisiMap:   domisili.PosisiMap,
-				Email2:      domisili.Email2,
-				UpdatedBy:   domisili.UpdatedBy,
-				NoTelp1:     domisili.NoTelp1,
-				NoTelp2:     domisili.NoTelp2,
-				Lat:         domisili.Lat,
-				Long:        domisili.Long,
-				Email1:      domisili.Email1,
-				UpdatedFrom: domisili.UpdatedFrom,
-				UpdatedDate: domisili.UpdatedDate.Format(time.DateTime),
-				IsAdmin:     domisili.IsAdmin,
+				Nik:         data_karyawan.UserProfileDB.Nik,
+				Alamat:      data_karyawan.UserProfileDB.Alamat,
+				Kelurahan:   data_karyawan.UserProfileDB.Kelurahan,
+				Kecamatan:   data_karyawan.UserProfileDB.Kecamatan,
+				Kabupaten:   data_karyawan.UserProfileDB.Kabupaten,
+				Provinsi:    data_karyawan.UserProfileDB.Provinsi,
+				Kodepos:     data_karyawan.UserProfileDB.Kodepos,
+				Domisili:    data_karyawan.UserProfileDB.Domisili,
+				PosisiMap:   data_karyawan.UserProfileDB.PosisiMap,
+				Email2:      data_karyawan.UserProfileDB.Email2,
+				UpdatedBy:   data_karyawan.UserProfileDB.UpdatedBy,
+				NoTelp1:     data_karyawan.UserProfileDB.NoTelp1,
+				NoTelp2:     data_karyawan.UserProfileDB.NoTelp2,
+				Lat:         data_karyawan.UserProfileDB.Lat,
+				Long:        data_karyawan.UserProfileDB.Long,
+				Email1:      data_karyawan.UserProfileDB.Email1,
+				UpdatedFrom: data_karyawan.UserProfileDB.UpdatedFrom,
+				UpdatedDate: data_karyawan.UserProfileDB.UpdatedDate.Format(time.DateTime),
+				IsAdmin:     data_karyawan.UserProfileDB.IsAdmin,
 			}
 
 			data.Domisili = &data_domisili
 		}
 
-		data_profile, _ := c.ProfileRepo.FindProfile(domisili.Nik)
-		if data_profile.ID != 0 {
+		// data_profile, _ := c.ProfileRepo.FindProfile(domisili.Nik)
+		if data_karyawan.Profile.ID != 0 {
 			profileMobile := &Authentication.MobileProfile{
-				Profile:     data_profile,
+				Profile:     data_karyawan.Profile,
 				UserProfile: *data.Domisili,
 			}
 			data.ProfileMobile = profileMobile
 		}
 
-		about, _ := c.AboutUsRepo.FindProfileAboutUs(data_profile.Nik)
-		if about.ID != 0 {
-			data.AboutUs = &about
+		// about, _ := c.AboutUsRepo.FindProfileAboutUs(data_karyawan.Profile.Nik)
+		if data_karyawan.AboutUs.ID != 0 {
+			data.AboutUs = &data_karyawan.AboutUs
 		}
 
-		company, _ := c.PihcMasterCompanyRepo.FindPihcMsterCompany(data_karyawan.Company)
-		data.Companys = company
+		// company, _ := c.PihcMasterCompanyRepo.FindPihcMsterCompany(data_karyawan.Company)
+		data.Companys = data_karyawan.PihcMasterCompany
 
 		typeCat := "category_skill"
-		personalCategory, _ := c.ProfileSkillRepo.GetProfileSkillArr(data_karyawan.EmpNo, typeCat)
+		personalCategory, _ := c.ProfileSkillRepo.GetProfileSkillArr(data_karyawan.PihcMasterKaryRtDb.EmpNo, typeCat)
 		if personalCategory != nil {
 			typeMainSkill := "main_skill"
-			personalMainSkill, _ := c.ProfileSkillRepo.GetProfileSkillArr(data_karyawan.EmpNo, typeMainSkill)
+			personalMainSkill, _ := c.ProfileSkillRepo.GetProfileSkillArr(data_karyawan.PihcMasterKaryRtDb.EmpNo, typeMainSkill)
 
 			typeSubSkill := "sub_skill"
-			personalSubSkill, _ := c.ProfileSkillRepo.GetProfileSkillArr(data_karyawan.EmpNo, typeSubSkill)
+			personalSubSkill, _ := c.ProfileSkillRepo.GetProfileSkillArr(data_karyawan.PihcMasterKaryRtDb.EmpNo, typeSubSkill)
 			for _, cat := range personalCategory {
 				mainskill := []Authentication.ProfileMainSkill{}
 
@@ -1167,15 +1149,15 @@ func (c *UsersProfileController) ShowProfile(ctx *gin.Context) {
 		}
 
 		data.CompanyLogo = "https://storage.googleapis.com/lumen-oauth-storage/company/logo-pi-full.png"
-		photoProfile, _ := c.PhotoProfileRepo.FindPhotoProfile(data_karyawan.EmpNo)
-		if photoProfile.Url != "" {
-			data.PhotoProfile = photoProfile.Url
+		// photoProfile, _ := c.PhotoProfileRepo.FindPhotoProfile(data_karyawan.EmpNo)
+		if data_karyawan.PhotoProfile.Url != "" {
+			data.PhotoProfile = data_karyawan.PhotoProfile.Url
 		} else {
 			data.PhotoProfile = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
 		}
 		data.PhotoProfileDefault = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
 
-		organization, _ := c.PihcMasterPositionRepo.FindViewOrganization(data_karyawan.EmpNo)
+		organization, _ := c.PihcMasterPositionRepo.FindViewOrganization(data_karyawan.PihcMasterKaryRtDb.EmpNo)
 
 		data.Organisasi = append(data.Organisasi, organization.Unit1)
 		data.Organisasi = append(data.Organisasi, organization.Unit2)
@@ -1191,6 +1173,193 @@ func (c *UsersProfileController) ShowProfile(ctx *gin.Context) {
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 	}
 }
+
+// func (c *UsersProfileController) ShowProfile(ctx *gin.Context) {
+// 	Nik := ctx.Param("nik")
+// 	var data Authentication.ProfilePribadi
+
+// 	data_karyawan, err := c.PihcMasterKaryDbRepo.FindUserByNIK(Nik)
+// 	if err == nil {
+// 		data.PihcMasterKary.EmpNo = data_karyawan.EmpNo
+// 		data.PihcMasterKary.Nama = data_karyawan.Nama
+// 		data.PihcMasterKary.Gender = data_karyawan.Gender
+// 		data.PihcMasterKary.Agama = data_karyawan.Agama
+// 		data.PihcMasterKary.StatusKawin = data_karyawan.StatusKawin
+// 		data.PihcMasterKary.Anak = data_karyawan.Anak
+// 		data.PihcMasterKary.Mdg = strconv.Itoa(data_karyawan.Mdg)
+// 		data.PihcMasterKary.EmpGrade = data_karyawan.EmpGrade
+// 		data.PihcMasterKary.EmpGradeTitle = data_karyawan.EmpGradeTitle
+// 		data.PihcMasterKary.Area = data_karyawan.Area
+// 		data.PihcMasterKary.AreaTitle = data_karyawan.AreaTitle
+// 		data.PihcMasterKary.SubArea = data_karyawan.SubArea
+// 		data.PihcMasterKary.SubAreaTitle = data_karyawan.SubAreaTitle
+// 		data.PihcMasterKary.Contract = data_karyawan.Contract
+// 		data.PihcMasterKary.Pendidikan = data_karyawan.Pendidikan
+// 		data.PihcMasterKary.Company = data_karyawan.Company
+// 		if data_karyawan.Lokasi != "" {
+// 			data.PihcMasterKary.Lokasi = &data_karyawan.Lokasi
+// 		}
+// 		data.PihcMasterKary.EmployeeStatus = data_karyawan.EmployeeStatus
+// 		data.PihcMasterKary.Email = data_karyawan.Email
+// 		data.PihcMasterKary.HP = data_karyawan.HP
+// 		data.PihcMasterKary.TglLahir = data_karyawan.TglLahir.Format(time.DateOnly)
+// 		data.PihcMasterKary.PosID = data_karyawan.PosID
+// 		data.PihcMasterKary.PosTitle = data_karyawan.PosTitle
+// 		data.PihcMasterKary.SupPosID = data_karyawan.SupPosID
+// 		data.PihcMasterKary.PosGrade = data_karyawan.PosGrade
+// 		data.PihcMasterKary.PosKategori = data_karyawan.PosKategori
+// 		data.PihcMasterKary.OrgID = data_karyawan.OrgID
+// 		data.PihcMasterKary.OrgTitle = data_karyawan.OrgTitle
+// 		data.PihcMasterKary.DeptID = data_karyawan.DeptID
+// 		data.PihcMasterKary.DeptTitle = data_karyawan.DeptTitle
+// 		data.PihcMasterKary.KompID = data_karyawan.KompID
+// 		data.PihcMasterKary.KompTitle = data_karyawan.KompTitle
+// 		data.PihcMasterKary.DirID = data_karyawan.DirID
+// 		data.PihcMasterKary.DirTitle = data_karyawan.DirTitle
+// 		data.PihcMasterKary.PosLevel = data_karyawan.PosLevel
+// 		data.PihcMasterKary.SupEmpNo = data_karyawan.SupEmpNo
+// 		data.PihcMasterKary.BagID = data_karyawan.BagID
+// 		data.PihcMasterKary.BagTitle = data_karyawan.BagTitle
+// 		if data_karyawan.SeksiID != "" {
+// 			data.PihcMasterKary.SeksiID = &data_karyawan.SeksiID
+// 		}
+// 		if data_karyawan.SeksiTitle != "" {
+// 			data.PihcMasterKary.SeksiTitle = &data_karyawan.SeksiTitle
+// 		}
+// 		if data_karyawan.PreNameTitle != "" {
+// 			data.PihcMasterKary.PreNameTitle = &data_karyawan.PreNameTitle
+// 		}
+// 		if data_karyawan.PostNameTitle != "" {
+// 			data.PihcMasterKary.PostNameTitle = &data_karyawan.PostNameTitle
+// 		}
+// 		if data_karyawan.NoNPWP != "" {
+// 			data.PihcMasterKary.NoNPWP = &data_karyawan.NoNPWP
+// 		}
+// 		if data_karyawan.BankAccount != "" {
+// 			data.PihcMasterKary.BankAccount = &data_karyawan.BankAccount
+// 		}
+// 		if data_karyawan.BankName != "" {
+// 			data.PihcMasterKary.BankName = &data_karyawan.BankName
+// 		}
+// 		data.PihcMasterKary.MdgDate = data_karyawan.MdgDate
+// 		if data_karyawan.PayScale != "" {
+// 			data.PihcMasterKary.PayScale = &data_karyawan.PayScale
+// 		}
+// 		data.PihcMasterKary.CCCode = data_karyawan.CCCode
+// 		data.PihcMasterKary.Nickname = data_karyawan.Nickname
+
+// 		domisili, _ := c.UserProfileRepo.FindProfileUsers(data.EmpNo)
+// 		if domisili.Nik != "" {
+// 			data_domisili := users.UserProfile{
+// 				Nik:         domisili.Nik,
+// 				Alamat:      domisili.Alamat,
+// 				Kelurahan:   domisili.Kelurahan,
+// 				Kecamatan:   domisili.Kecamatan,
+// 				Kabupaten:   domisili.Kabupaten,
+// 				Provinsi:    domisili.Provinsi,
+// 				Kodepos:     domisili.Kodepos,
+// 				Domisili:    domisili.Domisili,
+// 				PosisiMap:   domisili.PosisiMap,
+// 				Email2:      domisili.Email2,
+// 				UpdatedBy:   domisili.UpdatedBy,
+// 				NoTelp1:     domisili.NoTelp1,
+// 				NoTelp2:     domisili.NoTelp2,
+// 				Lat:         domisili.Lat,
+// 				Long:        domisili.Long,
+// 				Email1:      domisili.Email1,
+// 				UpdatedFrom: domisili.UpdatedFrom,
+// 				UpdatedDate: domisili.UpdatedDate.Format(time.DateTime),
+// 				IsAdmin:     domisili.IsAdmin,
+// 			}
+
+// 			data.Domisili = &data_domisili
+// 		}
+
+// 		data_profile, _ := c.ProfileRepo.FindProfile(domisili.Nik)
+// 		if data_profile.ID != 0 {
+// 			profileMobile := &Authentication.MobileProfile{
+// 				Profile:     data_profile,
+// 				UserProfile: *data.Domisili,
+// 			}
+// 			data.ProfileMobile = profileMobile
+// 		}
+
+// 		about, _ := c.AboutUsRepo.FindProfileAboutUs(data_profile.Nik)
+// 		if about.ID != 0 {
+// 			data.AboutUs = &about
+// 		}
+
+// 		company, _ := c.PihcMasterCompanyRepo.FindPihcMsterCompany(data_karyawan.Company)
+// 		data.Companys = company
+
+// 		typeCat := "category_skill"
+// 		personalCategory, _ := c.ProfileSkillRepo.GetProfileSkillArr(data_karyawan.EmpNo, typeCat)
+// 		if personalCategory != nil {
+// 			typeMainSkill := "main_skill"
+// 			personalMainSkill, _ := c.ProfileSkillRepo.GetProfileSkillArr(data_karyawan.EmpNo, typeMainSkill)
+
+// 			typeSubSkill := "sub_skill"
+// 			personalSubSkill, _ := c.ProfileSkillRepo.GetProfileSkillArr(data_karyawan.EmpNo, typeSubSkill)
+// 			for _, cat := range personalCategory {
+// 				mainskill := []Authentication.ProfileMainSkill{}
+
+// 				for _, mainskll := range personalMainSkill {
+// 					subskill := []Authentication.ProfileSubSkill{}
+
+// 					for _, subskll := range personalSubSkill {
+// 						if subskll.IdParentSkill != nil {
+// 							if mainskll.ID == *subskll.IdParentSkill {
+// 								subskill = append(subskill, struct{ profile.ProfileSkill }{subskll})
+// 							}
+// 						}
+// 					}
+
+// 					if mainskll.IdParentSkill != nil {
+// 						if cat.ID == *mainskll.IdParentSkill {
+// 							mainSkills := Authentication.ProfileMainSkill{
+// 								ProfileSkill: mainskll,
+// 								SubSkill:     subskill,
+// 							}
+// 							mainskill = append(mainskill, mainSkills)
+// 						}
+// 					}
+// 				}
+
+// 				catSkills := Authentication.ShowSkills{
+// 					ProfileSkill: cat,
+// 					Skill:        mainskill,
+// 				}
+// 				data.Skill = append(data.Skill, catSkills)
+// 			}
+// 		} else {
+// 			data.Skill = []Authentication.ShowSkills{}
+// 		}
+
+// 		data.CompanyLogo = "https://storage.googleapis.com/lumen-oauth-storage/company/logo-pi-full.png"
+// 		photoProfile, _ := c.PhotoProfileRepo.FindPhotoProfile(data_karyawan.EmpNo)
+// 		if photoProfile.Url != "" {
+// 			data.PhotoProfile = photoProfile.Url
+// 		} else {
+// 			data.PhotoProfile = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
+// 		}
+// 		data.PhotoProfileDefault = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
+
+// 		organization, _ := c.PihcMasterPositionRepo.FindViewOrganization(data_karyawan.EmpNo)
+
+// 		data.Organisasi = append(data.Organisasi, organization.Unit1)
+// 		data.Organisasi = append(data.Organisasi, organization.Unit2)
+// 		data.Organisasi = append(data.Organisasi, organization.Org3)
+// 		data.Organisasi = append(data.Organisasi, organization.Org4)
+
+//			ctx.JSON(http.StatusOK, gin.H{
+//				"status":  http.StatusOK,
+//				"success": "Success",
+//				"data":    data,
+//			})
+//		} else {
+//			ctx.AbortWithStatus(http.StatusInternalServerError)
+//		}
+//	}
 func (c *UsersProfileController) UpdatePhotoProfile(ctx *gin.Context) {
 	var req Authentication.ValidationPhotoProfile
 	var data Authentication.ProfilePribadi
@@ -1208,7 +1377,7 @@ func (c *UsersProfileController) UpdatePhotoProfile(ctx *gin.Context) {
 		return
 	}
 
-	data_karyawan, err := c.PihcMasterKaryDbRepo.FindUserByNIK(req.NIK)
+	data_karyawan, err := c.PihcMasterKaryRtDbRepo.FindUserProfileKaryawan(req.NIK)
 	if err == nil {
 		file, _ := ctx.FormFile("photo")
 
@@ -1224,25 +1393,24 @@ func (c *UsersProfileController) UpdatePhotoProfile(ctx *gin.Context) {
 			return
 		}
 
-		imageURL, file_name, err := c.PhotoProfileRepo.UploadFilePhotoProfile(data_karyawan.EmpNo, originalFileName, fileToUpload)
+		imageURL, file_name, err := c.PhotoProfileRepo.UploadFilePhotoProfile(data_karyawan.PihcMasterKaryRtDb.EmpNo, originalFileName, fileToUpload)
 		// file_url, file_name, err := c.EventNotulenRepo.UploadFile(originalFileName, fileToUpload)
 		if err == nil {
-			pp, _ := c.PhotoProfileRepo.FindPhotoProfile(data_karyawan.EmpNo)
-			fmt.Println(pp.Id)
-			if pp.Id != 0 {
+			// pp, _ := c.PhotoProfileRepo.FindPhotoProfile(data_karyawan.EmpNo)
+			if data_karyawan.PhotoProfile.Id != 0 {
 				fmt.Println("UPDATE")
-				pp.Name = file_name
-				pp.Url = imageURL
+				data_karyawan.PhotoProfile.Name = file_name
+				data_karyawan.PhotoProfile.Url = imageURL
 
-				updatePP, _ := c.PhotoProfileRepo.Update(pp)
+				updatePP, _ := c.PhotoProfileRepo.Update(data_karyawan.PhotoProfile)
 				photoProfile = updatePP
 			} else {
 				fmt.Println("CREATE")
-				pp.Name = file_name
-				pp.Url = imageURL
-				pp.EmpNo = data_karyawan.EmpNo
+				data_karyawan.PhotoProfile.Name = file_name
+				data_karyawan.PhotoProfile.Url = imageURL
+				data_karyawan.PhotoProfile.EmpNo = data_karyawan.PihcMasterKaryRtDb.EmpNo
 
-				createPP, _ := c.PhotoProfileRepo.Create(pp)
+				createPP, _ := c.PhotoProfileRepo.Create(data_karyawan.PhotoProfile)
 				photoProfile = createPP
 			}
 		}
@@ -1253,127 +1421,109 @@ func (c *UsersProfileController) UpdatePhotoProfile(ctx *gin.Context) {
 			})
 			return
 		}
-		data.PihcMasterKary.EmpNo = data_karyawan.EmpNo
-		data.PihcMasterKary.Nama = data_karyawan.Nama
-		data.PihcMasterKary.Gender = data_karyawan.Gender
-		data.PihcMasterKary.Agama = data_karyawan.Agama
-		data.PihcMasterKary.StatusKawin = data_karyawan.StatusKawin
-		data.PihcMasterKary.Anak = data_karyawan.Anak
-		data.PihcMasterKary.Mdg = strconv.Itoa(data_karyawan.Mdg)
-		data.PihcMasterKary.EmpGrade = data_karyawan.EmpGrade
-		data.PihcMasterKary.EmpGradeTitle = data_karyawan.EmpGradeTitle
-		data.PihcMasterKary.Area = data_karyawan.Area
-		data.PihcMasterKary.AreaTitle = data_karyawan.AreaTitle
-		data.PihcMasterKary.SubArea = data_karyawan.SubArea
-		data.PihcMasterKary.SubAreaTitle = data_karyawan.SubAreaTitle
-		data.PihcMasterKary.Contract = data_karyawan.Contract
-		data.PihcMasterKary.Pendidikan = data_karyawan.Pendidikan
-		data.PihcMasterKary.Company = data_karyawan.Company
-		if data_karyawan.Lokasi != "" {
-			data.PihcMasterKary.Lokasi = &data_karyawan.Lokasi
-		}
-		data.PihcMasterKary.EmployeeStatus = data_karyawan.EmployeeStatus
-		data.PihcMasterKary.Email = data_karyawan.Email
-		data.PihcMasterKary.HP = data_karyawan.HP
-		data.PihcMasterKary.TglLahir = data_karyawan.TglLahir.Format(time.DateOnly)
-		data.PihcMasterKary.PosID = data_karyawan.PosID
-		data.PihcMasterKary.PosTitle = data_karyawan.PosTitle
-		data.PihcMasterKary.SupPosID = data_karyawan.SupPosID
-		data.PihcMasterKary.PosGrade = data_karyawan.PosGrade
-		data.PihcMasterKary.PosKategori = data_karyawan.PosKategori
-		data.PihcMasterKary.OrgID = data_karyawan.OrgID
-		data.PihcMasterKary.OrgTitle = data_karyawan.OrgTitle
-		data.PihcMasterKary.DeptID = data_karyawan.DeptID
-		data.PihcMasterKary.DeptTitle = data_karyawan.DeptTitle
-		data.PihcMasterKary.KompID = data_karyawan.KompID
-		data.PihcMasterKary.KompTitle = data_karyawan.KompTitle
-		data.PihcMasterKary.DirID = data_karyawan.DirID
-		data.PihcMasterKary.DirTitle = data_karyawan.DirTitle
-		data.PihcMasterKary.PosLevel = data_karyawan.PosLevel
-		data.PihcMasterKary.SupEmpNo = data_karyawan.SupEmpNo
-		data.PihcMasterKary.BagID = data_karyawan.BagID
-		data.PihcMasterKary.BagTitle = data_karyawan.BagTitle
-		if data_karyawan.SeksiID != "" {
-			data.PihcMasterKary.SeksiID = &data_karyawan.SeksiID
-		}
-		if data_karyawan.SeksiTitle != "" {
-			data.PihcMasterKary.SeksiTitle = &data_karyawan.SeksiTitle
-		}
-		if data_karyawan.PreNameTitle != "" {
-			data.PihcMasterKary.PreNameTitle = &data_karyawan.PreNameTitle
-		}
-		if data_karyawan.PostNameTitle != "" {
-			data.PihcMasterKary.PostNameTitle = &data_karyawan.PostNameTitle
-		}
-		if data_karyawan.NoNPWP != "" {
-			data.PihcMasterKary.NoNPWP = &data_karyawan.NoNPWP
-		}
-		if data_karyawan.BankAccount != "" {
-			data.PihcMasterKary.BankAccount = &data_karyawan.BankAccount
-		}
-		if data_karyawan.BankName != "" {
-			data.PihcMasterKary.BankName = &data_karyawan.BankName
-		}
-		data.PihcMasterKary.MdgDate = data_karyawan.MdgDate
-		if data_karyawan.PayScale != "" {
-			data.PihcMasterKary.PayScale = &data_karyawan.PayScale
-		}
-		data.PihcMasterKary.CCCode = data_karyawan.CCCode
-		data.PihcMasterKary.Nickname = data_karyawan.Nickname
+		data.PihcMasterKaryRt.EmpNo = data_karyawan.PihcMasterKaryRtDb.EmpNo
+		data.PihcMasterKaryRt.Nama = data_karyawan.PihcMasterKaryRtDb.Nama
+		data.PihcMasterKaryRt.Gender = data_karyawan.PihcMasterKaryRtDb.Gender
+		data.PihcMasterKaryRt.Agama = data_karyawan.PihcMasterKaryRtDb.Agama
+		data.PihcMasterKaryRt.StatusKawin = data_karyawan.PihcMasterKaryRtDb.StatusKawin
+		data.PihcMasterKaryRt.Anak = data_karyawan.PihcMasterKaryRtDb.Anak
+		data.PihcMasterKaryRt.Mdg = strconv.Itoa(data_karyawan.PihcMasterKaryRtDb.Mdg)
+		data.PihcMasterKaryRt.EmpGrade = data_karyawan.PihcMasterKaryRtDb.EmpGrade
+		data.PihcMasterKaryRt.EmpGradeTitle = data_karyawan.PihcMasterKaryRtDb.EmpGradeTitle
+		data.PihcMasterKaryRt.Area = data_karyawan.PihcMasterKaryRtDb.Area
+		data.PihcMasterKaryRt.AreaTitle = data_karyawan.PihcMasterKaryRtDb.AreaTitle
+		data.PihcMasterKaryRt.SubArea = data_karyawan.PihcMasterKaryRtDb.SubArea
+		data.PihcMasterKaryRt.SubAreaTitle = data_karyawan.PihcMasterKaryRtDb.SubAreaTitle
+		data.PihcMasterKaryRt.Contract = data_karyawan.PihcMasterKaryRtDb.Contract
+		data.PihcMasterKaryRt.Pendidikan = data_karyawan.PihcMasterKaryRtDb.Pendidikan
+		data.PihcMasterKaryRt.Company = data_karyawan.PihcMasterKaryRtDb.Company
+		data.PihcMasterKaryRt.Lokasi = data_karyawan.PihcMasterKaryRtDb.Lokasi
+		data.PihcMasterKaryRt.EmployeeStatus = data_karyawan.PihcMasterKaryRtDb.EmployeeStatus
+		data.PihcMasterKaryRt.Email = data_karyawan.PihcMasterKaryRtDb.Email
+		data.PihcMasterKaryRt.HP = data_karyawan.PihcMasterKaryRtDb.HP
+		data.PihcMasterKaryRt.TglLahir = data_karyawan.PihcMasterKaryRtDb.TglLahir.Format(time.DateOnly)
+		data.PihcMasterKaryRt.PosID = data_karyawan.PihcMasterKaryRtDb.PosID
+		data.PihcMasterKaryRt.PosTitle = data_karyawan.PihcMasterKaryRtDb.PosTitle
+		data.PihcMasterKaryRt.SupPosID = data_karyawan.PihcMasterKaryRtDb.SupPosID
+		data.PihcMasterKaryRt.PosGrade = data_karyawan.PihcMasterKaryRtDb.PosGrade
+		data.PihcMasterKaryRt.PosKategori = data_karyawan.PihcMasterKaryRtDb.PosKategori
+		data.PihcMasterKaryRt.OrgID = data_karyawan.PihcMasterKaryRtDb.OrgID
+		data.PihcMasterKaryRt.OrgTitle = data_karyawan.PihcMasterKaryRtDb.OrgTitle
+		data.PihcMasterKaryRt.DeptID = data_karyawan.PihcMasterKaryRtDb.DeptID
+		data.PihcMasterKaryRt.DeptTitle = data_karyawan.PihcMasterKaryRtDb.DeptTitle
+		data.PihcMasterKaryRt.KompID = data_karyawan.PihcMasterKaryRtDb.KompID
+		data.PihcMasterKaryRt.KompTitle = data_karyawan.PihcMasterKaryRtDb.KompTitle
+		data.PihcMasterKaryRt.DirID = data_karyawan.PihcMasterKaryRtDb.DirID
+		data.PihcMasterKaryRt.DirTitle = data_karyawan.PihcMasterKaryRtDb.DirTitle
+		data.PihcMasterKaryRt.PosLevel = data_karyawan.PihcMasterKaryRtDb.PosLevel
+		data.PihcMasterKaryRt.SupEmpNo = data_karyawan.PihcMasterKaryRtDb.SupEmpNo
+		data.PihcMasterKaryRt.BagID = data_karyawan.PihcMasterKaryRtDb.BagID
+		data.PihcMasterKaryRt.BagTitle = data_karyawan.PihcMasterKaryRtDb.BagTitle
+		data.PihcMasterKaryRt.SeksiID = data_karyawan.PihcMasterKaryRtDb.SeksiID
+		data.PihcMasterKaryRt.SeksiTitle = data_karyawan.PihcMasterKaryRtDb.SeksiTitle
+		data.PihcMasterKaryRt.PreNameTitle = data_karyawan.PihcMasterKaryRtDb.PreNameTitle
+		data.PihcMasterKaryRt.PostNameTitle = data_karyawan.PihcMasterKaryRtDb.PostNameTitle
+		data.PihcMasterKaryRt.NoNPWP = data_karyawan.PihcMasterKaryRtDb.NoNPWP
+		data.PihcMasterKaryRt.BankAccount = data_karyawan.PihcMasterKaryRtDb.BankAccount
+		data.PihcMasterKaryRt.BankName = data_karyawan.PihcMasterKaryRtDb.BankName
+		data.PihcMasterKaryRt.MdgDate = data_karyawan.PihcMasterKaryRtDb.MdgDate
+		data.PihcMasterKaryRt.PayScale = data_karyawan.PihcMasterKaryRtDb.PayScale
+		data.PihcMasterKaryRt.CCCode = data_karyawan.PihcMasterKaryRtDb.CCCode
+		data.PihcMasterKaryRt.Nickname = data_karyawan.PihcMasterKaryRtDb.Nickname
 
-		domisili, _ := c.UserProfileRepo.FindProfileUsers(data.EmpNo)
+		// domisili, _ := c.UserProfileRepo.FindProfileUsers(data.EmpNo)
 
-		if domisili.Nik != "" {
+		if data_karyawan.UserProfileDB.Nik != "" {
 			data_domisili := users.UserProfile{
-				Nik:         domisili.Nik,
-				Alamat:      domisili.Alamat,
-				Kelurahan:   domisili.Kelurahan,
-				Kecamatan:   domisili.Kecamatan,
-				Kabupaten:   domisili.Kabupaten,
-				Provinsi:    domisili.Provinsi,
-				Kodepos:     domisili.Kodepos,
-				Domisili:    domisili.Domisili,
-				PosisiMap:   domisili.PosisiMap,
-				Email2:      domisili.Email2,
-				UpdatedBy:   domisili.UpdatedBy,
-				NoTelp1:     domisili.NoTelp1,
-				NoTelp2:     domisili.NoTelp2,
-				Lat:         domisili.Lat,
-				Long:        domisili.Long,
-				Email1:      domisili.Email1,
-				UpdatedFrom: domisili.UpdatedFrom,
-				UpdatedDate: domisili.UpdatedDate.Format(time.DateTime),
-				IsAdmin:     domisili.IsAdmin,
+				Nik:         data_karyawan.UserProfileDB.Nik,
+				Alamat:      data_karyawan.UserProfileDB.Alamat,
+				Kelurahan:   data_karyawan.UserProfileDB.Kelurahan,
+				Kecamatan:   data_karyawan.UserProfileDB.Kecamatan,
+				Kabupaten:   data_karyawan.UserProfileDB.Kabupaten,
+				Provinsi:    data_karyawan.UserProfileDB.Provinsi,
+				Kodepos:     data_karyawan.UserProfileDB.Kodepos,
+				Domisili:    data_karyawan.UserProfileDB.Domisili,
+				PosisiMap:   data_karyawan.UserProfileDB.PosisiMap,
+				Email2:      data_karyawan.UserProfileDB.Email2,
+				UpdatedBy:   data_karyawan.UserProfileDB.UpdatedBy,
+				NoTelp1:     data_karyawan.UserProfileDB.NoTelp1,
+				NoTelp2:     data_karyawan.UserProfileDB.NoTelp2,
+				Lat:         data_karyawan.UserProfileDB.Lat,
+				Long:        data_karyawan.UserProfileDB.Long,
+				Email1:      data_karyawan.UserProfileDB.Email1,
+				UpdatedFrom: data_karyawan.UserProfileDB.UpdatedFrom,
+				UpdatedDate: data_karyawan.UserProfileDB.UpdatedDate.Format(time.DateTime),
+				IsAdmin:     data_karyawan.UserProfileDB.IsAdmin,
 			}
 
 			data.Domisili = &data_domisili
 		}
 
-		data_profile, _ := c.ProfileRepo.FindProfile(domisili.Nik)
-		if data_profile.ID != 0 {
+		// data_profile, _ := c.ProfileRepo.FindProfile(domisili.Nik)
+		if data_karyawan.Profile.ID != 0 {
 			profileMobile := &Authentication.MobileProfile{
-				Profile:     data_profile,
+				Profile:     data_karyawan.Profile,
 				UserProfile: *data.Domisili,
 			}
 			data.ProfileMobile = profileMobile
 		}
 
-		about, _ := c.AboutUsRepo.FindProfileAboutUs(data_profile.Nik)
-		if about.ID != 0 {
-			data.AboutUs = &about
+		// about, _ := c.AboutUsRepo.FindProfileAboutUs(data_profile.Nik)
+		if data_karyawan.AboutUs.ID != 0 {
+			data.AboutUs = &data_karyawan.AboutUs
 		}
 
-		company, _ := c.PihcMasterCompanyRepo.FindPihcMsterCompany(data_karyawan.Company)
-		data.Companys = company
+		// company, _ := c.PihcMasterCompanyRepo.FindPihcMsterCompany(data_karyawan.Company)
+		data.Companys = data_karyawan.PihcMasterCompany
 
 		typeCat := "category_skill"
-		personalCategory, _ := c.ProfileSkillRepo.GetProfileSkillArr(data_karyawan.EmpNo, typeCat)
+		personalCategory, _ := c.ProfileSkillRepo.GetProfileSkillArr(data_karyawan.PihcMasterKaryRtDb.EmpNo, typeCat)
 		if personalCategory != nil {
 			typeMainSkill := "main_skill"
-			personalMainSkill, _ := c.ProfileSkillRepo.GetProfileSkillArr(data_karyawan.EmpNo, typeMainSkill)
+			personalMainSkill, _ := c.ProfileSkillRepo.GetProfileSkillArr(data_karyawan.PihcMasterKaryRtDb.EmpNo, typeMainSkill)
 
 			typeSubSkill := "sub_skill"
-			personalSubSkill, _ := c.ProfileSkillRepo.GetProfileSkillArr(data_karyawan.EmpNo, typeSubSkill)
+			personalSubSkill, _ := c.ProfileSkillRepo.GetProfileSkillArr(data_karyawan.PihcMasterKaryRtDb.EmpNo, typeSubSkill)
 			for _, cat := range personalCategory {
 				mainskill := []Authentication.ProfileMainSkill{}
 
@@ -1417,7 +1567,7 @@ func (c *UsersProfileController) UpdatePhotoProfile(ctx *gin.Context) {
 		}
 		data.PhotoProfileDefault = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
 
-		organization, _ := c.PihcMasterPositionRepo.FindViewOrganization(data_karyawan.EmpNo)
+		organization, _ := c.PihcMasterPositionRepo.FindViewOrganization(data_karyawan.PihcMasterKaryRtDb.EmpNo)
 
 		data.Organisasi = append(data.Organisasi, organization.Unit1)
 		data.Organisasi = append(data.Organisasi, organization.Unit2)
