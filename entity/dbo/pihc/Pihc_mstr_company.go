@@ -53,6 +53,14 @@ func NewViewOrganisasiRepo(db *gorm.DB) *ViewOrganisasiRepo {
 	return &ViewOrganisasiRepo{DB: db}
 }
 
+func (t PihcMasterCompanyRepo) FindAllCompany() ([]PihcMasterCompany, error) {
+	var pihc_mc []PihcMasterCompany
+	err := t.DB.Order("code ASC").Find(&pihc_mc).Error
+	if err != nil {
+		return pihc_mc, err
+	}
+	return pihc_mc, nil
+}
 func (t PihcMasterCompanyRepo) FindPihcMsterCompany(comp_code string) (PihcMasterCompany, error) {
 	var pihc_mc PihcMasterCompany
 	err := t.DB.Where("code=?", comp_code).Take(&pihc_mc).Error

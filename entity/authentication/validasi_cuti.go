@@ -16,6 +16,7 @@ type ValidasiStoreCutiKaryawan struct {
 	AkhirAbsen       string                       `form:"akhir_absen" json:"akhir_absen"`
 	CreatedBy        string                       `form:"created_by" json:"created_by"`
 	FileAbsen        []FileAbsenStoreCutiKaryawan `form:"file_absen" json:"file_absen"`
+	Status           string                       `form:"status" json:"status"`
 }
 
 type SaldoCutiTransaksiPengajuan struct {
@@ -37,13 +38,19 @@ type ValidasiStoreSaldoCuti struct {
 	ValidFrom       string `form:"valid_from" json:"valid_from" binding:"required"`
 	ValidTo         string `form:"valid_to" json:"valid_to" binding:"required"`
 	CreatedBy       string `form:"created_by" json:"created_by"`
+	Periode         string `form:"periode" json:"periode"`
 	MaxHutang       int    `form:"max_hutang" json:"max_hutang"`
 	ValidFromHutang string `form:"valid_from_hutang" json:"valid_from_hutang"`
 }
 
 type ValidasiListSaldoCuti struct {
 	ValidasiKonfirmasiNik
-	Tahun string `form:"tahun" json:"tahun" binding:"required"`
+	Key         string `form:"key" json:"key"`
+	Perusahaan  string `form:"perusahaan" json:"perusahaan"`
+	Direktorat  string `form:"direktorat" json:"direktorat"`
+	Kompartemen string `form:"kompartemen" json:"kompartemen"`
+	Departemen  string `form:"departemen" json:"departemen"`
+	Tahun       string `form:"tahun" json:"tahun" binding:"required"`
 }
 
 type ValidationNIKTahun struct {
@@ -57,6 +64,8 @@ type ValidationNIKTahunStatus struct {
 
 type ValidationApprovalAtasanPengajuanAbsen struct {
 	IdPengajuanAbsen int    `form:"id_pengajuan_absen" json:"id_pengajuan_absen" binding:"required"`
+	Nik              string `form:"nik" json:"nik"`
+	IsManager        bool   `form:"is_manager" json:"is_manager"`
 	Status           string `form:"status" json:"status" binding:"required"`
 	Keterangan       string `form:"keterangan" json:"keterangan"`
 }
@@ -135,13 +144,14 @@ type ListApprovalCuti struct {
 	pihc.PihcMasterKaryRt  `json:"karyawan"`
 	pihc.PihcMasterCompany `json:"companys"`
 	cuti.TipeAbsen         `json:"tipe_absen"`
-	Deskripsi              string           `json:"deskripsi"`
-	TglPengajuan           string           `json:"tgl_pengajuan"`
-	MulaiAbsen             string           `json:"mulai_absen"`
-	AkhirAbsen             string           `json:"akhir_absen"`
-	Status                 string           `json:"status"`
-	FileAbsen              []cuti.FileAbsen `json:"file_absen"`
-	Periode                *string          `json:"periode"`
-	Foto                   string           `json:"foto"`
-	FotoDefault            string           `json:"foto_default"`
+	Deskripsi              string                `json:"deskripsi"`
+	TglPengajuan           string                `json:"tgl_pengajuan"`
+	MulaiAbsen             string                `json:"mulai_absen"`
+	AkhirAbsen             string                `json:"akhir_absen"`
+	Status                 string                `json:"status"`
+	FileAbsen              []cuti.FileAbsen      `json:"file_absen"`
+	ApprovedBy             []cuti.AtasanApproved `json:"approved_by"`
+	Periode                *string               `json:"periode"`
+	Foto                   string                `json:"foto"`
+	FotoDefault            string                `json:"foto_default"`
 }

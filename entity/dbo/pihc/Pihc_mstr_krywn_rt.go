@@ -113,6 +113,59 @@ type PihcMasterKaryRt struct {
 	JobGrade       *string `json:"job_grade"`
 }
 
+type DataPegawaiRtDb struct {
+	EmpNo          string `json:"emp_no" gorm:"primary_key"`
+	Nama           string `json:"nama"`
+	Gender         string `json:"gender"`
+	Agama          string `json:"agama"`
+	StatusKawin    string `json:"status_kawin"`
+	Anak           int8   `json:"anak"` //
+	Mdg            string `json:"mdg"`  //
+	EmpGrade       string `json:"emp_grade"`
+	EmpGradeTitle  string `json:"emp_grade_title"`
+	Area           string `json:"area"`
+	AreaTitle      string `json:"area_title"`
+	SubArea        string `json:"sub_area"`
+	SubAreaTitle   string `json:"sub_area_title"`
+	Contract       string `json:"contract"`
+	Pendidikan     string `json:"pendidikan"`
+	Company        string `json:"company"`
+	Lokasi         string `json:"lokasi"`
+	EmployeeStatus string `json:"employee_status"`
+	Email          string `json:"email"`
+	HP             string `json:"hp"`
+	TglLahir       string `json:"tgl_lahir"`
+	PosID          string `json:"pos_id"`
+	PosTitle       string `json:"pos_title"`
+	SupPosID       string `json:"sup_pos_id"`
+	PosGrade       string `json:"pos_grade"`
+	PosKategori    string `json:"pos_kategori"`
+	OrgID          string `json:"org_id"`
+	OrgTitle       string `json:"org_title"`
+	DeptID         string `json:"dept_id"`
+	DeptTitle      string `json:"dept_title"`
+	KompID         string `json:"komp_id"`
+	KompTitle      string `json:"komp_title"`
+	DirID          string `json:"dir_id"`
+	DirTitle       string `json:"dir_title"`
+	PosLevel       string `json:"pos_level"`
+	SupEmpNo       string `json:"sup_emp_no"`
+	BagID          string `json:"bag_id"`
+	BagTitle       string `json:"bag_title"`
+	SeksiID        string `json:"seksi_id"`
+	SeksiTitle     string `json:"seksi_title"`
+	PreNameTitle   string `json:"pre_name_title"`
+	PostNameTitle  string `json:"post_name_title"`
+	NoNPWP         string `json:"no_npwp"`
+	BankAccount    string `json:"bank_account"`
+	BankName       string `json:"bank_name"`
+	MdgDate        string `json:"mdg_date"`
+	PayScale       string `json:"PayScale"`
+	CCCode         string `json:"cc_code"`
+	Nickname       string `json:"nickname"`
+	JobGrade       string `json:"job_grade"`
+}
+
 type SpesifikasiRekap struct {
 	EmpNama   string `json:"emp_nama"`
 	Nik       string `json:"nik"`
@@ -125,6 +178,19 @@ type SpesifikasiRekap struct {
 	KompTitle string `json:"komp_title"`
 	DirID     string `json:"dir_id"`
 	DirTitle  string `json:"dir_title"`
+}
+
+type ViewDirektorat struct {
+	DirId    string `json:"dir_id"`
+	DirTitle string `json:"dir_title"`
+}
+type ViewKompartemen struct {
+	KompID    string `json:"komp_id"`
+	KompTitle string `json:"komp_title"`
+}
+type ViewDepartemen struct {
+	DeptID    string `json:"dept_id"`
+	DeptTitle string `json:"dept_title"`
 }
 
 func (PihcMasterKaryRtDb) TableName() string {
@@ -248,11 +314,84 @@ func (t PihcMasterKaryRtDbRepo) FindUserAtasanBySupPosID(sup_pos_id string) (Pih
 	return pihc_mk, nil
 }
 
+func (t PihcMasterKaryRtDbRepo) FindDirektoratCompany(company string) ([]ViewDirektorat, error) {
+	var vdir []ViewDirektorat
+	err := t.DB.Raw(`
+		select pmkrt.dir_id, pmkrt.dir_title
+			from dbo.pihc_master_kary_rt pmkrt
+		where company = ? and (dir_id is not null and dir_title is not null) and (dir_id != '' and dir_title != '')
+		group by dir_id ,dir_title 
+		order by dir_id
+	`, company).Scan(&vdir).Error
+
+	if err != nil {
+		return vdir, err
+	}
+	return vdir, nil
+}
+
+func (t PihcMasterKaryRtDbRepo) FindKompartemenCompany(company string, dir_id string) ([]ViewKompartemen, error) {
+	var vk []ViewKompartemen
+	err := t.DB.Raw(`
+		select pmkrt.komp_id, pmkrt.komp_title
+			from dbo.pihc_master_kary_rt pmkrt
+		where company = ? and dir_id = ? 
+			and (komp_id is not null and komp_title is not null) and (komp_id != '' and komp_title != '')
+		group by komp_id ,komp_title 
+		order by komp_id
+	`, company, dir_id).Scan(&vk).Error
+
+	if err != nil {
+		return vk, err
+	}
+	return vk, nil
+}
+func (t PihcMasterKaryRtDbRepo) FindDepartemenCompany(company string, komp_id string) ([]ViewDepartemen, error) {
+	var vdept []ViewDepartemen
+	err := t.DB.Raw(`
+		select pmkrt.dept_id, pmkrt.dept_title
+			from dbo.pihc_master_kary_rt pmkrt
+		where company = ? and komp_id = ? 
+			and (dept_id is not null and dept_title is not null) and (dept_id != '' and dept_title != '')
+		group by dept_id ,dept_title 
+		order by dept_id
+	`, company, komp_id).Scan(&vdept).Error
+
+	if err != nil {
+		return vdept, err
+	}
+	return vdept, nil
+}
+
+//	func (t ViewOrganisasiRepo) FindViewOrganization(nik string) (ViewOrganisasi, error) {
+//		var vo ViewOrganisasi
+//		err := t.DB.Raw(`
+//		select vo.unit1,vo.unit2 , vo.org3, vo.org4
+//			from dbo."View_Organisasi" vo
+//			join dbo.pihc_master_kary_rt pmkr on pmkr.pos_id = vo."position"
+//			where pmkr.emp_no =?`, nik).Scan(&vo).Error
+//		if err != nil {
+//			return vo, err
+//		}
+//		return vo, nil
+//	}
 func (t PihcMasterKaryRtDbRepo) FindUserByNIKArray(nik []string) ([]PihcMasterKaryRtDb, error) {
 	var pihc_mk []PihcMasterKaryRtDb
 	err := t.DB.Where("emp_no in(?)", nik).Find(&pihc_mk).Error
 	if err != nil {
 		return pihc_mk, err
 	}
+	return pihc_mk, nil
+}
+
+func (t PihcMasterKaryRtDbRepo) FindUserByKeyArr(key string) ([]DataPegawaiRtDb, error) {
+	var pihc_mk []DataPegawaiRtDb
+
+	err := t.DB.Table("dbo.pihc_master_karyawan").Where("lower(nama) like lower(?) OR emp_no like ?", "%"+key+"%", "%"+key+"%").Find(&pihc_mk).Error
+	if err != nil {
+		fmt.Println("ERROR")
+		return pihc_mk, err
+	}
+
 	return pihc_mk, nil
 }

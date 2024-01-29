@@ -1,6 +1,7 @@
 package cuti
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -8,23 +9,33 @@ import (
 )
 
 type PengajuanAbsen struct {
-	IdPengajuanAbsen int       `json:"id_pengajuan_absen" gorm:"primary_key"`
-	Nik              string    `json:"nik" gorm:"default:null"`
-	CompCode         string    `json:"comp_code" gorm:"default:null"`
-	TipeAbsenId      *string   `json:"tipe_absen_id" gorm:"default:null"`
-	Deskripsi        *string   `json:"deskripsi" gorm:"default:null"`
-	MulaiAbsen       time.Time `json:"mulai_absen" gorm:"default:null"`
-	AkhirAbsen       time.Time `json:"akhir_absen" gorm:"default:null"`
-	TglPengajuan     time.Time `json:"tgl_pengajuan" gorm:"default:null"`
-	Status           *string   `json:"status" gorm:"default:null"`
-	CreatedBy        *string   `json:"created_by" gorm:"default:null"`
-	CreatedAt        time.Time `json:"created_at" gorm:"autoCreateTime"`
-	UpdatedAt        time.Time `json:"updated_at" gorm:"autoUpdateTime"`
-	Keterangan       *string   `json:"keterangan" gorm:"default:null"`
-	Periode          *string   `json:"periode" gorm:"default:null"`
-	ApprovedBy       *string   `json:"approved_by" gorm:"default:null"`
-	JmlHariKalendar  *int      `json:"jml_hari_kalendar" gorm:"default:null"`
-	JmlHariKerja     *int      `json:"jml_hari_kerja" gorm:"default:null"`
+	IdPengajuanAbsen int             `json:"id_pengajuan_absen" gorm:"primary_key"`
+	Nik              string          `json:"nik" gorm:"default:null"`
+	CompCode         string          `json:"comp_code" gorm:"default:null"`
+	TipeAbsenId      *string         `json:"tipe_absen_id" gorm:"default:null"`
+	Deskripsi        *string         `json:"deskripsi" gorm:"default:null"`
+	MulaiAbsen       time.Time       `json:"mulai_absen" gorm:"default:null"`
+	AkhirAbsen       time.Time       `json:"akhir_absen" gorm:"default:null"`
+	TglPengajuan     time.Time       `json:"tgl_pengajuan" gorm:"default:null"`
+	Status           *string         `json:"status" gorm:"default:null"`
+	CreatedBy        *string         `json:"created_by" gorm:"default:null"`
+	CreatedAt        time.Time       `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt        time.Time       `json:"updated_at" gorm:"autoUpdateTime"`
+	Keterangan       *string         `json:"keterangan" gorm:"default:null"`
+	Periode          *string         `json:"periode" gorm:"default:null"`
+	ApprovedBy       json.RawMessage `json:"approved_by" gorm:"default:null;type:json"`
+	JmlHariKalendar  *int            `json:"jml_hari_kalendar" gorm:"default:null"`
+	JmlHariKerja     *int            `json:"jml_hari_kerja" gorm:"default:null"`
+}
+
+type AtasanApproved struct {
+	Nik          string  `json:"nik"`
+	Name         string  `json:"name"`
+	Position     string  `json:"position"`
+	TypeApprover *string `json:"type_approver"`
+	Status       *string `json:"status"`
+	Keterangan   *string `json:"keterangan"`
+	Photo        string  `json:"photo"`
 }
 
 type MyPengajuanAbsen struct {
@@ -32,39 +43,39 @@ type MyPengajuanAbsen struct {
 	Nik              string `json:"nik"`
 	CompCode         string `json:"comp_code"`
 	TipeAbsen        `json:"tipe_absen"`
-	Deskripsi        *string   `json:"deskripsi"`
-	MulaiAbsen       string    `json:"mulai_absen"`
-	AkhirAbsen       string    `json:"akhir_absen"`
-	TglPengajuan     string    `json:"tgl_pengajuan"`
-	Status           *string   `json:"status"`
-	CreatedBy        *string   `json:"created_by"`
-	CreatedAt        time.Time `json:"created_at"`
-	UpdatedAt        time.Time `json:"updated_at"`
-	Keterangan       *string   `json:"keterangan"`
-	Periode          *string   `json:"periode"`
-	ApprovedBy       *string   `json:"approved_by"`
-	JmlHariKalendar  *int      `json:"jml_hari_kalendar"`
-	JmlHariKerja     *int      `json:"jml_hari_kerja"`
+	Deskripsi        *string         `json:"deskripsi"`
+	MulaiAbsen       string          `json:"mulai_absen"`
+	AkhirAbsen       string          `json:"akhir_absen"`
+	TglPengajuan     string          `json:"tgl_pengajuan"`
+	Status           *string         `json:"status"`
+	CreatedBy        *string         `json:"created_by"`
+	CreatedAt        time.Time       `json:"created_at"`
+	UpdatedAt        time.Time       `json:"updated_at"`
+	Keterangan       *string         `json:"keterangan"`
+	Periode          *string         `json:"periode"`
+	ApprovedBy       json.RawMessage `json:"approved_by" gorm:"default:null;type:json"`
+	JmlHariKalendar  *int            `json:"jml_hari_kalendar"`
+	JmlHariKerja     *int            `json:"jml_hari_kerja"`
 }
 
 type HistoryPengajuanAbsen struct {
-	IDHistoryPengajuanAbsen int       `json:"id_history_pengajuan_absen"`
-	Nik                     string    `json:"nik" gorm:"default:null"`
-	CompCode                string    `json:"comp_code" gorm:"default:null"`
-	TipeAbsenId             *string   `json:"tipe_absen_id" gorm:"default:null"`
-	Deskripsi               *string   `json:"deskripsi" gorm:"default:null"`
-	MulaiAbsen              time.Time `json:"mulai_absen" gorm:"default:null"`
-	AkhirAbsen              time.Time `json:"akhir_absen" gorm:"default:null"`
-	TglPengajuan            time.Time `json:"tgl_pengajuan" gorm:"default:null"`
-	Status                  *string   `json:"status" gorm:"default:null"`
-	CreatedBy               *string   `json:"created_by" gorm:"default:null"`
-	CreatedAt               time.Time `json:"created_at" gorm:"autoCreateTime"`
-	UpdatedAt               time.Time `json:"updated_at" gorm:"autoUpdateTime"`
-	Keterangan              *string   `json:"keterangan" gorm:"default:null"`
-	Periode                 *string   `json:"periode" gorm:"default:null"`
-	ApprovedBy              *string   `json:"approved_by" gorm:"default:null"`
-	JmlHariKalendar         *int      `json:"jml_hari_kalendar" gorm:"default:null"`
-	JmlHariKerja            *int      `json:"jml_hari_kerja" gorm:"default:null"`
+	IDHistoryPengajuanAbsen int             `json:"id_history_pengajuan_absen"`
+	Nik                     string          `json:"nik" gorm:"default:null"`
+	CompCode                string          `json:"comp_code" gorm:"default:null"`
+	TipeAbsenId             *string         `json:"tipe_absen_id" gorm:"default:null"`
+	Deskripsi               *string         `json:"deskripsi" gorm:"default:null"`
+	MulaiAbsen              time.Time       `json:"mulai_absen" gorm:"default:null"`
+	AkhirAbsen              time.Time       `json:"akhir_absen" gorm:"default:null"`
+	TglPengajuan            time.Time       `json:"tgl_pengajuan" gorm:"default:null"`
+	Status                  *string         `json:"status" gorm:"default:null"`
+	CreatedBy               *string         `json:"created_by" gorm:"default:null"`
+	CreatedAt               time.Time       `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt               time.Time       `json:"updated_at" gorm:"autoUpdateTime"`
+	Keterangan              *string         `json:"keterangan" gorm:"default:null"`
+	Periode                 *string         `json:"periode" gorm:"default:null"`
+	ApprovedBy              json.RawMessage `json:"approved_by" gorm:"default:null;type:json"`
+	JmlHariKalendar         *int            `json:"jml_hari_kalendar" gorm:"default:null"`
+	JmlHariKerja            *int            `json:"jml_hari_kerja" gorm:"default:null"`
 }
 
 type FileAbsen struct {
@@ -120,10 +131,12 @@ type HistorySaldoCuti struct {
 type TransaksiCuti struct {
 	IdTransaksiCuti  int       `json:"id_transaksi_cuti" gorm:"primary_key"`
 	PengajuanAbsenId int       `json:"pengajuan_absen_id" gorm:"default:null"`
+	TipeAbsenId      string    `json:"tipe_absen_id" gorm:"default:notnull"`
 	Nik              string    `json:"nik" gorm:"default:null"`
 	Periode          string    `json:"periode" gorm:"default:null"`
 	TipeHari         string    `json:"tipe_hari" gorm:"default:null"`
 	JumlahCuti       int       `json:"jumlah_cuti" gorm:"default:null"`
+	Keterangan       *string   `json:"keterangan" gorm:"default:null"`
 	CreatedAt        time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt        time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 }
@@ -204,7 +217,7 @@ func (t SaldoCutiRepo) Create(sc SaldoCuti) (SaldoCuti, error) {
 }
 
 func (t SaldoCutiRepo) Update(sc SaldoCuti) (SaldoCuti, error) {
-	err := t.DB.Where("nik=? AND tipe_absen_id=? AND periode=?", sc.Nik, sc.TipeAbsenId, sc.Periode).Save(&sc).Error
+	err := t.DB.Where("id_saldo_cuti = ?", sc.IdSaldoCuti).Save(&sc).Error
 	if err != nil {
 		return sc, err
 	}
@@ -230,11 +243,39 @@ func (t SaldoCutiRepo) GetSaldoCutiByID(idSaldo interface{}) (SaldoCuti, error) 
 	return sc, nil
 }
 
-func (t SaldoCutiRepo) FindSaldoCutiKaryawanAdmin(nik string, tahun string) ([]SaldoCuti, error) {
+func (t SaldoCutiRepo) FindSaldoCutiKaryawanAdmin(key string, company string, direktorat string, departemen string, kompartemen string, nik string, tahun string) ([]SaldoCuti, error) {
 	var sc []SaldoCuti
-	err := t.DB.Where("created_by=? AND periode=?", nik, tahun).Find(&sc).Error
+
+	query := t.DB.
+		Select("cuti_karyawan.saldo_cuti.*").
+		Joins("inner join dbo.pihc_master_kary_rt pmkr on cuti_karyawan.saldo_cuti.nik = pmkr.emp_no")
+
+	if key != "" {
+		query = query.Where("(pmkr.emp_no like ? OR lower(pmkr.nama) like lower(?) OR pmkr.pos_id like ? OR lower(pmkr.pos_title) like lower(?))",
+			key, "%"+key+"%", key, "%"+key+"%")
+	}
+
+	if company != "" {
+		query = query.Where("pmkr.company = ?", company)
+	}
+
+	if direktorat != "" {
+		query = query.Where("pmkr.dir_id = ?", direktorat)
+	}
+
+	if kompartemen != "" {
+		query = query.Where("pmkr.komp_id = ?", kompartemen)
+	}
+
+	if departemen != "" {
+		query = query.Where("pmkr.dept_id = ?", departemen)
+	}
+
+	query = query.Where("cuti_karyawan.saldo_cuti.created_by = ? AND cuti_karyawan.saldo_cuti.periode = ?", nik, tahun)
+
+	err := query.Order("cuti_karyawan.saldo_cuti.valid_from ASC").Find(&sc).Error
 	if err != nil {
-		return sc, err
+		return nil, err
 	}
 	return sc, nil
 }
@@ -410,11 +451,19 @@ func (t PengajuanAbsenRepo) FindDataIdPengajuan(id interface{}) (PengajuanAbsen,
 func (t PengajuanAbsenRepo) FindDataNIKPeriodeApproval(nik string, tahun string, manager bool) ([]PengajuanAbsen, error) {
 	var pengajuan_absen []PengajuanAbsen
 	var err error
+
+	query := t.DB.
+		Table("cuti_karyawan.pengajuan_absen").
+		Select("*").
+		Where("periode = ?", tahun)
+
 	if manager {
-		err = t.DB.Where("approved_by=? AND periode=?", nik, tahun).Find(&pengajuan_absen).Error
+		query = query.Where("EXISTS (SELECT 1 FROM json_array_elements(approved_by) AS approver WHERE approver->>'status' IS NOT NULL AND approver->>'nik' = ?)", nik)
 	} else {
-		err = t.DB.Where("periode=?", tahun).Find(&pengajuan_absen).Error
+		query = query.Where("EXISTS (SELECT 1 FROM json_array_elements(approved_by) AS approver WHERE approver->>'status' IS NOT NULL)")
 	}
+
+	err = query.Find(&pengajuan_absen).Error
 	if err != nil {
 		return pengajuan_absen, err
 	}
@@ -423,14 +472,22 @@ func (t PengajuanAbsenRepo) FindDataNIKPeriodeApproval(nik string, tahun string,
 func (t PengajuanAbsenRepo) FindDataNIKPeriodeApprovalWaiting(nik string, tahun string, status string, manager bool) ([]PengajuanAbsen, error) {
 	var pengajuan_absen []PengajuanAbsen
 	var err error
+
+	query := t.DB.
+		Table("cuti_karyawan.pengajuan_absen").
+		Select("*").
+		Where("periode = ? AND status = ?", tahun, status)
 	if manager {
-		err = t.DB.Where("approved_by=? AND periode=? AND status=?", nik, tahun, status).Find(&pengajuan_absen).Error
+		query = query.Where("EXISTS (SELECT 1 FROM json_array_elements(approved_by) AS approver WHERE approver->>'status' = 'WaitApv' and approver->>'nik' = ?)", nik)
 	} else {
-		err = t.DB.Where("periode=? AND status=?", tahun, status).Find(&pengajuan_absen).Error
+		query = query.Where("EXISTS (SELECT 1 FROM json_array_elements(approved_by) AS approver WHERE approver->>'status' = 'WaitApv')")
 	}
+
+	err = query.Find(&pengajuan_absen).Error
 	if err != nil {
 		return pengajuan_absen, err
 	}
+
 	return pengajuan_absen, nil
 }
 

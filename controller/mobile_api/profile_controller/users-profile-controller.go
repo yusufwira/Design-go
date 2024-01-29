@@ -32,6 +32,7 @@ type UsersProfileController struct {
 	KegiatanKaryawanRepo     *tjsl.KegiatanKaryawanRepo
 	PihcKaryawanMutasiPIRepo *pihc.PihcKaryawanMutasiPIRepo
 	PihcMasterKaryDbRepo     *pihc.PihcMasterKaryDbRepo
+	PihcMasterKaryRtDbRepo   *pihc.PihcMasterKaryRtDbRepo
 	PihcMasterCompanyRepo    *pihc.PihcMasterCompanyRepo
 	ViewOrganisasiRepo       *pihc.ViewOrganisasiRepo
 }
@@ -46,6 +47,7 @@ func NewUsersProfileController(Db *gorm.DB, StorageClient *storage.Client) *User
 		KegiatanKaryawanRepo:     tjsl.NewKegiatanKaryawanRepo(Db, StorageClient),
 		PihcKaryawanMutasiPIRepo: pihc.NewPihcKaryawanMutasiPIRepo(Db),
 		PihcMasterKaryDbRepo:     pihc.NewPihcMasterKaryDbRepo(Db),
+		PihcMasterKaryRtDbRepo:   pihc.NewPihcMasterKaryRtDbRepo(Db),
 		PihcMasterCompanyRepo:    pihc.NewPihcMasterCompanyRepo(Db),
 		ViewOrganisasiRepo:       pihc.NewViewOrganisasiRepo(Db)}
 }
@@ -361,7 +363,7 @@ func (c *UsersProfileController) DataPegawai(ctx *gin.Context) {
 		return
 	}
 
-	karyawan, err := c.PihcMasterKaryDbRepo.FindUserByKeyArr(req.Key)
+	karyawan, err := c.PihcMasterKaryRtDbRepo.FindUserByKeyArr(req.Key)
 
 	if err == nil {
 		for _, dataKaryawan := range karyawan {
@@ -402,6 +404,70 @@ func (c *UsersProfileController) DataPegawai(ctx *gin.Context) {
 			"data":    data,
 		})
 	}
+}
+func (c *UsersProfileController) DataAtasanPegawai(ctx *gin.Context) {
+	var req Authentication.ValidationNIK
+
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		var ve validator.ValidationErrors
+		if errors.As(err, &ve) {
+			out := make([]Authentication.ErrorMsg, len(ve))
+			for i, fe := range ve {
+				out[i] = Authentication.ErrorMsg{Field: fe.Field(), Message: getErrorMsg(fe)}
+			}
+			ctx.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"errorcode_": http.StatusServiceUnavailable, "errormsg_": out})
+		}
+		return
+	}
+	var data Authentication.DataPegawai
+
+	dataKaryawan, _ := c.PihcMasterKaryRtDbRepo.FindUserByNIK(req.NIK)
+	if dataKaryawan.PosTitle != "Wakil Direktur Utama" {
+		for dataKaryawan.PosTitle != "Wakil Direktur Utama" {
+			dataKaryawan, _ = c.PihcMasterKaryRtDbRepo.FindUserAtasanBySupPosID(dataKaryawan.SupPosID)
+			if dataKaryawan.SupPosID == "" {
+				break
+			}
+		}
+	} else {
+		for dataKaryawan.PosTitle != "Direktur Utama" {
+			dataKaryawan, _ = c.PihcMasterKaryRtDbRepo.FindUserAtasanBySupPosID(dataKaryawan.SupPosID)
+			if dataKaryawan.SupPosID == "" {
+				break
+			}
+		}
+	}
+
+	company, _ := c.PihcMasterCompanyRepo.FindPihcMsterCompany(dataKaryawan.Company)
+	photos, err1 := c.KegiatanKaryawanRepo.FindPhotosKaryawan(dataKaryawan.EmpNo, dataKaryawan.Company)
+	if err1 != nil {
+		photos = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
+	} else {
+		photos = "https://storage.googleapis.com/" + photos
+	}
+	empty := Authentication.DataPegawai{
+		Nik:                 dataKaryawan.EmpNo,
+		Nama:                dataKaryawan.Nama,
+		CompanyName:         company.Name,
+		Skill:               nil,
+		PhotoProfile:        photos,
+		PhotoProfileDefault: "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg",
+		CompanyLogo:         "https://storage.googleapis.com/lumen-oauth-storage/company/logo-pi-full.png",
+	}
+
+	if dataKaryawan.DeptTitle == "" {
+		empty.DeptTitle = dataKaryawan.KompTitle
+	} else {
+		empty.DeptTitle = dataKaryawan.DeptTitle
+	}
+
+	data = empty
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":  http.StatusOK,
+		"success": "Success",
+		"data":    data,
+	})
 }
 
 func (c *UsersProfileController) StoreAboutUs(ctx *gin.Context) {

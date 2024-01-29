@@ -28,9 +28,25 @@ type ValidationRegister struct {
 	Type     string `json:"type" form:"type"`
 }
 
+type ValidationNIK struct {
+	NIK string `json:"nik" form:"nik" binding:"required"`
+}
+
 type ValidationLMK struct {
-	NIK   string `json:"nik" form:"nik" binding:"required"`
+	ValidationNIK
 	Tahun string `json:"tahun" form:"tahun" binding:"required"`
+}
+
+type ValidationCompany struct {
+	Company string `json:"company" form:"company" binding:"required"`
+}
+type ValidationKompartemen struct {
+	ValidationCompany
+	Direktorat string `json:"direktorat" form:"direktorat" binding:"required"`
+}
+type ValidationDepartemen struct {
+	ValidationCompany
+	Kompartemen string `json:"kompartemen" form:"kompartemen" binding:"required"`
 }
 
 type ValidationSMK struct {

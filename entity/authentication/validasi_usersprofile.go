@@ -177,6 +177,12 @@ type ProfilePribadi struct {
 	PhotoProfileDefault string                 `json:"photo_profile_default"`
 	Organisasi          []string               `json:"organisasi"`
 }
+type DataAtasan struct {
+	EmpData        pihc.PihcMasterKaryRt `json:"emp_data"`
+	EmpNo          string                `json:"emp_no"`
+	StatusApprover *string               `json:"status_approver"`
+	Photo          string                `json:"photo"`
+}
 type ValidationPhotoProfile struct {
 	ValidationRequiredNIK
 }

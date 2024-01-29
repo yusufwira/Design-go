@@ -109,6 +109,57 @@ func (c *UsersController) GetDataKaryawanAll(ctx *gin.Context) {
 		})
 	}
 }
+func (c *UsersController) GetAtasanPegawai(ctx *gin.Context) {
+	// var req Authentication.ValidasiKonfirmasiNik
+	Nik := ctx.Param("nik")
+
+	if Nik != "" {
+		url := "https://api-pismart-dev.pupuk-indonesia.com/oauth_api/api/delegasi/tryFindSuperios/" + Nik
+		token := "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIzMTIiLCJqdGkiOiI0NGIxOWE2NzFlNjU4OGYwMzZkZjQzZjBlYWVkNDc5NzY2NDM4YzgxNDM2NmI3YmRiZmM2N2NiYzk3MTQ1MmI4ZjBkY2Y4NDk3OWMzZThhNCIsImlhdCI6MTcwNDc4MTA1MC4xODM3NjEsIm5iZiI6MTcwNDc4MTA1MC4xODM3NywiZXhwIjoxNzM2NDAzNDUwLjE3NDMsInN1YiI6IjU0OCIsInNjb3BlcyI6W119.cTNgAPfuW3Cxg-wAliHGxb8zZOLqq5ym6n2SM6yLHv431WRVWC_YFsw3eQ673hiK63GqDSs6hbDHJEzZxmhpxWEIaXRl6L_Zg9htPSqykJKG5uY9MoHbfs9BXxVKLQMntzfwc6K5S48incJFhWLVKVOopLuPQJ2e9-m25E9f2-mE_AfeHr0KvQhrmUHkB-T-GxDFBqn5YP9xQU4DKpDb-baPAUY_7wlDcTgSAJrGuy8LgLT96wNnDJA9rGXvTDJ7JRpF2SrsZEwIkMk9RF3MWPE4SLOnWC8xMkrM6WK4sTHEloBhfzH4_CMwegsIFN7XfHCavBmTU4PdSbg1dc_8tHJZ0zJALlZZ44UhdlfsMT1uGNcJAam_M7lo9Qnn3knl06pe3gWkm7uo2B7262Dvs-jHP5gLmdRmFZJcvyPNGBdjfdwvOwW3hALzGeDwypnHI-UXS5lQQvAC0kn0PTvmGWQl16Z7JK9He9B75fpn6Cb0StGq_xy9vL6MQ0QkinnmzwHfQuNwOWolz-2LvRFjz7MKUSged5q6r0sz0N-62daNIgGB3GIItS9taLmGfSbbghPuB3y8wHm5yqgadCmyGe2x4OuuzWpnRBxDXFVqnLo-iph90Squ0RgIxhGt5dSN94z9lA3vqUJbt7Em88cjmLZ8po8XAEFKBtLua2CQ6y8"
+
+		request, _ := http.NewRequest("GET", url, nil)
+		request.Header.Add("Authorization", "Bearer "+token)
+
+		client := &http.Client{}
+		resp, err := client.Do(request)
+		if err != nil {
+			fmt.Println("Error on response.\n[ERROR] -", err)
+		}
+		defer resp.Body.Close()
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("Error while reading the response bytes:", err)
+		}
+
+		var data_atasan pihc.PihcMasterKaryRt
+		json.Unmarshal(body, &data_atasan)
+
+		foto := "https://storage.googleapis.com/lumen-oauth-storage/DataKaryawan/Foto/" + data_atasan.Company + "/" + data_atasan.EmpNo + ".jpg"
+		respons, err := http.Get(foto)
+		if err != nil || respons.StatusCode != http.StatusOK {
+			default_foto := "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
+			foto = default_foto
+		}
+
+		temp := Authentication.DataAtasan{
+			EmpData: data_atasan,
+			EmpNo:   data_atasan.EmpNo,
+			Photo:   foto,
+		}
+
+		var atasan []Authentication.DataAtasan
+		atasan = append(atasan, temp)
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"status": 200,
+			"data":   atasan,
+		})
+	} else {
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+	}
+
+}
 
 func (c *UsersController) GetDataKaryawanNameIndiv(ctx *gin.Context) {
 	var req Authentication.ValidationGetName
@@ -253,6 +304,7 @@ func (c *UsersController) Login(ctx *gin.Context) {
 			"user_org_name":  karyawan.OrgTitle,
 			"user_dept_name": karyawan.DeptTitle,
 			"user_komp_name": karyawan.KompTitle,
+			"user_pos_name":  karyawan.PosTitle,
 			"model_type":     user.UserType,
 			"nik":            user.Nik,
 			"position":       karyawan.PosID,
