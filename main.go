@@ -33,7 +33,7 @@ func main() {
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
-		AllowOrigins: []string{"http://127.0.0.1:8000"},
+		AllowOrigins: []string{"http://127.0.0.1:8000","http://10.9.12.44:8088"},
 		AllowMethods: []string{"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"},
 		AllowHeaders: []string{"Origin", "Content-Type", "x-csrf-token", "Authorization"},
 	}))
