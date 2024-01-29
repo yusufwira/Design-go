@@ -168,41 +168,41 @@ func main() {
 		profile.GET("/getSkill/:nik", connection.Validation, userProfileController.GetSkill)
 		profile.GET("/getPengalamanKerja/:nik", connection.Validation, userProfileController.GetPengalamanKerja)
 		profile.GET("/getContactInformation/:nik", connection.Validation, userProfileController.GetContactInformation)
-		profile.GET("/showProfile/:nik", userProfileController.ShowProfile)
+		profile.GET("/showProfile/:nik", connection.Validation, userProfileController.ShowProfile)
 
-		profile.GET("/dataPegawai", userProfileController.DataPegawai)
-		profile.GET("/getAtasanPegawai", userProfileController.DataAtasanPegawai)
+		profile.GET("/dataPegawai", connection.Validation, userProfileController.DataPegawai)
+		profile.GET("/getAtasanPegawai", connection.Validation, userProfileController.DataAtasanPegawai)
 	}
 
 	cuti := auth.Group(os.Getenv("CUTI_URL"))
 	{
 		// PENGAJUAN CUTI
-		cuti.POST("/storeCuti", cutiKrywnController.StoreCutiKaryawan)
-		cuti.GET("/getTipeAbsenSaldoPengajuan", cutiKrywnController.GetTipeAbsenSaldoPengajuan)
-		cuti.GET("/myCuti", cutiKrywnController.GetMyPengajuanCuti)
-		cuti.GET("/showPengajuanCuti/:id_pengajuan_absen", cutiKrywnController.ShowDetailPengajuanCuti)
-		cuti.DELETE("/deletePengajuanCuti/:id_pengajuan_absen", cutiKrywnController.DeletePengajuanCuti)
+		cuti.POST("/storeCuti", connection.Validation, cutiKrywnController.StoreCutiKaryawan)
+		cuti.GET("/getTipeAbsenSaldoPengajuan", connection.Validation, cutiKrywnController.GetTipeAbsenSaldoPengajuan)
+		cuti.GET("/myCuti", connection.Validation, cutiKrywnController.GetMyPengajuanCuti)
+		cuti.GET("/showPengajuanCuti/:id_pengajuan_absen", connection.Validation, cutiKrywnController.ShowDetailPengajuanCuti)
+		cuti.DELETE("/deletePengajuanCuti/:id_pengajuan_absen", connection.Validation, cutiKrywnController.DeletePengajuanCuti)
 
 		// Approval
-		cuti.POST("/listApprovalCuti", cutiKrywnController.ListApprvlCuti)
-		cuti.GET("/showApprovalPengajuanCuti/:id_pengajuan_absen", cutiKrywnController.ShowDetailApprovalPengajuanCuti)
-		cuti.POST("/approve", cutiKrywnController.StoreApprovePengajuanAbsen)
+		cuti.POST("/listApprovalCuti", connection.Validation, cutiKrywnController.ListApprvlCuti)
+		cuti.GET("/showApprovalPengajuanCuti/:id_pengajuan_absen", connection.Validation, cutiKrywnController.ShowDetailApprovalPengajuanCuti)
+		cuti.POST("/approve", connection.Validation, cutiKrywnController.StoreApprovePengajuanAbsen)
 
 		// SALDO CUTI
-		cuti.POST("/storeAdminSaldo", cutiKrywnController.StoreAdminSaldoCutiKaryawan)
-		cuti.POST("/listAdminSaldo", cutiKrywnController.ListAdminSaldoCutiKaryawan)
-		cuti.GET("/getAdminSaldoCuti/:id_saldo_cuti", cutiKrywnController.GetAdminSaldoCuti)
-		cuti.GET("/getAdminTipeAbsen", cutiKrywnController.GetAdminTipeAbsen)
-		cuti.DELETE("/deleteAdminSaldoCuti/:id_saldo_cuti", cutiKrywnController.DeleteAdminSaldoCuti)
+		cuti.POST("/storeAdminSaldo", connection.Validation, cutiKrywnController.StoreAdminSaldoCutiKaryawan)
+		cuti.POST("/listAdminSaldo", connection.Validation, cutiKrywnController.ListAdminSaldoCutiKaryawan)
+		cuti.GET("/getAdminSaldoCuti/:id_saldo_cuti", connection.Validation, cutiKrywnController.GetAdminSaldoCuti)
+		cuti.GET("/getAdminTipeAbsen", connection.Validation, cutiKrywnController.GetAdminTipeAbsen)
+		cuti.DELETE("/deleteAdminSaldoCuti/:id_saldo_cuti", connection.Validation, cutiKrywnController.DeleteAdminSaldoCuti)
 
 		// Company
-		cuti.GET("/getCompany", cutiKrywnController.GetCompany)
+		cuti.GET("/getCompany", connection.Validation, cutiKrywnController.GetCompany)
 		// Direktorat
-		cuti.POST("/getDirektorat", cutiKrywnController.GetDirektorat)
+		cuti.POST("/getDirektorat", connection.Validation, cutiKrywnController.GetDirektorat)
 		// Kompartemen
-		cuti.POST("/getKompartemen", cutiKrywnController.GetKompartemen)
+		cuti.POST("/getKompartemen", connection.Validation, cutiKrywnController.GetKompartemen)
 		// Departemen
-		cuti.POST("/getDepartemen", cutiKrywnController.GetDepartemen)
+		cuti.POST("/getDepartemen", connection.Validation, cutiKrywnController.GetDepartemen)
 	}
 
 	r.Run(os.Getenv("PORT_RUN")) // local
