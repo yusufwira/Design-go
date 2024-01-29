@@ -1369,13 +1369,14 @@ func (c *CutiKrywnController) ListAdminSaldoCutiKaryawan(ctx *gin.Context) {
 
 	if err == nil {
 		for _, dataSaldoo := range saldoCuti {
-			karyawan, _ := c.PihcMasterKaryRtDbRepo.FindUserByNIK(dataSaldoo.Nik)
-			company, _ := c.PihcMasterCompanyRepo.FindPihcMsterCompany(karyawan.Company)
-			TipeAbsen, _ := c.TipeAbsenRepo.FindTipeAbsenByID(dataSaldoo.TipeAbsenId)
-			dataSaldoCuti := ListSaldoCutiKaryawanSet(dataSaldoo, company, TipeAbsen)
+			// karyawan, _ := c.PihcMasterKaryRtDbRepo.FindUserByNIK(dataSaldoo.Nik)
+			// company, _ := c.PihcMasterCompanyRepo.FindPihcMsterCompany(karyawan.Company)
+			// company, _ := c.PihcMasterCompanyRepo.FindPihcMsterCompany(dataSaldoo.PihcMasterKaryRtDb.Company)
+			// TipeAbsen, _ := c.TipeAbsenRepo.FindTipeAbsenByID(dataSaldoo.SaldoCuti.TipeAbsenId)
+			dataSaldoCuti := ListSaldoCutiKaryawanSet(dataSaldoo.SaldoCuti, dataSaldoo.PihcMasterCompany, dataSaldoo.TipeAbsen)
 
-			if karyawan.Nama != "" {
-				dataSaldoCuti.Nama = karyawan.Nama
+			if dataSaldoo.PihcMasterKaryRtDb.Nama != "" {
+				dataSaldoCuti.Nama = dataSaldoo.PihcMasterKaryRtDb.Nama
 			}
 			data = append(data, dataSaldoCuti)
 		}

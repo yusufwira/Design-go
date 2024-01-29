@@ -78,13 +78,47 @@ func (t PihcMasterCompanyRepo) FindPihcMsterCompanyArray(comp_code []string) ([]
 	return pihc_mc, nil
 }
 
-func (t ViewOrganisasiRepo) FindViewOrganization(nik string) (ViewOrganisasi, error) {
+//	func (t ViewOrganisasiRepo) FindViewOrganization(nik string) (ViewOrganisasi, error) {
+//		var vo ViewOrganisasi
+//		err := t.DB.Table(`dbo."View_Organisasi"`).
+//			Select(`dbo."View_Organisasi".unit1, dbo."View_Organisasi".unit2,
+//				dbo."View_Organisasi".org3, dbo."View_Organisasi".org4`).
+//			Joins(`inner join dbo.pihc_master_kary_rt pmkr on pmkr.pos_id = dbo."View_Organisasi"."position"`).
+//			Where("pmkr.emp_no =?", nik).Take(&vo).Error
+//		if err != nil {
+//			return vo, err
+//		}
+//		return vo, nil
+//	}
+func (t PihcMasterPositionRepo) FindViewOrganization(nik string) (ViewOrganisasi, error) {
 	var vo ViewOrganisasi
-	err := t.DB.Raw(`
-	select vo.unit1,vo.unit2 , vo.org3, vo.org4
-		from dbo."View_Organisasi" vo
-		join dbo.pihc_master_kary_rt pmkr on pmkr.pos_id = vo."position"
-		where pmkr.emp_no =?`, nik).Scan(&vo).Error
+	err := t.DB.Table("dbo.pihc_master_position").
+		Select(`
+			CASE
+				WHEN LEFT(dbo.pihc_master_position.grade::text, 1) >= '3'::text THEN
+					COALESCE(b4.org_unit_desc, b3.org_unit_desc, b2.org_unit_desc, dbo.pihc_master_position.org_unit_desc)
+				ELSE
+					dbo.pihc_master_position.org_unit_desc
+			END AS unit1,
+			CASE
+				WHEN LEFT(dbo.pihc_master_position.grade::text, 1) >= '3'::text THEN
+					COALESCE(b4.org_unit_desc, b3.org_unit_desc, b2.org_unit_desc, dbo.pihc_master_position.org_unit_desc)
+				ELSE
+					b2.org_unit_desc
+			END AS unit2,
+			b3.org_unit_desc AS org3,
+			b4.org_unit_desc AS org4
+		`).
+		Joins(`
+        LEFT JOIN dbo.pihc_master_position b2 ON dbo.pihc_master_position.manager_pos::text = b2."position"::text
+        LEFT JOIN dbo.pihc_master_position b3 ON b2.manager_pos::text = b3."position"::text
+        LEFT JOIN dbo.pihc_master_position b4 ON b3.manager_pos::text = b4."position"::text
+        INNER JOIN dbo.pihc_master_kary_rt pmkr ON pmkr.pos_id = dbo.pihc_master_position."position"
+    	`).
+		Where("pmkr.emp_no = ?", nik).
+		Order(`dbo.pihc_master_position."position"`).
+		Take(&vo).Error
+
 	if err != nil {
 		return vo, err
 	}

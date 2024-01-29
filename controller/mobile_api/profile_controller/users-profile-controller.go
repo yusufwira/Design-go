@@ -35,6 +35,7 @@ type UsersProfileController struct {
 	PihcMasterKaryRtDbRepo   *pihc.PihcMasterKaryRtDbRepo
 	PihcMasterCompanyRepo    *pihc.PihcMasterCompanyRepo
 	ViewOrganisasiRepo       *pihc.ViewOrganisasiRepo
+	PihcMasterPositionRepo   *pihc.PihcMasterPositionRepo
 }
 
 func NewUsersProfileController(Db *gorm.DB, StorageClient *storage.Client) *UsersProfileController {
@@ -49,7 +50,8 @@ func NewUsersProfileController(Db *gorm.DB, StorageClient *storage.Client) *User
 		PihcMasterKaryDbRepo:     pihc.NewPihcMasterKaryDbRepo(Db),
 		PihcMasterKaryRtDbRepo:   pihc.NewPihcMasterKaryRtDbRepo(Db),
 		PihcMasterCompanyRepo:    pihc.NewPihcMasterCompanyRepo(Db),
-		ViewOrganisasiRepo:       pihc.NewViewOrganisasiRepo(Db)}
+		ViewOrganisasiRepo:       pihc.NewViewOrganisasiRepo(Db),
+		PihcMasterPositionRepo:   pihc.NewPihcMasterPositionRepo(Db)}
 }
 
 func getErrorMsg(fe validator.FieldError) string {
@@ -1173,7 +1175,7 @@ func (c *UsersProfileController) ShowProfile(ctx *gin.Context) {
 		}
 		data.PhotoProfileDefault = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
 
-		organization, _ := c.ViewOrganisasiRepo.FindViewOrganization(data_karyawan.EmpNo)
+		organization, _ := c.PihcMasterPositionRepo.FindViewOrganization(data_karyawan.EmpNo)
 
 		data.Organisasi = append(data.Organisasi, organization.Unit1)
 		data.Organisasi = append(data.Organisasi, organization.Unit2)
@@ -1415,7 +1417,7 @@ func (c *UsersProfileController) UpdatePhotoProfile(ctx *gin.Context) {
 		}
 		data.PhotoProfileDefault = "https://t3.ftcdn.net/jpg/03/46/83/96/360_F_346839683_6nAPzbhpSkIpb8pmAwufkC7c5eD7wYws.jpg"
 
-		organization, _ := c.ViewOrganisasiRepo.FindViewOrganization(data_karyawan.EmpNo)
+		organization, _ := c.PihcMasterPositionRepo.FindViewOrganization(data_karyawan.EmpNo)
 
 		data.Organisasi = append(data.Organisasi, organization.Unit1)
 		data.Organisasi = append(data.Organisasi, organization.Unit2)

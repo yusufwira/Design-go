@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/yusufwira/lern-golang-gin/entity/dbo/pihc"
 	"gorm.io/gorm"
 )
 
@@ -243,12 +244,21 @@ func (t SaldoCutiRepo) GetSaldoCutiByID(idSaldo interface{}) (SaldoCuti, error) 
 	return sc, nil
 }
 
-func (t SaldoCutiRepo) FindSaldoCutiKaryawanAdmin(key string, company string, direktorat string, departemen string, kompartemen string, nik string, tahun string) ([]SaldoCuti, error) {
-	var sc []SaldoCuti
+type SaldoCutiKaryawans struct {
+	SaldoCuti
+	pihc.PihcMasterKaryRtDb
+	pihc.PihcMasterCompany
+	TipeAbsen
+}
 
-	query := t.DB.
-		Select("cuti_karyawan.saldo_cuti.*").
-		Joins("inner join dbo.pihc_master_kary_rt pmkr on cuti_karyawan.saldo_cuti.nik = pmkr.emp_no")
+func (t SaldoCutiRepo) FindSaldoCutiKaryawanAdmin(key string, company string, direktorat string, departemen string, kompartemen string, nik string, tahun string) ([]SaldoCutiKaryawans, error) {
+	var sc []SaldoCutiKaryawans
+
+	query := t.DB.Table("cuti_karyawan.saldo_cuti").
+		Select("cuti_karyawan.saldo_cuti.*,pmkr.*,pmc.*,ta.*").
+		Joins(` inner join dbo.pihc_master_kary_rt pmkr on cuti_karyawan.saldo_cuti.nik = pmkr.emp_no
+				inner join dbo.pihc_master_company pmc on pmc.code = pmkr.company
+				inner join cuti_karyawan.tipe_absen ta on cuti_karyawan.saldo_cuti.tipe_absen_id = ta.id_tipe_absen `)
 
 	if key != "" {
 		query = query.Where("(pmkr.emp_no like ? OR lower(pmkr.nama) like lower(?) OR pmkr.pos_id like ? OR lower(pmkr.pos_title) like lower(?))",
