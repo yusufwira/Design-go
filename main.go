@@ -39,8 +39,8 @@ func main() {
 	}))
 
 	r.Use(gin.Recovery())
-	r.POST("/login", UserController.Login)
-	r.POST("/register", UserController.Register)
+	r.POST("/user/login", UserController.Login)
+	r.POST("/user/register", UserController.Register)
 
 	auth := r.Group("/api")
 	{

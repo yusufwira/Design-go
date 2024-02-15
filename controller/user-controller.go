@@ -261,13 +261,9 @@ func (c *UsersController) Login(ctx *gin.Context) {
 			fmt.Println("ERRORRR2")
 		}
 
-		// fmt.Println("Response Body:", string(body))
-		// fmt.Println("Content-Type:", resp.Header.Get("Content-Type"))
-
 		trimmedBody := bytes.TrimSpace(body)
 		var data Authentication.Token
 		if err := json.Unmarshal(trimmedBody, &data); err != nil {
-			// fmt.Println("Error unmarshaling JSON:", err)
 			return
 		}
 
