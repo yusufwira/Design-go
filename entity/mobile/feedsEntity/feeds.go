@@ -1,4 +1,4 @@
-package feedsController
+package feedsEntity
 
 import (
 	"time"
@@ -8,7 +8,7 @@ import (
 )
 
 // Feed represents the entity structure
-type Feed struct {
+type FeedModel struct {
 	ID          int64     `gorm:"column:id;primaryKey"`
 	NIK         string    `gorm:"column:nik"`
 	Description string    `gorm:"column:desc"`
@@ -25,7 +25,7 @@ type Feed struct {
 	ReferenceID string    `gorm:"column:referensi_id"`
 }
 
-func (Feed) TableName() string {
+func (FeedModel) TableName() string {
 	return "mobile.feeds"
 }
 
@@ -39,7 +39,7 @@ func GetFeedRepo(db *gorm.DB) *FeedRepo {
 
 // Handler to create a new feed
 func (r FeedRepo) createFeed(c *gin.Context) {
-	var feed Feed
+	var feed FeedModel
 	if err := c.ShouldBindJSON(&feed); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
@@ -50,7 +50,7 @@ func (r FeedRepo) createFeed(c *gin.Context) {
 
 // Handler to get a feed by ID
 func (r FeedRepo) getFeed(c *gin.Context) {
-	var feed Feed
+	var feed FeedModel
 	id := c.Param("id")
 	if err := r.db.First(&feed, id).Error; err != nil {
 		c.JSON(404, gin.H{"error": "Record not found!"})
@@ -61,7 +61,7 @@ func (r FeedRepo) getFeed(c *gin.Context) {
 
 // Handler to update a feed by ID
 func (r FeedRepo) updateFeed(c *gin.Context) {
-	var feed Feed
+	var feed FeedModel
 	id := c.Param("id")
 	if err := r.db.First(&feed, id).Error; err != nil {
 		c.JSON(404, gin.H{"error": "Record not found!"})
@@ -77,7 +77,7 @@ func (r FeedRepo) updateFeed(c *gin.Context) {
 
 // Handler to delete a feed by ID
 func (r FeedRepo) deleteFeed(c *gin.Context) {
-	var feed Feed
+	var feed FeedModel
 	id := c.Param("id")
 	if err := r.db.First(&feed, id).Error; err != nil {
 		c.JSON(404, gin.H{"error": "Record not found!"})
