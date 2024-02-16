@@ -31,7 +31,8 @@ type EventController struct {
 }
 
 func NewEventController(Db *gorm.DB, StorageClient *storage.Client) *EventController {
-	return &EventController{EventBookingRoomRepo: events.NewEventBookingRoomRepo(Db),
+	return &EventController{
+		EventBookingRoomRepo:   events.NewEventBookingRoomRepo(Db),
 		EventPersonRepo:        events.NewEventPersonRepo(Db),
 		MainEventRepo:          events.NewMainEventRepo(Db),
 		EventPresenceRepo:      events.NewEventPresenceRepo(Db),

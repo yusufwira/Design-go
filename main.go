@@ -75,6 +75,11 @@ func main() {
 		log.Fatalf("err loading: %v", err)
 	}
 
+	feed := auth.Group("mobile")
+	{
+		feed.POST("/listKegiatan", connection.Validation, mstrKgtController.ListMasterKegiatan)
+	}
+
 	jobtender := auth.Group("job_tender")
 	{
 		jobtender.GET("/detailJobVacancy/:id", jobTenderController.GetDetailJob)
